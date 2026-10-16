@@ -33,10 +33,19 @@ review to IndexNow, so the crawler arrived exactly when nothing was cached.
 - **Sitemap:** each market's product URLs come from `lastGoodMarketProductPaths`, an
   `unstable_cache` entry (`sitemap-market-products-v1`, 10 minutes, no tag a casino update
   clears). A snapshot with any part unread throws instead of being stored, so the previous list
-  stays (INFERRED from Next.js stale-while-revalidate behaviour: a failed background refresh keeps
-  the stale entry). With no list yet, what could be read is used, as before.
+  stays (DETECTED in Next.js 15.5 `unstable-cache.js`: a rejected background refresh is logged
+  and the stale value returned, no new entry is written). With no list yet, what could be read is
+  used, as before.
+- **Sitemap, Learn guides (follow-up, 16 Oct 2026):** each language's guides come from
+  `lastGoodPublishedArticles`, an `unstable_cache` entry (`sitemap-learn-articles-v1`, 10
+  minutes, no tag). Every publish clears the article list cache, so before this a stall right
+  after a publish listed no guides for that language. A failed read throws instead of being
+  stored; with no list yet and no database answer, the language lists no guides. Only category,
+  slug and update date are cached. A nested `unstable_cache` is bypassed inside the outer one, so
+  each refresh reads the database directly and the article tag never reaches this entry.
 
 ## Release gates
 
-- Merged and deployed: UNKNOWN at writing.
+- Merged and deployed: PR #525 reached Production on 15 Oct 2026, 21:38 UTC (c7e4f540). The Learn guides
+  follow-up: UNKNOWN at writing.
 - Watch Production logs for `PUBLIC_CATALOGUE_UNAVAILABLE` during the next stall.

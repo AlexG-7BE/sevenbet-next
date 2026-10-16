@@ -5,7 +5,7 @@ import test from "node:test";
 import { HTML_LIMITED_BOT_UA_RE } from "next/dist/shared/lib/router/utils/html-bots";
 
 import robots from "../app/robots";
-import { completeMarketProductPaths, indexableMarketProductPaths, indexableReviewCards, lastGoodMarketProductPaths, SitemapCatalogueUnavailable } from "../app/sitemap";
+import { completeMarketProductPaths, indexableMarketProductPaths, indexableReviewCards, lastGoodMarketProductPaths, lastGoodPublishedArticles, SitemapCatalogueUnavailable } from "../app/sitemap";
 import { PublicCasinoService, PublicCatalogueUnavailableError } from "../lib/services/public-casino.service";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { articleLanguageAlternates } from "../lib/articles/article-seo";
@@ -673,4 +673,26 @@ test("the sitemap keeps the last good market list when the database stalls", asy
   const sitemap = read("app/sitemap.ts");
   assert.match(sitemap, /\["sitemap-market-products-v1", market\.countryCode\], \{ revalidate: 600 \}/);
   assert.match(sitemap, /const baseProducts = await lastGoodMarketProductPaths\(DEFAULT_MARKET_PROFILE, crawlerBonuses\);/);
+});
+
+test("the sitemap keeps the last good list of Learn guides when the database stalls", async () => {
+  type Cache = Parameters<typeof lastGoodPublishedArticles>[1];
+  const guide = { slug: "ta-bort-spelpaus", category: "responsible-gambling", updatedAt: "2026-10-15T08:00:00.000Z" };
+  const stall = async () => { throw new Error("Query read timeout"); };
+  // A stale entry is served while its refresh fails (unstable_cache keeps it).
+  const servedStale = (() => async () => [guide]) as unknown as Cache;
+  assert.deepEqual(await lastGoodPublishedArticles("sv-SE", servedStale, stall), [guide]);
+  // Nothing cached and the database stalls: no guides, and no second read during the stall.
+  let reads = 0;
+  const noEntry = ((callback: () => Promise<unknown>) => async () => callback()) as unknown as Cache;
+  assert.deepEqual(await lastGoodPublishedArticles("sv-SE", noEntry, async () => { reads += 1; throw new Error("Query read timeout"); }), []);
+  assert.equal(reads, 1);
+  // A cache that cannot run (outside a Next.js request) reads directly once.
+  const broken = (() => async () => { throw new Error("incrementalCache missing"); }) as unknown as Cache;
+  assert.deepEqual(await lastGoodPublishedArticles("sv-SE", broken, async () => [guide]), [guide]);
+  assert.deepEqual(await lastGoodPublishedArticles("sv-SE", broken, stall), []);
+  const sitemap = read("app/sitemap.ts");
+  // No tag: a publish clears the article list cache, never this entry.
+  assert.match(sitemap, /\["sitemap-learn-articles-v1", locale\], \{ revalidate: 600 \}/);
+  assert.match(sitemap, /articles: await lastGoodPublishedArticles\(language\.defaultLocale\),/);
 });
