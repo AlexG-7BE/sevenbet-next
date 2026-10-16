@@ -51,9 +51,19 @@ const artifactFields: Record<ProgramAiMissionNumber, readonly string[]> = {
   5: ["decisionChecks", "pauseRuleType", "scenarioChoice"],
   6: ["frictionMethods", "fallbackMethod", "bypassReason"],
   7: ["supportModes", "exitActionType", "supportCardStyle"],
-  8: ["researchCriteria", "comparisonSignals", "offerTermSignal"],
+  8: ["trustedPerson", "openingLine", "helpService", "firstTenMinutes"],
   9: ["scenarioType", "responseStrategy", "fallbackStrategy"],
   10: ["reviewCadenceDays", "planPriorityIds", "timelineReviewed"],
+};
+
+/**
+ * Fields a Mission's earlier lesson stored and its current lesson no longer asks for. They are
+ * read as absent: no screen shows them, no provider receives them, and the next save of that
+ * Mission drops them. Mission 08 was "Research responsibly" (a comparison checklist) until the
+ * Founder replaced it with the help lesson "Know who to turn to" on 16 October 2026.
+ */
+const retiredArtifactFields: Partial<Record<ProgramAiMissionNumber, readonly string[]>> = {
+  8: ["researchCriteria", "comparisonSignals", "offerTermSignal"],
 };
 
 /** The "Set a 7-day goal" Mission: its result feeds the weekly goal card of the home. */
@@ -65,19 +75,29 @@ function recordValue(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function artifactFromDraft(draft: unknown, definition: ProgramAiMissionDefinition) {
+function storedArtifact(draft: unknown, definition: ProgramAiMissionDefinition) {
   const namespace = recordValue(recordValue(draft).programAiV1);
-  if (!Object.keys(namespace).length || namespace.version !== definition.artifactVersion) return {};
-  const artifact = recordValue(namespace.artifact);
-  const unsupported = Object.keys(artifact).filter(
-    (key) => !artifactFields[definition.missionNumber].includes(key),
+  if (!Object.keys(namespace).length || namespace.version !== definition.artifactVersion) {
+    return { artifact: {} as ProgramAiStructuralArtifact, retired: false };
+  }
+  const retiredFields = retiredArtifactFields[definition.missionNumber] ?? [];
+  const stored = recordValue(namespace.artifact);
+  const unsupported = Object.keys(stored).filter(
+    (key) => !artifactFields[definition.missionNumber].includes(key) && !retiredFields.includes(key),
   );
   if (unsupported.length) {
     throw new ProgrammeStateConflictError("Stored Mission artifact has unsupported fields", {
       fields: unsupported,
     });
   }
-  return artifact as ProgramAiStructuralArtifact;
+  const artifact = Object.fromEntries(
+    Object.entries(stored).filter(([key]) => !retiredFields.includes(key)),
+  ) as ProgramAiStructuralArtifact;
+  return { artifact, retired: Object.keys(stored).some((key) => retiredFields.includes(key)) };
+}
+
+function artifactFromDraft(draft: unknown, definition: ProgramAiMissionDefinition) {
+  return storedArtifact(draft, definition).artifact;
 }
 
 /** One stored value of a Mission's result, or null. It never throws: the home opens on any record. */
@@ -467,6 +487,10 @@ export class ProgrammeAiMissionsService {
     const currentActionIndex = actions.findIndex((action) => !action.completed);
     const currentAction = currentActionIndex >= 0 ? actions[currentActionIndex].id : null;
     const hasNewContract = actions.every((action) => action.completed);
+    const stored = progress ? storedArtifact(progress.draft, definition) : { artifact: {}, retired: false };
+    // Completed under an earlier lesson of this Mission and holding none of the current answers:
+    // the step is done and opens as already complete, not as an empty result.
+    const earlierLesson = progress?.status === "COMPLETED" && stored.retired && !Object.keys(stored.artifact).length;
     return {
       missionNumber: definition.missionNumber,
       step: missionStep(definition.missionNumber),
@@ -479,12 +503,12 @@ export class ProgrammeAiMissionsService {
       currentActionPosition: currentActionIndex >= 0 ? currentActionIndex + 1 : null,
       actionsCompleted: actions.filter((action) => action.completed).length,
       actionsTotal: actions.length,
-      artifact: progress ? artifactFromDraft(progress.draft, definition) : {},
+      artifact: stored.artifact,
       artifactVersion: definition.artifactVersion,
       xpEarnedHere: actionXpEarned(definition, progress),
       completionBonus: 25,
       completedAt: progress?.completedAt?.toISOString() ?? null,
-      legacyCompletion: progress?.status === "COMPLETED" && !hasNewContract,
+      legacyCompletion: (progress?.status === "COMPLETED" && !hasNewContract) || earlierLesson,
     };
   }
 

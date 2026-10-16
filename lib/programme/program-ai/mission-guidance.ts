@@ -206,7 +206,7 @@ function safeString(value: unknown, maximum: number) {
     throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
   }
   const result = value.trim();
-  return assertSafeProgrammeGeneratedText(result, { strictCommercialTerms: true });
+  return assertSafeProgrammeGeneratedText(result, { strictCommercialTerms: true, noPhoneNumbers: true });
 }
 
 export function parseGeneratedResult(

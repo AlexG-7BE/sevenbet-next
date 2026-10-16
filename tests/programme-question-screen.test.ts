@@ -75,7 +75,7 @@ test("the lines of the question screen are presentation: written for every step 
   // (a sequence to put in order, drafted responses to choose from) and carry the why-line only.
   const optionLists: Record<string, string> = {};
   for (const [, name, body] of missionExperience.matchAll(/^function (\w+Options)\(\) \{ return \[(.*)\]; \}$/gm)) optionLists[name] = body;
-  assert.deepEqual(Object.keys(optionLists).sort(), ["comparisonOptions", "frictionOptions", "researchOptions", "responseOptions"]);
+  assert.deepEqual(Object.keys(optionLists).sort(), ["frictionOptions", "responseOptions"]);
   const cardsByAction: Record<string, { value: string; described: boolean }[]> = {};
   for (const [, actionId, definition] of missionExperience.matchAll(/^  (\w+): \{ prompt: "[^"]+", explanation: "[^"]+",(.*)\},$/gm)) {
     const fields = Object.entries(optionLists).reduce((text, [name, body]) => text.replace(`${name}()`, `[${body}]`), definition);
@@ -97,22 +97,22 @@ test("the lines of the question screen are presentation: written for every step 
       optionLineCount += lines.length;
     }
   }
-  // 28 lines for step 2 and the last two questions of step 3, and 101 for Missions 03–07, 09 and 10.
-  assert.equal(optionLineCount, 6 + 5 + 4 + 6 + 7 + (10 + 20 + 14 + 22 + 13 + 8 + 14));
+  // 15 lines for step 2, 23 for step 3 ("Know who to turn to", 16 October 2026) and 101 for
+  // Missions 03–07, 09 and 10.
+  assert.equal(optionLineCount, 6 + 5 + 4 + 12 + 5 + 6 + (10 + 20 + 14 + 22 + 13 + 8 + 14));
   const optionsByAction: Record<string, readonly string[]> = {
     choose_direction: ["understand", "pause", "reduce_impulse", "set_boundary", "research_later", "seek_support"],
     build_7_day_goal: ["notice_and_note", "pause_first", "use_one_boundary", "research_after_pause", "ask_for_support"],
     reality_check: ["make_it_smaller", "use_the_pause", "restart_next_day", "ask_for_support"],
-    decode_offer_terms: ["wagering_requirement", "expiry", "eligible_games", "deposit_condition", "withdrawal_limit", "unclear_terms"],
-    build_research_checklist: ["licensing_status", "operator_identity", "terms", "withdrawals", "payments", "safer_gambling_tools", "offer_conditions"],
+    // Step 3: who the person is to you, then the line you would say; the kind of help; the first 10 minutes.
+    learn_comparison_signals: ["partner", "family", "friend", "colleague", "been_there", "professional", "service_first", "call_me", "tell_you", "one_word", "check_in", "first_call"],
+    decode_offer_terms: ["phone", "chat", "in_person", "debt", "close_ones"],
+    build_research_checklist: ["phone_away", "send_line", "contact_service", "wait_ten_minutes", "go_outside", "read_card"],
   };
   for (const [actionId, options] of Object.entries(optionsByAction)) {
     assert.deepEqual(questionOptionLineEntries(actionId).map(([value]) => value), options, actionId);
     for (const value of options) assert.ok(missionExperience.includes(`option("${value}"`), `${actionId}.${value} is an option of the Mission screen`);
   }
-  // The first question of step 3 keeps the lines its options already had.
-  assert.deepEqual(questionOptionLineEntries("learn_comparison_signals"), []);
-  assert.ok(missionExperience.includes('option("licensing_status", "Licence / regulatory status", "Confirms whether the product is permitted for the relevant market.")'));
   assert.ok(missionExperience.includes("const line = item.description ?? (actionId ? questionOptionLine(actionId, item.value) : undefined);"));
   // A question without lines shows its options and helper only: both are optional in the layout.
   assert.equal(questionWhyLine("not_an_action"), undefined);
@@ -127,9 +127,11 @@ test("the lines of the question screen are presentation: written for every step 
   // One short plain sentence each, in every language the catalogue carries; no promise, no jargon.
   const firstWritten = [
     ...firstSteps.map((actionId) => questionWhyLine(actionId)!),
-    ...["choose_direction", "build_7_day_goal", "reality_check", "decode_offer_terms"].flatMap((actionId) => questionOptionLineEntries(actionId).map(([, line]) => line)),
+    ...firstSteps.flatMap((actionId) => questionOptionLineEntries(actionId).map(([, line]) => line))
+      // "Wait 10 minutes" keeps the timer line it carries in steps 4 and 7.
+      .filter((line) => line !== questionOptionLine("choose_pause_move", "wait_ten_minutes")),
   ];
-  assert.equal(firstWritten.length, 6 + 6 + 5 + 4 + 6);
+  assert.equal(firstWritten.length, 6 + 6 + 5 + 4 + 12 + 5 + 5);
   assert.equal(new Set(firstWritten).size, firstWritten.length);
   // Every line the mapping names: a why-line per action, a line per option card. An option offered
   // in more than one question keeps one line, so the rows are fewer than the cards.
@@ -137,10 +139,9 @@ test("the lines of the question screen are presentation: written for every step 
     ...allActions.map((actionId) => questionWhyLine(actionId)!),
     ...allActions.flatMap((actionId) => questionOptionLineEntries(actionId).map(([, line]) => line)),
   ])];
-  // The checklist of step 3 keeps the seven lines its options carried before this screen.
-  const inherited = new Set(questionOptionLineEntries("build_research_checklist").map(([, line]) => line));
+  // No line is carried over from an earlier screen any more: step 3's research checklist is gone.
+  const inherited = new Set<string>();
   const written = mapped.filter((key) => !inherited.has(key));
-  assert.equal(inherited.size, 7);
   assert.equal(written.length, firstWritten.length + 21 + 79);
   for (const key of firstWritten) assert.ok(written.includes(key), key);
   for (const locale of PROGRAMME_LOCALES) assert.ok(CATALOGUE_LOCALES.includes(locale));
@@ -290,7 +291,8 @@ test("the end of a step: a keepsake card, the finish press without XP, the rewar
   // The card draws any Mission's rows; a long value takes the whole width; a long sentence is set smaller.
   assert.ok(missionPrimitives.includes("{sentence ? <blockquote data-length={keepsakeSentenceSize(sentence)}>{sentence}</blockquote> : null}"));
   assert.ok(missionPrimitives.includes('<div data-wide={keepsakeRowIsWide(row.value, row.label) ? "" : undefined} key={row.key}><dt>{row.label}</dt><dd>{row.value}</dd></div>'));
-  assert.ok(missionExperience.includes("const keepsake = { title: programmeMissionResultTitle(mission.missionNumber, locale), sentence: localWording.trim() || undefined, rows: presentMissionArtifact(mission.artifact, locale) };"));
+  // A step's keepsake: its name, its sentence and its rows; step 3's support card adds its line and the crisis line.
+  assert.ok(missionExperience.includes("const keepsake = programmeMissionKeepsake(mission.missionNumber, mission.artifact, locale, localWording);"));
   assert.equal(keepsakeRowIsWide("x".repeat(KEEPSAKE_WIDE_VALUE)), false);
   assert.equal(keepsakeRowIsWide("x".repeat(KEEPSAKE_WIDE_VALUE + 1)), true);
   // A label with a very long word takes the whole width too, so no word breaks inside itself.

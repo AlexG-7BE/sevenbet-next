@@ -12,7 +12,26 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## The Programme shows no casino links, to anyone — in review
+## Step 3 is a help lesson, "Know who to turn to" — in review
+
+**Founder decision, 16 October 2026** (question tool;
+[decision](07_Decisions/STEP3-HELP-LESSON-2026-10-16.md)). **PROPOSED — NOT YET LIVE** until the
+Founder approves the text and screens and the branch `feat/step3-help-lesson` (built on
+`feat/programme-no-casino-links`) is merged and deployed:
+
+- Mission 08 keeps its number, step 3, prerequisite, action ids, reward keys and XP; its lesson
+  "Research responsibly" (comparison signals, a bonus-terms card, a research checklist) is replaced
+  by "Know who to turn to": one person (who they are to you, never a name) and one short line; one
+  kind of help, shown as the checked service of the person's market (sv → Sweden, da → Denmark,
+  en → Great Britain) with its number and hours and the crisis line; the first 10 minutes of an
+  urge. Keepsake "MY SUPPORT CARD"; final-plan priority "Support card".
+- The ten other Programme languages show no number: the Help page and "call your local emergency
+  number".
+- Old Mission 08 answers are read as retired: never shown or sent to the provider, dropped on the
+  next save; a step 3 completed under the research lesson opens as already complete.
+- The public 10 Steps page (13 languages), the trust page and the control page FAQ (en/sv/da) say
+  what step 3 now does. Provider guidance and Reviews never write a phone number.
+
 
 **Founder decision, 16 October 2026** (question tool, «Без казино для всех»;
 [decision](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)). **PROPOSED — NOT YET LIVE**

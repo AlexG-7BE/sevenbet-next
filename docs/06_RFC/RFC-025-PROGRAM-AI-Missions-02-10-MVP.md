@@ -284,7 +284,7 @@ Allowed durable structural facts are:
 | 05 | `decisionChecks`, `pauseRuleType`, `scenarioChoice` |
 | 06 | `frictionMethods`, `fallbackMethod`, `bypassReason` |
 | 07 | `supportModes`, `exitActionType`, `supportCardStyle` |
-| 08 | `researchCriteria`, `comparisonSignals`, `offerTermSignal` |
+| 08 | `trustedPerson`, `openingLine`, `helpService`, `firstTenMinutes` (since the help lesson of 16 October 2026, [STEP3-HELP-LESSON-2026-10-16](../07_Decisions/STEP3-HELP-LESSON-2026-10-16.md); the research lesson's `researchCriteria`, `comparisonSignals`, `offerTermSignal` are retired: read as absent, dropped on the next save) |
 | 09 | `scenarioType`, `responseStrategy`, `fallbackStrategy` |
 | 10 | `reviewCadenceDays`, `planPriorityIds`, `timelineReviewed` |
 

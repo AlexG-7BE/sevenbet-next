@@ -202,9 +202,9 @@
 .reviewSection p { margin: 0; color: rgba(250, 250, 247, .72); line-height: 1.65; }
 
 /* Mission primitives */
-.sequenceBuilder, .aiPicker, .stackBuilder, .applicationPanel, .offerDecoder, .programmeTimeline { display: grid; gap: 16px; }
-.sequenceBuilder h3, .aiPicker h3, .applicationPanel h3, .offerDecoder h3, .programmeTimeline h3 { margin: 4px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.05; text-transform: uppercase; }
-.sequenceBuilder p, .aiPicker p, .applicationPanel p, .offerDecoder p, .programmeTimeline p { margin: 0; color: rgba(250, 250, 247, .55); font-size: 14px; line-height: 1.55; }
+.sequenceBuilder, .aiPicker, .stackBuilder, .applicationPanel, .helpService, .programmeTimeline { display: grid; gap: 16px; }
+.sequenceBuilder h3, .aiPicker h3, .applicationPanel h3, .helpService h3, .programmeTimeline h3 { margin: 4px 0 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.05; text-transform: uppercase; }
+.sequenceBuilder p, .aiPicker p, .applicationPanel p, .helpService p, .programmeTimeline p { margin: 0; color: rgba(250, 250, 247, .55); font-size: 14px; line-height: 1.55; }
 .sequenceBuilder ol, .stackBuilder ol, .programmeTimeline ol { margin: 0; padding: 0; display: grid; gap: 8px; list-style: none; }
 .sequenceBuilder li { padding: 12px 14px; display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; border: 1px solid rgba(250, 250, 247, .12); border-radius: 4px; background: var(--pg-ink); }
 .sequenceBuilder li > span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--pg-acid); color: var(--pg-ink); font-family: var(--font-seven-serif), Georgia, serif; font-size: 16px; font-style: italic; }
@@ -216,7 +216,7 @@
 .sequenceFeedback { padding: 14px 16px; background: rgba(228, 226, 78, .25); color: var(--pg-paper) !important; font-size: 14px !important; font-weight: 600; line-height: 1.5; }
 .scenarioPanel { padding: clamp(20px, 3vw, 28px); display: grid; gap: 12px; border: 1px solid rgba(228, 226, 78, .25); border-radius: 4px; background: var(--pg-ink); }
 .scenarioPanel p { margin: 0; color: var(--pg-paper); font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(22px, 2.4vw, 30px); font-style: italic; line-height: 1.2; }
-.aiPicker, .stackBuilder, .applicationPanel, .offerDecoder { padding: 22px; border: 1px solid var(--pg-line); border-radius: 4px; background: var(--pg-ink); }
+.aiPicker, .stackBuilder, .applicationPanel, .helpService { padding: 22px; border: 1px solid var(--pg-line); border-radius: 4px; background: var(--pg-ink); }
 .aiPicker > div { display: grid; gap: 9px; }
 .aiPicker button { padding: 15px; display: grid; gap: 7px; border: 1px solid var(--pg-line-strong); background: var(--pg-ink); color: var(--pg-paper); cursor: pointer; line-height: 1.45; text-align: left; transition: border-color 200ms var(--pg-ease), background 200ms var(--pg-ease); }
 .aiPicker button:hover { border-color: rgba(250, 250, 247, .5); }
@@ -228,12 +228,19 @@
 .applicationPanel > div { display: grid; gap: 8px; }
 .applicationPanel label { min-height: 52px; padding: 11px 14px; display: flex; gap: 12px; align-items: center; border: 1px solid var(--pg-line-strong); background: var(--pg-card); cursor: pointer; }
 .applicationPanel input { width: 20px; height: 20px; accent-color: var(--pg-acid); }
-.offerDecoder > div { display: grid; grid-template-columns: 1.2fr repeat(3, 1fr); gap: 1px; background: rgba(250, 250, 247, .2); }
-.offerDecoder > div > * { min-height: 72px; padding: 10px; display: grid; place-items: center; background: var(--pg-ink); text-align: center; }
-.offerDecoder > div > strong { font-family: var(--font-seven-serif), Georgia, serif; font-size: 20px; font-style: italic; font-weight: 400; }
-.offerDecoder > div > span { color: rgba(250, 250, 247, .7); font-size: 12px; letter-spacing: .08em; }
-.offerDecoder p { color: rgba(250, 250, 247, .7); }
-.offerDecoder p strong { color: var(--pg-acid); }
+/* Step 3's help service: who answers, when, and the crisis line under it (Founder, 16 October 2026). */
+.helpContact { display: grid; gap: 8px; }
+.helpContact + .helpContact { padding-top: 16px; border-top: 1px solid var(--pg-line-strong); }
+.helpContactLabel { color: var(--pg-label); font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; }
+.helpService p { color: rgba(250, 250, 247, .72); }
+.helpService .helpHours { color: var(--pg-paper); font-weight: 600; }
+.helpLinks { display: flex; flex-wrap: wrap; gap: 8px; }
+.helpLinks a { min-height: 44px; padding: 10px 16px; display: inline-flex; align-items: center; border: 1px solid rgba(250, 250, 247, .25); border-radius: 12px; color: var(--pg-paper); font-size: 14px; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.helpLinks a[data-programme-help-call] { border-color: var(--pg-acid); background: var(--pg-acid); color: var(--pg-ink); }
+.helpCrisis { padding: 14px 16px; display: grid; gap: 6px; border-left: 2px solid var(--pg-mint); background: var(--pg-card); }
+.helpCrisis strong { font-size: 14px; }
+.helpCrisis p { font-size: 14px; }
+.helpCrisis a { color: var(--pg-paper); font-weight: 700; }
 .programmeTimeline ol { position: relative; }
 .programmeTimeline li { display: grid; grid-template-columns: 48px 1fr; gap: 14px; align-items: start; }
 .programmeTimeline li > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--pg-raised); color: var(--pg-acid); font-family: var(--font-seven-serif), Georgia, serif; font-size: 18px; font-style: italic; }
@@ -279,7 +286,7 @@
 .stepReveal { min-width: 0; display: grid; scroll-margin-top: calc(var(--sb-header-offset) + 16px); scroll-margin-bottom: 176px; }
 .stepShell .stepSecondary { width: 100%; min-height: 52px; gap: 10px; border-radius: 16px; font-size: 16px; font-weight: 700; letter-spacing: 0; }
 /* The widgets keep their content; inside a step they take the cards' corners. */
-.stepMain :is(.aiPicker, .stackBuilder, .applicationPanel, .offerDecoder, .scenarioPanel, .artifact) { border-radius: 16px; }
+.stepMain :is(.aiPicker, .stackBuilder, .applicationPanel, .helpService, .scenarioPanel, .artifact) { border-radius: 16px; }
 .stepMain .aiPicker button { border-radius: 14px; }
 .stepMain .aiPicker button[aria-pressed="true"] { box-shadow: 0 0 0 1px var(--pg-acid) inset; }
 .stepMain .applicationPanel label, .stepMain .localField textarea { border-radius: 12px; }
@@ -378,7 +385,6 @@
 }
 @media (max-width: 900px) {
   .programmeLabel { display: none; }
-  .offerDecoder > div { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
   .missionMain, .reviewMain { width: calc(100% - 40px); padding: 32px 0 112px; gap: 28px; }

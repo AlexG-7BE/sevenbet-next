@@ -203,7 +203,7 @@ test("the control page lists the Programme's real steps, and the trust page stat
   const page = read(PAGES[CONTROL_PATHS.withoutQuitting]);
   assert.match(page, /const steps = currentProgrammeJourney\(contentLocale\);/, "the steps come from the catalogue");
   for (const locale of CONTROL_LOCALES) assert.equal(currentProgrammeJourney(locale).length, 10);
-  assert.equal(currentProgrammeJourney("en-GB")[2].title, "Research responsibly");
+  assert.equal(currentProgrammeJourney("en-GB")[2].title, "Know who to turn to");
 
   for (const locale of CONTROL_LOCALES) {
     const text = JSON.stringify(trustMessages(locale));

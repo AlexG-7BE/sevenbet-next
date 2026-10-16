@@ -17,7 +17,8 @@ const titles = Array.from({ length: 10 }, (_, index) => programmeMissionCopy("en
 type Artifact = Record<string, string | number | boolean | string[]>;
 const results: Record<number, { actions: [string, string, string]; artifact: Artifact; title: string; rows: number }> = {
   2: { actions: ["choose_direction", "build_7_day_goal", "reality_check"], artifact: { direction: "pause", goalStyle: "pause_first", reviewWindowDays: 7, realityCheck: "restart_next_day" }, title: "MY 7-DAY GOAL", rows: 4 },
-  8: { actions: ["learn_comparison_signals", "decode_offer_terms", "build_research_checklist"], artifact: { comparisonSignals: ["operator_identity", "withdrawal_conditions"], offerTermSignal: "wagering_requirement", researchCriteria: ["licensing_status", "terms", "withdrawals"] }, title: "MY RESEARCH CHECKLIST", rows: 3 },
+  // Step 3's support card: the chosen line is its sentence, so its rows are the person, the service, the first 10 minutes and the crisis line.
+  8: { actions: ["learn_comparison_signals", "decode_offer_terms", "build_research_checklist"], artifact: { trustedPerson: "friend", openingLine: "call_me", helpService: "phone", firstTenMinutes: ["phone_away", "send_line", "contact_service"] }, title: "MY SUPPORT CARD", rows: 4 },
   4: { actions: ["choose_boundary", "build_boundary_rule", "choose_execution"], artifact: { boundaryCategory: "money", triggerType: "before_access", executionMethod: "bank_block", pressureCheck: "easy_to_use" }, title: "MY BOUNDARY", rows: 4 },
 };
 
@@ -115,10 +116,10 @@ test("a long value takes the whole width of the card and the person's own senten
   const card = page.locator("[data-programme-keepsake]");
   await expect(card.locator("blockquote")).toHaveText("For seven days I pause for ten minutes before one decision.");
   expect(await card.locator("blockquote").evaluate((element) => getComputedStyle(element).fontStyle)).toBe("italic");
-  // The research checklist has lists for values: those rows take both columns, the short one keeps one.
+  // The support card of step 3 leads with the chosen line; its service and its moves take both columns, the person keeps one.
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await openResult(page, 8);
-  await expect(card.locator("blockquote")).toHaveCount(0);
+  await expect(card.locator("blockquote")).toHaveText("Can you call me? I'm having a hard moment.");
   const widths = await card.locator("dl > div").evaluateAll((rows) => rows.map((row) => ({ wide: row.hasAttribute("data-wide"), width: row.getBoundingClientRect().width, long: (row.querySelector("dd")?.textContent ?? "").length > 26 || (row.querySelector("dt")?.textContent ?? "").split(/\s+/).some((word) => word.length > 14) })));
   for (const row of widths) expect(row.wide).toBe(row.long);
   expect(widths.filter((row) => row.wide).length).toBeGreaterThanOrEqual(1);
@@ -182,7 +183,7 @@ test("Save as image gives a PNG of the card, made on the device", async ({ page 
   await expect(page.getByText("The image could not be saved.")).toHaveCount(0);
 });
 
-test("the research Mission's completion ends with the step itself: no research block and no casino link (Founder, 16 October 2026)", async ({ page }) => {
+test("step 3's completion ends with the support card itself: no research block and no casino link (Founder, 16 October 2026)", async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 });
   await openResult(page, 8);
   await finish(page).click();

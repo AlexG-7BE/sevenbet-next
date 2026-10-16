@@ -8,7 +8,7 @@ import { programmeJourney } from "@/lib/programme/program-ai/mission-registry";
 /**
  * The weekly funnel count (Founder plan, 13 Oct 2026, PROGRAMME-FUNNEL-MCP-2026-10-14): for a
  * date range, how many accounts were created, how many Programmes were started, how many people
- * completed the third step ("Research responsibly") and how many partner buttons signed-in people
+ * completed the third step (Mission 08, "Know who to turn to"; "Research responsibly" before 16 October 2026) and how many partner buttons signed-in people
  * pressed, by the country and by the source the account was created from.
  *
  * Aggregate, read-only measurement. Each stage is counted by its own date, so a row is the week's
@@ -89,7 +89,7 @@ export class ProgrammeFunnelError extends Error {
 }
 
 export const PROGRAMME_FUNNEL_NOTES = [
-  "Each stage is counted by its own date in the range: accounts by creation, Programme starts by the start of the enrolment, the third step (Research responsibly) by its completion, partner buttons by the press. A row is the range's activity, not a cohort.",
+  "Each stage is counted by its own date in the range: accounts by creation, Programme starts by the start of the enrolment, the third step (Mission 08, Know who to turn to) by its completion, partner buttons by the press. A row is the range's activity, not a cohort.",
   "Every count belongs to an account and is shown under the country and the source that account was created from. The source is the sign-up UTM source, or the acquisition source when there was no UTM tag; null means neither was recorded.",
   "outboundClicks are partner-button presses by signed-in people; partnerClicks are those that reached the partner. Presses by people without an account are not here: social_traffic counts them per visit.",
   "A Programme start here is an enrolment, which needs an account. People who began the first step without an account are counted by social_traffic (programmeStarts), not here.",

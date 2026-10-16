@@ -12,6 +12,7 @@ import {
   type ProgramAiMissionNumber,
 } from "@/lib/programme/program-ai/mission-registry";
 import { isProgrammeLocale } from "@/lib/programme/presentation";
+import { PROGRAMME_HELP_SERVICE_TYPES } from "@/lib/programme/program-ai/help-services";
 
 export type ProgramAiStructuralArtifact = Record<string, string | number | boolean | string[]>;
 
@@ -33,12 +34,15 @@ const fallbackMethods = ["leave", "wait_twenty_minutes", "open_help", "contact_s
 const supportModes = ["trusted_person", "professional_support", "peer_support", "protected_help", "not_ready"] as const;
 const supportCardStyles = ["when_then", "short_prompt", "two_step"] as const;
 const exitActions = ["leave_page", "close_account_tools", "open_help", "contact_support", "take_a_walk"] as const;
-const comparisonSignals = ["licensing_status", "operator_identity", "material_terms", "withdrawal_conditions", "payments", "safer_gambling_tools", "offer_conditions"] as const;
-const offerTermSignals = ["wagering_requirement", "expiry", "eligible_games", "deposit_condition", "withdrawal_limit", "unclear_terms"] as const;
-const researchCriteria = ["licensing_status", "operator_identity", "terms", "withdrawals", "payments", "safer_gambling_tools", "offer_conditions"] as const;
+// Mission 08, "Know who to turn to" (Founder, 16 October 2026): who the person is to you, never a
+// name; one line from a closed list; the kind of help, never a service picked by name; two or
+// three moves for the first 10 minutes. Nothing a person types reaches the server.
+const trustedPeople = ["partner", "family", "friend", "colleague", "been_there", "professional", "service_first"] as const;
+const openingLines = ["call_me", "tell_you", "one_word", "check_in", "first_call"] as const;
+const firstTenMinutes = ["phone_away", "send_line", "contact_service", "wait_ten_minutes", "go_outside", "read_card"] as const;
 const scenarioTypes = ["unexpected_offer", "urge_after_stress", "social_invitation", "unclear_terms"] as const;
 const responseStrategies = ["pause_and_check", "leave_and_return", "use_boundary", "ask_for_support"] as const;
-const planPriorityIds = ["starting_point", "goal", "early_signal", "pause_move", "boundary", "decision_checks", "friction", "support", "research", "fallback"] as const;
+const planPriorityIds = ["starting_point", "goal", "early_signal", "pause_move", "boundary", "decision_checks", "friction", "support", "support_card", "fallback"] as const;
 
 function exactList<T extends readonly string[]>(
   value: unknown,
@@ -125,14 +129,14 @@ function parseArtifact(
       assertOnlyKeys(artifact, ["exitActionType"]);
       return { exitActionType: enumField("exitActionType", exitActions) };
     case "8:learn_comparison_signals":
-      assertOnlyKeys(artifact, ["comparisonSignals"]);
-      return { comparisonSignals: exactList(artifact.comparisonSignals, "comparisonSignals", comparisonSignals, 2, 3) };
+      assertOnlyKeys(artifact, ["trustedPerson", "openingLine"]);
+      return { trustedPerson: enumField("trustedPerson", trustedPeople), openingLine: enumField("openingLine", openingLines) };
     case "8:decode_offer_terms":
-      assertOnlyKeys(artifact, ["offerTermSignal"]);
-      return { offerTermSignal: enumField("offerTermSignal", offerTermSignals) };
+      assertOnlyKeys(artifact, ["helpService"]);
+      return { helpService: enumField("helpService", PROGRAMME_HELP_SERVICE_TYPES) };
     case "8:build_research_checklist":
-      assertOnlyKeys(artifact, ["researchCriteria"]);
-      return { researchCriteria: exactList(artifact.researchCriteria, "researchCriteria", researchCriteria, 3, 5) };
+      assertOnlyKeys(artifact, ["firstTenMinutes"]);
+      return { firstTenMinutes: exactList(artifact.firstTenMinutes, "firstTenMinutes", firstTenMinutes, 2, 3) };
     case "9:choose_scenario":
       assertOnlyKeys(artifact, ["scenarioType"]);
       return { scenarioType: enumField("scenarioType", scenarioTypes) };

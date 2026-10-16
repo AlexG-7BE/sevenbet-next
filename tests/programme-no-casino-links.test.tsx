@@ -1,8 +1,8 @@
 // Founder decision, 16 October 2026 ("Без казино для всех"): the Programme shows no casino, offer,
 // bonus or comparison link to anyone, so that it ends in help. No Programme screen, card or letter
-// links into the research section or to a partner route, and finishing step 3 ("Research
-// responsibly") opens nothing in the menu. The research pages themselves stay public and keep
-// their own menu. Decision record: docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md.
+// links into the research section or to a partner route, and finishing step 3 (Mission 08, now
+// the help lesson "Know who to turn to") opens nothing in the menu. The research pages themselves
+// stay public and keep their own menu. Decision record: docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md.
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -104,7 +104,7 @@ function withOldResearchFields(value: ProgramAiHome) {
 
 function completedMission(missionNumber: 8 | 10): ProgramAiMission {
   const actions = missionNumber === 8
-    ? [["learn_comparison_signals", 20], ["decode_offer_terms", 20], ["build_research_checklist", 15]] as const
+    ? [["learn_comparison_signals", 15], ["decode_offer_terms", 20], ["build_research_checklist", 15]] as const
     : [["review_my_plan", 20], ["assemble_final_plan", 20], ["choose_review_cadence", 15]] as const;
   return {
     missionNumber,
@@ -119,7 +119,7 @@ function completedMission(missionNumber: 8 | 10): ProgramAiMission {
     actionsCompleted: 3,
     actionsTotal: 3,
     artifact: missionNumber === 8
-      ? { comparisonSignals: ["licensing_status", "material_terms"], offerTermSignal: "wagering_requirement", researchCriteria: ["licensing_status", "terms", "withdrawals"] }
+      ? { trustedPerson: "friend", openingLine: "call_me", helpService: "phone", firstTenMinutes: ["phone_away", "send_line"] }
       : { timelineReviewed: true, planPriorityIds: ["pause_move", "boundary", "fallback"], reviewCadenceDays: 14 },
     artifactVersion: "1",
     xpEarnedHere: 80,

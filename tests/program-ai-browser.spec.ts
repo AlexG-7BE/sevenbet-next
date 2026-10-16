@@ -68,7 +68,7 @@ const missionActionArtifacts: Record<string, Record<string, unknown>> = {
   run_decision_check: { scenarioChoice: "unexpected_offer" }, build_three_checks: { decisionChecks: ["purpose", "terms", "exit"] }, commit_pause_rule: { pauseRuleType: "pause_when_terms_are_unclear" },
   choose_friction_layer: { frictionMethods: ["bank_block"] }, build_friction_stack: { frictionMethods: ["bank_block", "remove_saved_payment"] }, rehearse_bypass: { fallbackMethod: "leave", bypassReason: "easy_to_disable" },
   choose_support_route: { supportModes: ["protected_help"] }, build_support_card: { supportCardStyle: "when_then" }, choose_exit_action: { exitActionType: "open_help" },
-  learn_comparison_signals: { comparisonSignals: ["licensing_status", "material_terms"] }, decode_offer_terms: { offerTermSignal: "wagering_requirement" }, build_research_checklist: { researchCriteria: ["licensing_status", "terms", "withdrawals"] },
+  learn_comparison_signals: { trustedPerson: "friend", openingLine: "call_me" }, decode_offer_terms: { helpService: "phone" }, build_research_checklist: { firstTenMinutes: ["phone_away", "send_line", "contact_service"] },
   choose_scenario: { scenarioType: "unclear_terms" }, rehearse_response: { responseStrategy: "pause_and_check" }, build_fallback_response: { fallbackStrategy: "leave_and_return" },
   review_my_plan: { timelineReviewed: true }, assemble_final_plan: { planPriorityIds: ["pause_move", "boundary", "fallback"] }, choose_review_cadence: { reviewCadenceDays: 14 },
 };
@@ -950,14 +950,17 @@ test("durably accepted account survives empty storage, context, login and Missio
         }
         if (mission.missionNumber === 8 && index === 0) {
           await openCurrentMission(page, 8, 1440, "Resume mission");
-          await expect(page.getByRole("heading", { name: "What would you check before judging the headline?" })).toBeVisible();
-          await page.getByRole("radio", { name: "Wagering requirement" }).check();
-          await expect(page.getByText("bonus-linked funds can be withdrawn")).toBeVisible();
+          // Step 3, "Know who to turn to" (Founder, 16 October 2026): the kind of help, then who answers.
+          await expect(page.getByRole("heading", { name: "Which kind of help would you try first?" })).toBeVisible();
+          await page.getByRole("radio", { name: /Talk on the phone/ }).check();
+          await expect(page.getByRole("heading", { name: "National Gambling Helpline" })).toBeVisible();
+          await expect(page.getByRole("link", { name: "Call 0808 8020 133" })).toHaveAttribute("href", "tel:08088020133");
+          await expect(page.locator("[data-programme-crisis-line]")).toContainText("Samaritans · 116 123");
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 8 && index === 1) {
           await openCurrentMission(page, 8, 1440, "Resume mission");
-          await expect(page.getByRole("group", { name: /Research checklist/ })).toBeVisible();
+          await expect(page.getByRole("group", { name: /Your first 10 minutes/ })).toBeVisible();
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 9 && index === 0) {
@@ -1027,7 +1030,7 @@ test("durably accepted account survives empty storage, context, login and Missio
       for (const [from, to] of [["en-GB", "de-DE"], ["de-DE", "es-ES"], ["es-ES", "fi-FI"], ["fi-FI", "en-GB"]] as const) {
         await switchProgrammeLocale(page, from, to);
         await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-        // After the 7-day goal the dashboard leads with "Research responsibly", the third step.
+        // After the 7-day goal the dashboard leads with "Know who to turn to", the third step.
         await expect(page.locator("[data-programme-presentation=\"dashboard\"] h1")).toContainText(programmeMissionCopy(to, 8).title);
         await expect(page.locator("[aria-labelledby='programme-path-title'] li").nth(2)).toContainText(programmeMissionCopy(to, 8).title);
         await expect(page.getByText(startingPoint.startingPoint, { exact: true })).toBeVisible();
@@ -1051,7 +1054,7 @@ test("durably accepted account survives empty storage, context, login and Missio
       await expect(page.getByText("PERSONAL REVIEW AVAILABLE", { exact: true })).toBeVisible();
       await expect(page.getByText(/First Personal Review is ready\./)).toBeVisible();
     } else if (mission.missionNumber === 8) {
-      // Finishing the third step, "Research responsibly", opens nothing (Founder, 16 October 2026):
+      // Finishing the third step, "Know who to turn to", opens nothing (Founder, 16 October 2026):
       // no research block or casino link on its completion screen, no menu cookie, the same guide
       // menu on this page and on Home, and no research card on the Programme home.
       const guideMenu = ["/10-steps", "/learn", "/help"];
