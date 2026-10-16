@@ -424,6 +424,10 @@ test("commercial completion before application JavaScript preserves the native o
     if (browserName === "webkit") {
       await stableCasinoLink.focus();
     } else {
+      // Native drawer focus order from the summary: the dialog's B4GAMBLE link, 10 Steps, then
+      // Casinos. Best Offers sits between them in the DOM but is still held, so it has no anchor
+      // yet. 10 Steps joined the drawer on every page on 17 October 2026.
+      await page.keyboard.press("Tab");
       await page.keyboard.press("Tab");
       await page.keyboard.press("Tab");
     }
