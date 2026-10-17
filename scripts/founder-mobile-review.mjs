@@ -82,7 +82,7 @@ async function installDashboardProgramme(page) {
       user: { id: userId, name: "Founder review", email: "founder-review@example.invalid", emailVerified: true, createdAt: now, updatedAt: now },
     }),
   }));
-  const titles = ["Map the moment", "Set a 7-day goal", "Understand the urge", "Build one boundary", "Check before deciding", "Add friction", "Prepare support", "Research responsibly", "Rehearse the decision", "Make the plan reviewable"];
+  const titles = ["Map the moment", "Set a 7-day goal", "Understand the urge", "Build one boundary", "Check before deciding", "Add friction", "Prepare support", "Know who to turn to", "Rehearse the decision", "Make the plan reviewable"];
   const missions = titles.map((title, index) => ({
     missionNumber: index + 1,
     title,

@@ -24,10 +24,10 @@ const whyLines: Readonly<Record<string, ProgrammeMessageKey>> = {
   choose_direction: "a small goal lasts longer than a big promise.",
   build_7_day_goal: "so you know what to do, not only what you want.",
   reality_check: "it is easier to choose now than on a hard day.",
-  // Step 3 · Research responsibly
-  learn_comparison_signals: "a few clear facts say more than a big headline.",
-  decode_offer_terms: "the small print often changes what the headline means.",
-  build_research_checklist: "a fixed list lets you check the same things every time.",
+  // Step 3 · Know who to turn to (Mission 08; its action ids are kept from the earlier lesson)
+  learn_comparison_signals: "an urge is easier to get through when one person knows.",
+  decode_offer_terms: "a number you already have is quicker than a search.",
+  build_research_checklist: "a plan made now needs no thinking when the urge comes.",
   // Step 4 · Understand the urge (Mission 03)
   map_urge_sequence: "seeing the order shows where you still have a choice.",
   name_early_signal: "an early sign gives you more time to choose.",
@@ -107,24 +107,36 @@ const optionLines: Readonly<Record<string, Readonly<Record<string, ProgrammeMess
     restart_next_day: "Leave today and start again tomorrow.",
     ask_for_support: "Talk to someone instead of handling it alone.",
   },
-  decode_offer_terms: {
-    wagering_requirement: "How many times you must bet before a withdrawal.",
-    expiry: "How long you have before the bonus runs out.",
-    eligible_games: "Which games count towards the requirement.",
-    deposit_condition: "What you must pay in to get the bonus.",
-    withdrawal_limit: "The most you can take out from the bonus.",
-    unclear_terms: "You could not find a clear answer.",
+  // Step 3 · Know who to turn to (Mission 08). The first question has two lists: who the person
+  // is to you, then the line you would say.
+  learn_comparison_signals: {
+    partner: "Someone you live with or are close to.",
+    family: "A parent, a sister or brother, a grown-up child.",
+    friend: "Someone you would call on a bad day.",
+    colleague: "A colleague you trust.",
+    been_there: "From a support group, or someone who has also gambled.",
+    professional: "Someone whose work is to listen.",
+    service_first: "That is a fine start. The next question helps you find one.",
+    call_me: "For the moment the urge comes.",
+    tell_you: "For a first talk, when things are calm.",
+    one_word: "Agree on the word now, so it is quick later.",
+    check_in: "So you do not have to start the talk yourself.",
+    first_call: "Your first sentence when you call a helpline or chat.",
   },
-  // The checklist lists the same seven facts as the step's first question, so each keeps the line
-  // it already carries there.
+  decode_offer_terms: {
+    phone: "A helpline with someone trained to listen.",
+    chat: "If saying it out loud feels like too much.",
+    in_person: "Near you or online.",
+    debt: "If gambling has left you with bills, loans or debts.",
+    close_ones: "Support for the person you tell, too.",
+  },
   build_research_checklist: {
-    licensing_status: "Confirms whether the product is permitted for the relevant market.",
-    operator_identity: "Shows the legal business behind the consumer brand.",
-    terms: "Reveals the conditions that shape the headline.",
-    withdrawals: "Shows how and when funds can be accessed.",
-    payments: "Makes fees, methods and processing expectations visible.",
-    safer_gambling_tools: "Shows what account controls are available before they are needed.",
-    offer_conditions: "Separates the headline from the conditions attached to it.",
+    phone_away: "In another room, or out of reach.",
+    send_line: "The words you chose in the first question.",
+    contact_service: "How to reach it is on your card.",
+    wait_ten_minutes: timerLine,
+    go_outside: "A walk, the stairs, anything that gets you out of the room.",
+    read_card: "Your own plan, in your own words.",
   },
   // Step 4 · Understand the urge (Mission 03). The sequence of its first question is put in order,
   // not chosen from cards, so that question carries a why-line only.
@@ -253,7 +265,7 @@ const optionLines: Readonly<Record<string, Readonly<Record<string, ProgrammeMess
     decision_checks: "The three questions you ask before deciding.",
     friction: "The obstacles you put on the quick route.",
     support: "The person or service you can turn to.",
-    research: "The facts you check each time you compare.",
+    support_card: "Your person, your help service and your first 10 minutes.",
     fallback: "What you do if the first move does not hold.",
   },
   choose_review_cadence: {

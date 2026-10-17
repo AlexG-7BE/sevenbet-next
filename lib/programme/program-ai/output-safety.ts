@@ -65,14 +65,23 @@ export const PROGRAMME_OUTPUT_SAFETY_PATTERNS: Record<ProgrammeLocale, LocalePat
   },
 };
 
+/**
+ * A run of five or more digits, spaced or not, reads as a phone number. The final plan and the
+ * full Review, whose input holds the support card of step 3, never carry one: the help services
+ * and crisis lines come from the checked list in help-services.ts, never from a model
+ * (16 October 2026). Other operations may echo a person's own amounts and dates, so only those two
+ * apply this check (mission-guidance.ts).
+ */
+const PHONE_NUMBER_LIKE = /\d(?:[\s.-]?\d){4,}/;
+
 export function assertSafeProgrammeGeneratedText(
   value: string,
-  { strictCommercialTerms = false }: { strictCommercialTerms?: boolean } = {},
+  { strictCommercialTerms = false, noPhoneNumbers = false }: { strictCommercialTerms?: boolean; noPhoneNumbers?: boolean } = {},
 ) {
   const unsafe = Object.values(PROGRAMME_OUTPUT_SAFETY_PATTERNS).some((patterns) => (
     patterns.clinicalOrSafety.some((pattern) => pattern.test(value))
     || (strictCommercialTerms && patterns.commercialTerms.some((pattern) => pattern.test(value)))
   ));
-  if (unsafe) throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
+  if (unsafe || (noPhoneNumbers && PHONE_NUMBER_LIKE.test(value))) throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
   return value;
 }

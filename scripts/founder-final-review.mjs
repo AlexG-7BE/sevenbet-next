@@ -159,7 +159,7 @@ async function installDashboardRoutes(page) {
     contentType: "application/json",
     body: JSON.stringify({ session: { id: "founder-final-review-session", token: "visual", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: now, updatedAt: now }, user: { id: userId, name: "Founder review", email: "founder-review@example.invalid", emailVerified: true, createdAt: now, updatedAt: now } }),
   }));
-  const titles = ["Map the moment", "Set a 7-day goal", "Understand the urge", "Build one boundary", "Check before deciding", "Add friction", "Prepare support", "Research responsibly", "Rehearse the decision", "Make the plan reviewable"];
+  const titles = ["Map the moment", "Set a 7-day goal", "Understand the urge", "Build one boundary", "Check before deciding", "Add friction", "Prepare support", "Know who to turn to", "Rehearse the decision", "Make the plan reviewable"];
   const missions = titles.map((title, index) => ({ missionNumber: index + 1, title, status: index < 3 ? "completed" : index === 3 ? "current" : "locked", actionsCompleted: index === 0 ? 2 : index < 3 ? 3 : index === 3 ? 1 : 0, actionsTotal: index === 0 ? 2 : 3, xpEarnedHere: index === 0 ? 40 : index < 3 ? 75 : index === 3 ? 15 : 0, completionBonus: index === 0 ? 0 : 25 }));
   await page.route("**/api/program/program-ai/home", (route) => route.fulfill({
     status: 200,

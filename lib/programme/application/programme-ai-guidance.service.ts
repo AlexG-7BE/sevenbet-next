@@ -7,6 +7,7 @@ import {
   reviewGuidanceOperation,
   type ProgramAiGeneratedResult,
 } from "@/lib/programme/program-ai/mission-guidance";
+import { isRetiredFieldValue } from "@/lib/programme/program-ai/mission-presentation";
 import { parseProgramAiLocalWording } from "@/lib/programme/program-ai/mission-validation";
 import {
   programAiReviewDefinitions,
@@ -127,7 +128,8 @@ function finalPlanContext(mission: Awaited<ReturnType<ProgrammeAiMissionsService
     startingPoint: programmeFacts?.startingPoint ?? null,
     // The step number is for the person's timeline; the provider keeps its closed input.
     facts: (programmeFacts?.facts ?? []).map(({ missionNumber, artifact }) => ({ missionNumber, artifact })),
-    planPriorityIds,
+    // A priority the current lesson no longer offers ("Research checklist") is not sent.
+    planPriorityIds: planPriorityIds.filter((id) => !isRetiredFieldValue("planPriorityIds", id)),
   };
 }
 

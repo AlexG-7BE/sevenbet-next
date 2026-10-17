@@ -121,11 +121,12 @@ until merged and deployed (branch `feat/commercial-menu-for-everyone`):
 - no migration, no new column, no data change. DETECTED: horizontal overflow checked at 901, 960,
   1024, 1100, 1200, 1280 and 1440 px in en, de, sv, fi, nl, pt and el — one row, no overflow.
 
-## The Programme shows no casino links, to anyone — in review
+## The Programme shows no casino links, to anyone — live
 
 **Founder decision, 16 October 2026** (question tool, «Без казино для всех»;
-[decision](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)). **PROPOSED — NOT YET LIVE**
-until merged and deployed (branch `feat/programme-no-casino-links`):
+[decision](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)). **DETECTED — LIVE**: PR #530
+was merged into `main` as `774dd2f7` on 16 October 2026 (19:33 UTC) and its Production deployment
+(GitHub deployment `7127836331`, 19:35 UTC) reports success:
 
 - no Programme screen, card, dashboard or letter links to a casino, bonus, offer, comparison or
   partner page: the step-3 completion block ("New in your menu", "Put it to use"), the Programme
@@ -145,8 +146,9 @@ until merged and deployed (branch `feat/programme-no-casino-links`):
   and a Programme document no longer reads partner availability for a menu;
 - FAQ, Methodology (13 languages), the Privacy Notice (updated 16 October 2026), the trust and
   control pages (en/sv/da) and `llms.txt` say so;
-- unchanged: the Mission 08 lesson text, Mission order, rewards and prerequisites, the research
-  pages, catalogue, reviews and `/r/` routes. Way back: tag
+- unchanged by #530: the Mission 08 lesson text (replaced separately, see the section above),
+  Mission order, rewards and prerequisites, the research pages, catalogue, reviews and `/r/`
+  routes. Way back: tag
   `archive/programme-research-door-2026-10-16` (`800c2eb0`) and the restore steps in the record.
 
 ## Catalogue order by licence and the sports offer for every reader — in review
