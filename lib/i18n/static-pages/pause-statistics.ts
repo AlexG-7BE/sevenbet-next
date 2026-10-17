@@ -20,29 +20,31 @@ export type PauseStatisticsMessages = Readonly<{
   periods: Readonly<{ heading: string; body: string }>;
   unknown: Readonly<{ heading: string; intro: string; items: readonly string[] }>;
   requests: Readonly<{ heading: string; body: string; status: string }>;
-  corpus: Readonly<{ heading: string; body: string; rows: readonly StatisticsRow[]; method: string }>;
+  corpus: Readonly<{ heading: string; body: string; rows: readonly StatisticsRow[]; method: string; studyLabel: string }>;
   dayEleven: Readonly<{ heading: string; body: string; cta: string }>;
   sources: Readonly<{ heading: string; items: readonly Readonly<{ label: string; href: string }>[] }>;
   homeLabel: string;
   breadcrumbLabel: string;
 }>;
 
+/**
+ * Replaced on 18 October 2026. The first version of this table counted keyword hits over all
+ * 4,211 collected Lånforum posts, 2,505 of which are a quoted earlier post whose own reply never
+ * reached the parser — so every theme was counted roughly 2.5 times. The rows below come from the
+ * coded study instead (3,299 posts, one coded record each), and `/forum-study` carries the
+ * denominators, the method and the claims the material cannot support.
+ */
 const corpusRowsSv: readonly StatisticsRow[] = [
-  { label: "Inlägg i urvalet", value: "4 211", source: "Lånforum, taggarna spelmissbruk, spelberoende, casino, spelskulder; 71 trådar; hämtat 12 oktober 2026" },
-  { label: "Handlar om återbetalning, GDPR eller spelhistorik", value: "502", source: "nyckelord i texten; ett inlägg kan höra till flera rader" },
-  { label: "Nämner Spelpaus eller avstängning", value: "307", source: "samma metod" },
-  { label: "Räknar spelfria dagar", value: "253", source: "samma metod" },
-  { label: "Ångest, skam eller lögner", value: "192", source: "samma metod" },
-  { label: "Sambo, partner eller föräldrar", value: "187", source: "samma metod" },
-  { label: "Kronofogden eller inkasso", value: "134", source: "samma metod" },
-  { label: "Lönen", value: "110", source: "samma metod" },
-  { label: "”Vinna tillbaka”", value: "16", source: "samma metod" },
-  { label: "”Jag har kontroll”", value: "8", source: "samma metod" },
+  { label: "Kodade inlägg", value: "3 299", source: "tre öppna forum; de två svenska kodade i sin helhet, Reddit som ett fast urval" },
+  { label: "Skriver om sitt eget spelande", value: "925", source: "av 3 299 inlägg (28,0 %); resten är svar och anhöriga" },
+  { label: "Nämner ett avstängningsregister", value: "174", source: "av 3 299 inlägg (5,3 %)" },
+  { label: "Av dem: en väg runt eller en väg tillbaka", value: "65", source: "av 174 inlägg som nämner ett register (37,4 %)" },
+  { label: "Står vid slutet av en paus", value: "8", source: "av 3 299 inlägg — dagen nästan ingen skriver om" },
 ];
 
 const sv: PauseStatisticsMessages = {
   metadataTitle: "Spelpaus i siffror – registret, perioderna och det ingen publicerar",
-  metadataDescription: "Spelinspektionens egna siffror om Spelpaus som öppna data, de frågor ingen myndighet svarar på ännu, våra begäranden om allmänna handlingar och ett urval av 4 211 foruminlägg.",
+  metadataDescription: "Spelinspektionens egna siffror om Spelpaus som öppna data, de frågor ingen myndighet svarar på ännu, våra begäranden om allmänna handlingar och 3 299 kodade foruminlägg.",
   eyebrow: "Öppna data",
   titleLead: "Spelpaus",
   titleEmphasis: "i siffror.",
@@ -80,10 +82,11 @@ const sv: PauseStatisticsMessages = {
     status: "Status: begäran skickad i oktober 2026. Svar väntas inom dagar till två veckor.",
   },
   corpus: {
-    heading: "Så låter det efteråt: 4 211 foruminlägg",
-    body: "Ett urval av öppna inlägg på Lånforum om spel och skulder, kodade efter tema. Inga citat återges; forumet handlar om tiden efter förlusten – pengarna tillbaka, Kronofogden, dagar utan spel – inte om kvällen innan.",
+    heading: "Så låter det efteråt: 3 299 kodade inlägg",
+    body: "Vi läste 3 299 öppna foruminlägg om spel och skulder och kodade varje inlägg för sig mot ett fast schema. Det tydligaste i materialet: när ett avstängningsregister nämns kommer en väg runt det eller en väg tillbaka upp i mer än en tredjedel av inläggen. Inga citat återges.",
     rows: corpusRowsSv,
-    method: "Metod: nyckelordssökning i inläggens text, ett inlägg kan höra till flera teman; datum saknas i större delen av urvalet och läggs till före nästa version. Flashback och Reddit, där språket före förlusten finns, ingår inte än.",
+    method: "Varje siffra står med sin nämnare, och det materialet inte kan visa – ingen lönevecka, ingen trend över åren, inga danska siffror – står tryckt på studiens egen sida, tillsammans med alla aggregat som CSV.",
+    studyLabel: "Hela studien: Så låter det innan det går snett",
   },
   dayEleven: {
     heading: "Dag 11",
@@ -106,21 +109,16 @@ const sv: PauseStatisticsMessages = {
 };
 
 const corpusRowsDa: readonly StatisticsRow[] = [
-  { label: "Indlæg i udvalget", value: "4.211", source: "Lånforum (svensk gældsforum), tags for spilafhængighed og spillegæld; 71 tråde; hentet 12. oktober 2026" },
-  { label: "Handler om tilbagebetaling, GDPR eller spilhistorik", value: "502", source: "nøgleord i teksten; et indlæg kan høre til flere rækker" },
-  { label: "Nævner Spelpaus eller udelukkelse", value: "307", source: "samme metode" },
-  { label: "Tæller spilfri dage", value: "253", source: "samme metode" },
-  { label: "Angst, skam eller løgne", value: "192", source: "samme metode" },
-  { label: "Partner eller forældre", value: "187", source: "samme metode" },
-  { label: "Fogeden eller inkasso", value: "134", source: "samme metode" },
-  { label: "Lønnen", value: "110", source: "samme metode" },
-  { label: "”Vinde det tilbage”", value: "16", source: "samme metode" },
-  { label: "”Jeg har styr på det”", value: "8", source: "samme metode" },
+  { label: "Kodede indlæg", value: "3.299", source: "tre åbne fora; de to svenske kodet i deres helhed, Reddit som et fast udvalg" },
+  { label: "Skriver om sit eget spil", value: "925", source: "af 3.299 indlæg (28,0 %); resten er svar og pårørende" },
+  { label: "Nævner et udelukkelsesregister", value: "174", source: "af 3.299 indlæg (5,3 %)" },
+  { label: "Heraf: en vej omkring eller en vej tilbage", value: "65", source: "af 174 indlæg der nævner et register (37,4 %)" },
+  { label: "Står ved slutningen af en pause", value: "8", source: "af 3.299 indlæg — dagen næsten ingen skriver om" },
 ];
 
 const da: PauseStatisticsMessages = {
   metadataTitle: "ROFUS i tal – registret, perioderne og det, ingen offentliggør",
-  metadataDescription: "Spillemyndighedens egne tal om ROFUS som åbne data, de spørgsmål ingen myndighed svarer på endnu, vores anmodninger om aktindsigt og et udvalg af 4.211 forumindlæg.",
+  metadataDescription: "Spillemyndighedens egne tal om ROFUS som åbne data, de spørgsmål ingen myndighed svarer på endnu, vores anmodninger om aktindsigt og 3.299 kodede forumindlæg.",
   eyebrow: "Åbne data",
   titleLead: "ROFUS",
   titleEmphasis: "i tal.",
@@ -156,10 +154,11 @@ const da: PauseStatisticsMessages = {
     status: "Status: anmodning sendt i oktober 2026. Svar forventes inden for syv arbejdsdage.",
   },
   corpus: {
-    heading: "Sådan lyder det bagefter: 4.211 forumindlæg",
-    body: "Et udvalg af åbne indlæg på et svensk gældsforum om spil og gæld, kodet efter tema. Ingen citater gengives; forummet handler om tiden efter tabet – pengene tilbage, fogeden, dage uden spil – ikke om aftenen før.",
+    heading: "Sådan lyder det bagefter: 3.299 kodede indlæg",
+    body: "Vi læste 3.299 åbne forumindlæg om spil og gæld og kodede hvert indlæg for sig efter et fast skema. Det klareste i materialet: når et udelukkelsesregister nævnes, kommer en vej omkring det eller en vej tilbage op i mere end en tredjedel af indlæggene. Ingen citater gengives.",
     rows: corpusRowsDa,
-    method: "Metode: nøgleordssøgning i indlæggenes tekst; et indlæg kan høre til flere temaer; datoer mangler i det meste af udvalget og tilføjes før næste version. Danske fora og Reddit, hvor sproget før tabet findes, er ikke med endnu.",
+    method: "Hvert tal står med sin nævner, og det materialet ikke kan vise – ingen lønuge, ingen tendens over årene, ingen danske tal – står trykt på studiets egen side sammen med alle aggregater som CSV.",
+    studyLabel: "Hele studiet: Sådan lyder det, inden det går galt",
   },
   dayEleven: {
     heading: "Dagen efter",
@@ -180,7 +179,7 @@ const da: PauseStatisticsMessages = {
 
 const en: PauseStatisticsMessages = {
   metadataTitle: "Self-exclusion in numbers – Spelpaus and ROFUS as open data",
-  metadataDescription: "The regulators' own figures about Sweden's Spelpaus and Denmark's ROFUS as open data, what nobody publishes, our public-records requests, and a sample of 4,211 forum posts.",
+  metadataDescription: "The regulators' own figures about Sweden's Spelpaus and Denmark's ROFUS as open data, what nobody publishes, our public-records requests, and 3,299 coded forum posts.",
   eyebrow: "Open data",
   titleLead: "Self-exclusion",
   titleEmphasis: "in numbers.",
@@ -219,21 +218,17 @@ const en: PauseStatisticsMessages = {
     status: "Status: requests sent in October 2026.",
   },
   corpus: {
-    heading: "What it sounds like afterwards: 4,211 forum posts",
-    body: "A sample of open posts on a Swedish debt forum about gambling and debt, coded by theme. No quotes are reproduced; the forum is about the time after the loss – refunds, the enforcement authority, days without gambling – not the evening before.",
+    heading: "What it sounds like afterwards: 3,299 coded posts",
+    body: "We read 3,299 open forum posts about gambling and debt and coded every post on its own against a fixed scheme. The clearest thing in the material: where a self-exclusion register is named, a way round it or a way back comes up in more than a third of the posts. No quotes are reproduced.",
     rows: [
-      { label: "Posts in the sample", value: "4,211", source: "Lånforum, tags for gambling addiction and gambling debt; 71 threads; collected 12 October 2026" },
-      { label: "About refunds, GDPR or gambling history", value: "502", source: "keywords in the text; one post can belong to several rows" },
-      { label: "Mention Spelpaus or self-exclusion", value: "307", source: "same method" },
-      { label: "Count gambling-free days", value: "253", source: "same method" },
-      { label: "Anxiety, shame or lies", value: "192", source: "same method" },
-      { label: "Partner or parents", value: "187", source: "same method" },
-      { label: "Enforcement authority or debt collection", value: "134", source: "same method" },
-      { label: "The salary", value: "110", source: "same method" },
-      { label: "“Win it back”", value: "16", source: "same method" },
-      { label: "“I'm in control”", value: "8", source: "same method" },
+      { label: "Coded posts", value: "3,299", source: "three open forums; the two Swedish ones coded in full, Reddit as a fixed selection" },
+      { label: "Write about their own gambling", value: "925", source: "of 3,299 posts (28.0 %); the rest are answers and relatives" },
+      { label: "Name a self-exclusion register", value: "174", source: "of 3,299 posts (5.3 %)" },
+      { label: "Of those: a way round it or a way back", value: "65", source: "of 174 posts naming a register (37.4 %)" },
+      { label: "Stand at the end of a pause", value: "8", source: "of 3,299 posts — the day almost nobody writes about" },
     ],
-    method: "Method: keyword search in the text of the posts; one post can belong to several themes; dates are missing for most of the sample and will be added before the next version. Flashback and Reddit, where the language before the loss lives, are not included yet.",
+    method: "Every figure carries its denominator, and what the material cannot show – no payday week, no trend over the years, no Danish figure – is printed on the study's own page together with all the aggregates as a CSV.",
+    studyLabel: "The whole study: what it sounds like before it goes wrong",
   },
   dayEleven: {
     heading: "The day after",

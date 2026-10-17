@@ -707,8 +707,9 @@ more than five: "Read next" always showed the three newest guides of the languag
 Responsible Gambling). Casino reviews sit three or four clicks deep with two or three links
 in and a median of 294 words. Ten language pages serve the English text under an English
 title (`/sv|da|de/help`, `/sv|da|de/responsible-gambling`, `/de/pause-plan`, `/de/beside`,
-`/de/for-creators`, `/de/pause-statistics`). `/for-creators`, `/beside` and
-`/pause-statistics` are in the sitemap with no internal link.
+`/de/for-creators`, `/de/pause-statistics`). `/for-creators` and `/beside` are in the sitemap with no internal link;
+`/pause-statistics` is linked from the footer and `/forum-study` from
+`/pause-statistics` and `/pause-plan`.
 
 **Changed.** `relatedReadingSelection` (`lib/articles/related-reading.ts`) picks the guides
 that share a tag with the article first (the Spelpaus and ROFUS pause guides link to each
@@ -1737,9 +1738,62 @@ nothing on the site, and the page says so. Tests: `tests/for-creators.test.ts`
 `/{sv,da,en}/pause-statistics` publishes the regulators' Spelpaus and ROFUS
 figures with sources, as open CSV (`public/data/*.csv`, CC BY 4.0, Dataset
 structured data), the periods, what nobody publishes, the status of our
-public-records requests, and the first thematic cut of a 4,211-post forum
-corpus with its method. The page states the revenue model and links only to
-the pause plan. Tests: `tests/pause-statistics.test.ts` (`pause-plan:test`).
+public-records requests, and a summary of the coded forum study with its
+method. The page states the revenue model and links to the pause plan and to
+`/forum-study`. Tests: `tests/pause-statistics.test.ts` (`pause-plan:test`).
+
+**Changed, 18 October 2026.** The corpus block used to count keyword hits over
+all 4,211 collected Lånforum posts. 2,505 of those are a quoted earlier post
+whose own reply never reached the parser, so every theme was counted roughly
+2.5 times. The block now carries five figures from the coded study, each with
+its denominator, and links to the study page; `tests/forum-study.test.ts`
+keeps the superseded keyword counts from coming back.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
+## The forum study — «Så låter det innan det går snett» — in review
+
+**Founder decision, 13 October 2026 (incentive layer, mechanism «Öppna data i
+stället för pressmeddelande»); study run 17 October 2026, page 18 October
+2026.** `/{sv,da,en}/forum-study` publishes the read-out of **3,299 coded
+forum posts** about gambling, debt and self-exclusion: Swedish titled «Så
+låter det innan det går snett», Danish «Sådan lyder det, inden det går galt»,
+English as the source text. It is built the way `/pause-statistics` is built —
+`LOCALIZABLE_PUBLIC` in `lib/market/routing.ts`, a core route in
+`lib/site.ts`, `HELP` in `lib/site/host-routes.ts`, Dataset and BreadcrumbList
+structured data, `CleanRouteRevenueLine` in the header, copy in
+`lib/i18n/static-pages/forum-study.ts`.
+
+Every figure prints its own denominator, because two thirds of the posts
+(2,210 of 3,299) are replies with no gambling of their own and the
+player-level figures rest on 925 posts. The leading finding: a self-exclusion
+register is named in 174 of 3,299 posts, and **65 of those 174 (37.4 %)
+describe a way round it or a way back** — played elsewhere during the pause
+36, played again once it ended 23, tried to have it lifted early 15. Only 8
+posts of 3,299 stand at the end of a pause, which is the day the pause plan is
+built around.
+
+The page has a section of its own for what the material **cannot** show, and
+publishes none of it: no payday-week claim (payday or night in 25 of 925
+posts, 2.7 %), no year-on-year trend, no Danish figure (82 Danish posts, ROFUS
+named 7 times), and no rate in any population — the Reddit third is a fixed
+1,000-post selection out of 3,178, not a representative sample, while the two
+Swedish forums are coded in full. 49 posts of 3,299 place anyone before the
+trouble, so the question in the title is answered by a silence, and the page
+says so in its first paragraph.
+
+`public/data/forum-study-aggregates.csv` (CC BY 4.0) carries 168 aggregate
+rows — section, key, scope, count, denominator, share, 95 % interval — and
+nothing else: no post text, no usernames, no thread addresses. It is generated
+by `research/study/aggregates-csv.mjs` in the content repo from
+`research/study/stats.json`; every number was recomputed from the coded files
+on 18 October 2026 and reproduced byte-identically.
+
+No casino and no offer is named or linked in the page body; the site menu
+carries the commercial pages as it does everywhere
+(`docs/07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md`). Linked from
+`/pause-statistics` and from `/pause-plan`. Tests:
+`tests/forum-study.test.ts` (`pause-plan:test`).
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 

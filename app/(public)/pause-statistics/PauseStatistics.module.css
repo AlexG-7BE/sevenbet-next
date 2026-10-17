@@ -36,4 +36,8 @@
 .sources a { color:#e4e24e; font-size:15px; }
 .sources a:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
 
+/* The one link out of the corpus block, to the coded study behind these rows. */
+.study { display:inline-block; color:#e4e24e; font-size:15px; font-weight:700; }
+.study:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
+
 @media (max-width: 900px) { .card,.sources { padding:22px; } }

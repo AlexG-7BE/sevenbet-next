@@ -62,7 +62,7 @@
     "brand-cutover:test": "NEXT_PUBLIC_SITE_URL=https://b4gamble.com node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/brand-cutover.test.ts tests/production-canonical-host.test.ts",
     "social-links:test": "node --import tsx --test tests/social-short-links.test.ts",
     "pause-letters:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/pause-letters.test.ts",
-    "pause-plan:test": "node --import tsx --test tests/pause-plan.test.ts tests/clean-route.test.ts tests/for-creators.test.ts tests/pause-statistics.test.ts",
+    "pause-plan:test": "node --import tsx --test tests/pause-plan.test.ts tests/clean-route.test.ts tests/for-creators.test.ts tests/pause-statistics.test.ts tests/forum-study.test.ts",
     "gambling-control:test": "node --import tsx --test tests/gambling-control.test.ts",
     "programme-no-casino:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/programme-no-casino-links.test.tsx",
     "programme-step3-help:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/programme-step3-help-lesson.test.tsx",

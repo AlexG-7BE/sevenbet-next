@@ -79,6 +79,8 @@ export type PausePlanMessages = Readonly<{
   faq: readonly (readonly [string, string])[];
   supportHeading: string;
   support: readonly Readonly<{ label: string; href: string }>[];
+  /** The one line out to the coded forum study; omitted in a language the study has no page for. */
+  studyLabel?: string;
   homeLabel: string;
   breadcrumbLabel: string;
   /** The revenue model, stated in the header. */
@@ -165,6 +167,7 @@ const sv: PausePlanMessages = {
     { label: "Stödlinjen – 020-81 91 00", href: "https://www.stodlinjen.se/" },
     { label: "Spelpaus.se – registrera eller läs om pausen", href: "https://www.spelpaus.se/" },
   ],
+  studyLabel: "Så låter det innan det går snett: 3 299 kodade foruminlägg",
   homeLabel: "Hem",
   breadcrumbLabel: "10 dagar, 10 steg",
   revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. Planen innehåller inga.",
@@ -243,6 +246,7 @@ const da: PausePlanMessages = {
     { label: "StopSpillet – 70 22 28 25", href: "https://www.stopspillet.dk/" },
     { label: "ROFUS – registrer dig eller læs om pausen", href: "https://www.rofus.nu/" },
   ],
+  studyLabel: "Sådan lyder det, inden det går galt: 3.299 kodede forumindlæg",
   homeLabel: "Forside",
   breadcrumbLabel: "Dagen efter ROFUS",
   revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. Planen indeholder ingen.",
@@ -362,6 +366,7 @@ const en: PausePlanMessages = {
     { label: "Stödlinjen (Sweden) – 020-81 91 00", href: "https://www.stodlinjen.se/" },
     { label: "StopSpillet (Denmark) – 70 22 28 25", href: "https://www.stopspillet.dk/" },
   ],
+  studyLabel: "What it sounds like before it goes wrong: 3,299 coded forum posts",
   homeLabel: "Home",
   breadcrumbLabel: "Before you lift GAMSTOP",
   revenueLine: "B4GAMBLE earns commission from licensed casinos. The plan contains none.",
