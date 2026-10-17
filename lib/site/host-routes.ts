@@ -1,0 +1,264 @@
+import {
+  languageRouteByPublicSlug,
+  localeForLanguageSegment,
+  localeMarketRouteByPublicSlug,
+  marketProfileByRouteMarket,
+} from "@/lib/market/registry";
+
+/**
+ * RFC-057 §4: one manifest gives every route root exactly one class, and the class decides
+ * which of the two Production hosts serves it. A class is about the host that serves a route,
+ * never about who may read it: every COMMERCIAL page stays public, indexable and ungated on
+ * the main host.
+ *
+ *  - `HELP`       the help site serves it; the main site serves it until phase 3.
+ *  - `SHARED`     both hosts serve it, each with its own content.
+ *  - `COMMERCIAL` only the main site serves it; the help host answers 404.
+ *  - `INTERNAL`   only the main site serves it; the help host answers 404.
+ *
+ * A path with no entry is unknown and the help host answers 404 for it, so a new route can
+ * never appear on the help host by accident. tests/help-site-host.test.ts walks every
+ * `app/**` page and route handler, every metadata route and every top-level entry of
+ * `public/` and fails when one has no class.
+ *
+ * This manifest extends the public-prefix allowlist of `lib/market/routing.ts` rather than
+ * replacing it: that one decides which paths may carry a language prefix, this one decides
+ * which host serves them.
+ */
+export type SiteRouteClass = "COMMERCIAL" | "HELP" | "INTERNAL" | "SHARED";
+
+export type SiteRouteMatch = "EXACT" | "SUBTREE";
+
+export type SiteRouteManifestEntry = Readonly<{
+  /** A full path, not only a first segment: `/learn` and `/learn/responsible-gambling` differ. */
+  path: string;
+  match: SiteRouteMatch;
+  siteClass: SiteRouteClass;
+}>;
+
+/** The classes the help host serves. Everything else, and everything unknown, answers 404 there. */
+export const HELP_HOST_SERVED_CLASSES: readonly SiteRouteClass[] = ["HELP", "SHARED"];
+
+export const SITE_ROUTE_MANIFEST = [
+  // ---------------------------------------------------------------- SHARED
+  // The help home is the pause plan (Founder, Q5 (b), 17 October 2026); the main home is unchanged.
+  { path: "/", match: "EXACT", siteClass: "SHARED" },
+  // The Learn hub itself: on the help host it lists only `responsible-gambling` guides (§4.1).
+  { path: "/learn", match: "EXACT", siteClass: "SHARED" },
+  { path: "/contact", match: "EXACT", siteClass: "SHARED" },
+  { path: "/privacy", match: "EXACT", siteClass: "SHARED" },
+  { path: "/terms", match: "EXACT", siteClass: "SHARED" },
+  { path: "/login", match: "EXACT", siteClass: "SHARED" },
+  { path: "/reset-password", match: "EXACT", siteClass: "SHARED" },
+  { path: "/unsubscribe", match: "EXACT", siteClass: "SHARED" },
+  // Search and icon files: one route, per-host content (§12).
+  { path: "/robots.txt", match: "EXACT", siteClass: "SHARED" },
+  { path: "/sitemap.xml", match: "EXACT", siteClass: "SHARED" },
+  { path: "/llms.txt", match: "EXACT", siteClass: "SHARED" },
+  { path: "/favicon.ico", match: "EXACT", siteClass: "SHARED" },
+  { path: "/icon.svg", match: "EXACT", siteClass: "SHARED" },
+  // Hashed build files are served on both hosts (Founder, 25 September 2026): they are not
+  // linked from help pages, carry no address in a sitemap and are not indexed (§4.2).
+  { path: "/_next", match: "SUBTREE", siteClass: "SHARED" },
+  // Short links land on help pages (§15).
+  { path: "/ig", match: "SUBTREE", siteClass: "SHARED" },
+  { path: "/fb", match: "SUBTREE", siteClass: "SHARED" },
+  { path: "/x", match: "SUBTREE", siteClass: "SHARED" },
+  { path: "/t", match: "SUBTREE", siteClass: "SHARED" },
+  { path: "/threads", match: "EXACT", siteClass: "SHARED" },
+  { path: "/lana", match: "EXACT", siteClass: "SHARED" },
+  // The APIs help pages call. Never redirected (§5).
+  { path: "/api/auth", match: "SUBTREE", siteClass: "SHARED" },
+  { path: "/api/program", match: "SUBTREE", siteClass: "SHARED" },
+  { path: "/api/programme-access", match: "SUBTREE", siteClass: "SHARED" },
+  { path: "/api/contact", match: "EXACT", siteClass: "SHARED" },
+  { path: "/api/email/unsubscribe", match: "EXACT", siteClass: "SHARED" },
+  { path: "/api/customer/email-preference", match: "EXACT", siteClass: "SHARED" },
+  { path: "/api/public/pause-reminder", match: "EXACT", siteClass: "SHARED" },
+  { path: "/api/presentation", match: "EXACT", siteClass: "SHARED" },
+
+  // ------------------------------------------------------------------ HELP
+  { path: "/program", match: "SUBTREE", siteClass: "HELP" },
+  { path: "/10-steps", match: "EXACT", siteClass: "HELP" },
+  // The UK help-ad landing (noindex).
+  { path: "/start", match: "EXACT", siteClass: "HELP" },
+  { path: "/pause-plan", match: "EXACT", siteClass: "HELP" },
+  { path: "/innan", match: "EXACT", siteClass: "HELP" },
+  { path: "/beside", match: "EXACT", siteClass: "HELP" },
+  { path: "/pause-statistics", match: "EXACT", siteClass: "HELP" },
+  // The control answer pages (en/sv/da).
+  { path: "/gambling-control", match: "EXACT", siteClass: "HELP" },
+  { path: "/control-without-quitting", match: "EXACT", siteClass: "HELP" },
+  { path: "/gambling-control-tools", match: "EXACT", siteClass: "HELP" },
+  // Protected Help.
+  { path: "/help", match: "SUBTREE", siteClass: "HELP" },
+  { path: "/responsible-gambling", match: "SUBTREE", siteClass: "HELP" },
+  // Legacy addresses that redirect into /responsible-gambling.
+  { path: "/responsible-gaming", match: "EXACT", siteClass: "HELP" },
+  { path: "/self-check", match: "EXACT", siteClass: "HELP" },
+  { path: "/tools", match: "SUBTREE", siteClass: "HELP" },
+  // The protected help guides: the one Learn category that carries no offer bridge
+  // (lib/articles/article-bridges.ts) and whose related reading stays inside the category.
+  { path: "/learn/responsible-gambling", match: "SUBTREE", siteClass: "HELP" },
+  // public/data: the regulator tables /pause-statistics links for download
+  // (lib/i18n/static-pages/pause-statistics.ts). A .csv is not an excluded file ending, so
+  // middleware does see it and it needs a class of its own; §4.2 allows the folder.
+  { path: "/data", match: "SUBTREE", siteClass: "HELP" },
+
+  // ------------------------------------------------------------ COMMERCIAL
+  { path: "/best-offers", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/casinos", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/casino", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  { path: "/bonuses", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/compare", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/catalog", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/bonus-guide", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/wagering-calculator", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/outbound", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  { path: "/r", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  { path: "/go", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  { path: "/partner-creatives", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  { path: "/partner-preview", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  // Every Learn category other than the help one, and its guides.
+  { path: "/learn", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  { path: "/faq", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/methodology", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/about", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/affiliate-disclosure", match: "EXACT", siteClass: "COMMERCIAL" },
+  // The commercial site's own trust page. It stays here and is never redirected (§5); the
+  // help site has its own /who-runs-this for a different reader.
+  { path: "/can-you-trust-b4gamble", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/for-creators", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  { path: "/llms-full.txt", match: "EXACT", siteClass: "COMMERCIAL" },
+  // Its text reads "Reviews, bonus terms side by side…"; the help host has its own image (§8).
+  { path: "/opengraph-image", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/api/public", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  { path: "/api/media", match: "SUBTREE", siteClass: "COMMERCIAL" },
+  // Q3 is answered G3: the help host carries no Google tag, no cookie banner and no optional
+  // cookies, so neither endpoint is served there (§10). b4gamble.com keeps its 4 October
+  // 2026 analytics decision unchanged.
+  { path: "/api/consent/analytics", match: "EXACT", siteClass: "COMMERCIAL" },
+  { path: "/api/analytics/events", match: "EXACT", siteClass: "COMMERCIAL" },
+  // The main host's IndexNow key file. §12 gives each host its own key, so this exact path is
+  // the main site's and answers 404 on the help host; the help key file is its own path.
+  { path: "/219017cffaba5177842beab195a2564c.txt", match: "EXACT", siteClass: "COMMERCIAL" },
+
+  // -------------------------------------------------------------- INTERNAL
+  { path: "/admin", match: "SUBTREE", siteClass: "INTERNAL" },
+  // Everything under /api that no entry above claims: admin, MCP, internal crons and the
+  // Resend webhooks all fail closed into INTERNAL.
+  { path: "/api", match: "SUBTREE", siteClass: "INTERNAL" },
+  { path: "/editorial-preview", match: "SUBTREE", siteClass: "INTERNAL" },
+  { path: "/launch-polish-error-harness", match: "EXACT", siteClass: "INTERNAL" },
+  { path: "/.well-known", match: "SUBTREE", siteClass: "INTERNAL" },
+] as const satisfies readonly SiteRouteManifestEntry[];
+
+/**
+ * Top-level entries of `public/`, which the middleware matcher never sees (§4.2). The Vercel
+ * Firewall rule that refuses the COMMERCIAL ones on the help host is phase 2 and is written
+ * from this list; the test keeps the two in step.
+ */
+export const PUBLIC_ASSET_MANIFEST = {
+  about: "COMMERCIAL",
+  "best-offers": "COMMERCIAL",
+  "bonus-directory": "COMMERCIAL",
+  // The B4GAMBLE mark. The help site carries no B4GAMBLE wordmark or logo at all (Q2).
+  brand: "COMMERCIAL",
+  "casino-brands": "COMMERCIAL",
+  "casino-directory": "COMMERCIAL",
+  // The pause statistics the help pages print.
+  data: "HELP",
+  "demo-casinos": "COMMERCIAL",
+  // The handoff home's images. The pause plan is the help home (Q5 (b)), so they are never
+  // requested there.
+  home: "COMMERCIAL",
+  // Covers of commercial guides; help-guide images are served first-party (§13).
+  learn: "COMMERCIAL",
+  "partner-preview": "COMMERCIAL",
+} as const satisfies Readonly<Record<string, SiteRouteClass>>;
+
+/** The file-convention metadata routes and the path each one answers on. */
+export const METADATA_ROUTE_MANIFEST = {
+  "app/favicon.ico": "/favicon.ico",
+  "app/icon.svg": "/icon.svg",
+  "app/opengraph-image.tsx": "/opengraph-image",
+  "app/robots.ts": "/robots.txt",
+  "app/sitemap.ts": "/sitemap.xml",
+} as const;
+
+function cleanPathname(pathname: string) {
+  const suffixIndex = pathname.search(/[?#]/);
+  const clean = (suffixIndex >= 0 ? pathname.slice(0, suffixIndex) : pathname) || "/";
+  return clean.startsWith("/") ? clean : `/${clean}`;
+}
+
+function routeSegments(pathname: string) {
+  return cleanPathname(pathname).split("/").filter(Boolean);
+}
+
+/**
+ * The language prefix and the legacy market prefixes, removed syntactically so that
+ * `/casinos`, `/sv/casinos` and `/se/sv/casinos/` are one decision (§4). This is deliberately
+ * not `stripPublicMarketPrefix`: that one answers "may this path carry a prefix", and a route
+ * it refuses (a Programme or protected-Help path under a prefix) would keep its prefix and
+ * fall through as an unknown root.
+ */
+export function stripSiteRoutePrefixes(pathname: string) {
+  const segments = routeSegments(pathname);
+  const first = segments[0]?.toLowerCase() ?? "";
+  if (!first) return "/";
+
+  if (languageRouteByPublicSlug(first) || localeMarketRouteByPublicSlug(first)) {
+    return `/${segments.slice(1).join("/")}`;
+  }
+
+  const market = marketProfileByRouteMarket(first);
+  if (market) {
+    const innerLocale = localeForLanguageSegment(market, segments[1] ?? null);
+    return `/${segments.slice(innerLocale ? 2 : 1).join("/")}`;
+  }
+
+  return `/${segments.join("/")}`;
+}
+
+function matches(entry: SiteRouteManifestEntry, pathname: string) {
+  if (entry.match === "EXACT") return entry.path === pathname;
+  return pathname === entry.path || pathname.startsWith(`${entry.path}/`);
+}
+
+/** The class of an exact application path, with no language or market prefix on it. */
+export function classifyRoutePath(pathname: string): SiteRouteClass | null {
+  const clean = cleanPathname(pathname);
+  const normalized = clean.length > 1 ? clean.replace(/\/+$/, "") || "/" : clean;
+  let best: SiteRouteManifestEntry | null = null;
+  for (const entry of SITE_ROUTE_MANIFEST) {
+    if (!matches(entry, normalized)) continue;
+    if (
+      !best
+      || entry.path.length > best.path.length
+      || (entry.path.length === best.path.length && entry.match === "EXACT")
+    ) {
+      best = entry;
+    }
+  }
+  return best?.siteClass ?? null;
+}
+
+/** The class of a request path, after its language and legacy market prefixes are removed. */
+export function classifySitePath(pathname: string): SiteRouteClass | null {
+  return classifyRoutePath(stripSiteRoutePrefixes(pathname));
+}
+
+/**
+ * Whether the help host serves this request path. Fails closed: an unknown path, a
+ * COMMERCIAL one and an INTERNAL one all answer 404 there.
+ */
+export function helpHostServes(pathname: string) {
+  const siteClass = classifySitePath(pathname);
+  return siteClass !== null && HELP_HOST_SERVED_CLASSES.includes(siteClass);
+}
+
+/** The class of a top-level entry of `public/`. */
+export function classifyPublicAsset(entry: string): SiteRouteClass | null {
+  return (PUBLIC_ASSET_MANIFEST as Readonly<Record<string, SiteRouteClass>>)[entry] ?? null;
+}

@@ -12,14 +12,50 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## The help site on a second domain is approved — decided, not built
+## The help site on a second domain is approved — phase 1 has begun, every switch off
 
 **Founder decision, 17 October 2026** (chat, «ок, начинай первый этап»;
 [decision](07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md),
 [RFC-057](06_RFC/RFC-057-Help-Site-on-a-Second-Domain.md), now `ACTIVE`).
-**APPROVED — NO CODE YET.** Phase 0 is done; phase 1 (code, with every switch off, so the main
-site behaves exactly as before) is the work in hand. Nothing a visitor sees has changed, on
-either site.
+**APPROVED — PHASE 1 IN PROGRESS, DARK.** Phase 0 is done. Phase 1 is written as several pull
+requests with every switch off, so the main site behaves exactly as before; nothing a visitor
+sees has changed, on either site, and nothing is live on `pauseplan.help`.
+
+### Phase 1, the host foundation (branch `feat/help-site-host-foundation`)
+
+**DETECTED in the repository, PROPOSED until merged and deployed.** The first phase-1 pull
+request carries the host decision and the route classes, and nothing a visitor can reach:
+
+- `lib/site/host-routes.ts` — the route-class manifest of RFC-057 §4. Every route root is
+  `COMMERCIAL`, `HELP`, `SHARED` or `INTERNAL`, and `tests/help-site-host.test.ts` walks every
+  `app/**` page and route handler, every metadata route and every top-level entry of `public/`
+  and fails when one has no class. A path with no class fails closed: the help host answers 404.
+- `lib/site/host-gate.ts` — `HELP_CANONICAL_ORIGIN = "https://pauseplan.help"` as a source
+  constant (no request or environment value ever names an origin) and the host decision of
+  §7.1, delegating every case it does not own to RFC-030's resolver, which is unchanged.
+- **Two switches, both off:** `HELP_SITE_SERVING` (Production treats the exact help host as the
+  help site) and `HELP_SITE_REDIRECTS` (the main host 301s help routes and the help host may be
+  indexed). Both are read as literal `process.env.NAME`, because Vercel's edge runtime exposes a
+  custom variable no other way. `HELP_SITE_DEV_HOST` makes a local or CI host act as the help
+  site and is ignored in Preview and Production. **Neither switch is set anywhere today**, so
+  the help host is "any other host" and 308s to `b4gamble.com`, which is today's behaviour.
+- Middleware classifies the host once, before anything else, and passes the class to the page in
+  the trusted header `x-b4gamble-site`, stripped from every incoming request like the
+  presentation headers (§7.2). `resolveServerSite()` is the one helper server code reads it
+  with; no component reads `Host`.
+- `app/robots.ts` renders per request and names only its own host's sitemap; `app/llms.txt` and
+  the IndexNow key file lose their shared `public` cache entry the moment the help host is
+  served (§7.4). With the switches off all three bodies and headers are what they are today.
+- The country block is unchanged and host-independent for its 451 decision; the owner cookie is
+  host-only anywhere but `b4gamble.com`. The CSP builder narrows `img-src` to
+  `'self' data: blob:` and drops the Google hosts from `connect-src` on the help host only
+  (§13); the main site's policy is byte-for-byte unchanged.
+- **Not in this pull request, and still to come in phase 1:** the help shell and the host-aware
+  root not-found, the help home, host-aware root metadata and the help share image, per-site
+  origins (`helpUrl`) and site-keyed caches, the Better Auth two-host configuration, per-host
+  search files and the second IndexNow key, e-mail origins, the Learn origin by category, the
+  first-party help images, the help-host copy, the owner page and data statement, the link guard
+  and the two-host browser specs.
 
 - **Two sites, one Vercel project.** `b4gamble.com` stays the commercial site; `pauseplan.help`
   becomes the help site, carrying the Programme, the 10 steps, the pause plans (sv/da/en), the

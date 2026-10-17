@@ -141,7 +141,9 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   assert.match(contact, /absoluteUrl\(productCanonicalPath\(presentation, "\/contact"\)\)/);
   assert.doesNotMatch(contact, /https:\/\/b4gamble\.com\/contact/);
   // SEO-CRAWLER-READY-2026-09-27: click redirects are closed to every agent and the non-standard Host line is gone.
-  assert.deepEqual(robots(), {
+  // RFC-057 §7.4: robots now reads the site per request. Outside a request there is no
+  // trusted site header, so it answers for the main site, exactly as before.
+  assert.deepEqual(await robots(), {
     rules: [
       { userAgent: "*", allow: "/", disallow: ["/r/", "/go/", "/outbound/"] },
       {

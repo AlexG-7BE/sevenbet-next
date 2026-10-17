@@ -96,8 +96,10 @@ test("metadata is blocking (in <head>) for Next's own list, every crawler and AI
   for (const userAgent of browserUserAgents) assert.equal(served.test(userAgent), false, userAgent);
 });
 
-test("robots.txt closes click redirects to every agent, keeps /api/ open and has no Host line", () => {
-  const rules = robots();
+test("robots.txt closes click redirects to every agent, keeps /api/ open and has no Host line", async () => {
+  // RFC-057 §7.4: robots reads the trusted site header per request. Outside a request there
+  // is none, so it answers for the main site exactly as before.
+  const rules = await robots();
   assert.equal("host" in rules, false);
   assert.equal(rules.sitemap, absoluteUrl("/sitemap.xml"));
   const groups = Array.isArray(rules.rules) ? rules.rules : [rules.rules];
