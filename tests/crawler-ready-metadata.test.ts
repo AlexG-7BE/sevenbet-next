@@ -114,7 +114,13 @@ test("robots.txt closes click redirects to every agent, keeps /api/ open and has
 });
 
 test("one sitewide Organization and WebSite with a stable URL and a real logo", () => {
-  const organization = organizationSchema();
+  // Since RFC-057 §8 the schema takes a site, and the help host's Organization has no logo and
+  // no sameAs at all (it carries no B4GAMBLE mark and none of the brand's profiles). This test
+  // is the main site's; the help variant is asserted in tests/help-site-shell.test.tsx.
+  const organization = organizationSchema("main") as ReturnType<typeof organizationSchema> & {
+    logo: { url: string };
+    sameAs: string[];
+  };
   assert.equal(organization["@type"], "Organization");
   assert.equal(organization.url, siteUrl);
   assert.equal(organization.logo.url, absoluteUrl(ORGANIZATION_LOGO_PATH));
@@ -306,7 +312,10 @@ test("a language hub lists its own guides first, then the English guides marked 
   assert.equal((hub.match(/data-learn-article-language="en">På engelska</g) ?? []).length, 1);
   assert.doesNotMatch(hub, /lang="en"[^>]*>Omsättningskrav/);
   assert.ok(hub.indexOf("Omsättningskrav") < hub.indexOf("Wagering requirements explained"));
-  assert.match(read("app/(public)/learn/page.tsx"), /const articles = \[\.\.\.localizedArticles, \.\.\.englishArticles\];/);
+  // The mixed list is unchanged on the main host; the help host filters it to the one Learn
+  // category it publishes (RFC-057 §4.1), which is why the list is named before it is filtered.
+  assert.match(read("app/(public)/learn/page.tsx"), /const allArticles = \[\.\.\.localizedArticles, \.\.\.englishArticles\];/);
+  assert.match(read("app/(public)/learn/page.tsx"), /const articles = site === "help"\s*\n?\s*\? allArticles\.filter\(\(article\) => article\.category === "responsible-gambling"\)\s*\n?\s*: allArticles;/);
 });
 
 test("a guide missing in the visitor's language opens in English instead of a 404", () => {

@@ -11,6 +11,8 @@ import { productCanonicalPath, productHref, productMetadata } from "@/lib/market
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
+import { helpControlFaqEntry, helpRoutePath, helpTrustCardCopy } from "@/lib/site/help-copy";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -25,35 +27,43 @@ export async function generateMetadata(): Promise<Metadata> {
  * card for each question, the pause plan, the ten steps and Help. It links to no casino.
  */
 export default async function GamblingControlPage() {
-  const presentation = await resolveServerPresentationContext();
+  const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const messages = gamblingControlHubMessages(presentation.locale);
   const shared = controlSharedMessages(presentation.locale);
   const contentLocale = controlLocale(presentation.locale);
-  const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub));
+  const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub), site);
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
   const schema = controlPageSchema({
+    site,
     name: `${messages.titleLead} ${messages.titleEmphasis}`,
     description: messages.metadataDescription,
     url,
     inLanguage: contentLocale,
     faq: messages.faq,
     breadcrumbs: [
-      { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) },
+      { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) },
       { name: shared.hubLabel, item: url },
     ],
   });
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="gambling-control" lang={contentLocale === presentation.locale ? undefined : "en"}>
     <JsonLd data={schema} />
-    <ControlHeader answer={messages.answer} eyebrow={messages.eyebrow} intro={[messages.intro]} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
+    <ControlHeader presentation={presentation} site={site} answer={messages.answer} eyebrow={messages.eyebrow} intro={[messages.intro]} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
 
     <div className={styles.body}>
       <section className={styles.card} data-control-section="questions" data-nav-theme="dark">
         <h2>{messages.cardsHeading}</h2>
         <ul className={styles.cards}>
-          {messages.cards.map((card) => <li key={card.path}>
-            <Link data-control-card={card.path} href={productHref(presentation, card.path)}><strong>{card.title}</strong><span>{card.body}</span></Link>
-          </li>)}
+          {/* On the help host the trust card becomes the owner page, in the help site's own
+              words (RFC-057 §6.5); a card with no help equivalent is not rendered. */}
+          {messages.cards.flatMap((card) => {
+            const href = helpRoutePath(card.path, site);
+            if (!href) return [];
+            const trust = site === "help" && card.path === CONTROL_PATHS.trust ? helpTrustCardCopy(presentation.locale) : null;
+            return [<li key={href}>
+              <Link data-control-card={href} href={productHref(presentation, href)}><strong>{trust ? trust.title : card.title}</strong><span>{trust ? trust.body : card.body}</span></Link>
+            </li>];
+          })}
         </ul>
       </section>
 
@@ -61,7 +71,7 @@ export default async function GamblingControlPage() {
 
       <ControlStart href={startHref} shared={shared} />
 
-      <ControlFaqSection faq={messages.faq} heading={shared.faqHeading} />
+      <ControlFaqSection faq={site === "help" ? [helpControlFaqEntry(presentation.locale), ...messages.faq.slice(1)] : messages.faq} heading={shared.faqHeading} />
     </div>
   </div>;
 }

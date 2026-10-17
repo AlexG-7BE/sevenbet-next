@@ -50,7 +50,7 @@ export default async function CanYouTrustPage() {
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="can-you-trust-b4gamble" lang={contentLocale === presentation.locale ? undefined : "en"}>
     <JsonLd data={schema} />
-    <ControlHeader answer={messages.answer} eyebrow={messages.eyebrow} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
+    <ControlHeader presentation={presentation} site="main" answer={messages.answer} eyebrow={messages.eyebrow} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
 
     <div className={styles.body}>
       {messages.sections.map((section) => <ControlCard heading={section.heading} id={section.id} key={section.id}>
@@ -68,7 +68,7 @@ export default async function CanYouTrustPage() {
 
       <ControlFaqSection faq={messages.faq} heading={shared.faqHeading} />
 
-      <ControlRelated heading={shared.relatedHeading} hrefFor={(href) => productHref(presentation, href)} links={controlRelatedLinks(presentation.locale, CONTROL_PATHS.trust)} />
+      <ControlRelated site="main" heading={shared.relatedHeading} hrefFor={(href) => productHref(presentation, href)} links={controlRelatedLinks(presentation.locale, CONTROL_PATHS.trust)} />
     </div>
   </div>;
 }

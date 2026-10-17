@@ -13,6 +13,8 @@ import { resolveServerCommercialProductState } from "@/lib/market/commercial-pro
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { accountNavigationFor, commercialDestinationsNavigable } from "@/lib/public-shell";
+import { helpSiteSwitchesFromProcessEnv } from "@/lib/site/host-gate";
+import { resolveServerSite } from "@/lib/site/server-site";
 import styles from "@/components/public-shell/PublicShell.module.css";
 
 // Every public page under this layout inherits it (Next merges segment config
@@ -92,9 +94,10 @@ async function CommercialFooterNavigation({
 
 export default async function PublicLayout({ children }: { children: ReactNode }) {
   const commercialProductState = boundedCommercialProductState(resolveServerCommercialProductState());
-  const [requestHeaders, presentation] = await Promise.all([
+  const [requestHeaders, presentation, site] = await Promise.all([
     headers(),
     resolveServerPresentationContext(),
+    resolveServerSite(),
   ]);
   // The shell reads only session-cookie presence for account chrome. Protected
   // pages and APIs remain the authority for identity and Programme state.
@@ -132,6 +135,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
         commercialProductState="EDITORIAL_ONLY"
         deferCommercialNavigation
         presentation={presentation}
+        site={site}
       />
       <main id="main-content">{children}</main>
       <PublicFooter
@@ -148,8 +152,10 @@ export default async function PublicLayout({ children }: { children: ReactNode }
         )}
         commercialProductState="EDITORIAL_ONLY"
         deferCommercialNavigation
+        helpSiteLinked={helpSiteSwitchesFromProcessEnv().redirects}
         presentation={presentation}
         programme={{ path: programmePath, localizePublicLinks: true }}
+        site={site}
       />
     </PublicNavigationFeedback>
   );

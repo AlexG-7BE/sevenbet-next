@@ -12,6 +12,7 @@ import { productCanonicalPath, productHref, productMetadata } from "@/lib/market
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -27,21 +28,22 @@ export async function generateMetadata(): Promise<Metadata> {
  * The table is a real <table>; on a phone each tool becomes a card (GamblingControl.module.css).
  */
 export default async function GamblingControlToolsPage() {
-  const presentation = await resolveServerPresentationContext();
+  const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const messages = controlToolsMessages(presentation.locale);
   const shared = controlSharedMessages(presentation.locale);
   const contentLocale = controlLocale(presentation.locale);
-  const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.tools));
+  const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.tools), site);
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
   const { columns } = messages;
   const schema = controlPageSchema({
+    site,
     name: messages.question,
     description: messages.metadataDescription,
     url,
     inLanguage: contentLocale,
     faq: messages.faq,
     breadcrumbs: [
-      { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) },
+      { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) },
       { name: shared.hubLabel, item: absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub)) },
       { name: messages.breadcrumbLabel, item: url },
     ],
@@ -49,7 +51,7 @@ export default async function GamblingControlToolsPage() {
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="gambling-control-tools" lang={contentLocale === presentation.locale ? undefined : "en"}>
     <JsonLd data={schema} />
-    <ControlHeader answer={messages.answer} eyebrow={messages.eyebrow} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
+    <ControlHeader presentation={presentation} site={site} answer={messages.answer} eyebrow={messages.eyebrow} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
 
     <div className={styles.body}>
       <ControlCard heading={messages.tableHeading} id="tools">
@@ -97,7 +99,7 @@ export default async function GamblingControlToolsPage() {
         </ul>
       </section>
 
-      <ControlRelated heading={shared.relatedHeading} hrefFor={(href) => productHref(presentation, href)} links={controlRelatedLinks(presentation.locale, CONTROL_PATHS.tools)} />
+      <ControlRelated site={site} heading={shared.relatedHeading} hrefFor={(href) => productHref(presentation, href)} links={controlRelatedLinks(presentation.locale, CONTROL_PATHS.tools)} />
     </div>
   </div>;
 }

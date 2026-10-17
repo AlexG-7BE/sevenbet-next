@@ -4,6 +4,9 @@ import { Fragment, type ReactNode } from "react";
 import { earlyOfferBridgeIndex, midArticleBridgeIndex, type OfferBridgeKind } from "@/lib/articles/article-bridges";
 import { articlePath, type AdminArticle, type ArticleBlock, type PublicArticle } from "@/lib/articles/article-types";
 import type { LearningMessages } from "@/lib/i18n/learning-center";
+import { helpRoutePath } from "@/lib/site/help-copy";
+import { helpMediaUrl } from "@/lib/site/help-media";
+import type { SiteClass } from "@/lib/site/host-gate";
 
 import styles from "./article.module.css";
 import handoffStyles from "./article-handoff.module.css";
@@ -48,7 +51,11 @@ function isExternal(url: string) {
   return /^https?:\/\//i.test(url);
 }
 
-function ArticleBlockView({ block }: { block: ArticleBlock }) {
+function articleImageSrc(url: string, site: SiteClass) {
+  return site === "help" ? helpMediaUrl(url) : url;
+}
+
+function ArticleBlockView({ block, site }: { block: ArticleBlock; site: SiteClass }) {
   if (block.type === "paragraph") return <p>{block.text}</p>;
   if (block.type === "heading") {
     const id = headingId(block);
@@ -60,7 +67,12 @@ function ArticleBlockView({ block }: { block: ArticleBlock }) {
   }
   if (block.type === "quote") return <blockquote><p>{block.text}</p>{block.citation && <cite>{block.citation}</cite>}</blockquote>;
   if (block.type === "callout") return <aside className={styles.callout}>{block.title && <strong>{block.title}</strong>}<p>{block.text}</p></aside>;
-  if (block.type === "image") return <figure className={styles.articleImage}><img alt={block.alt} height={900} loading="lazy" src={block.url} width={1600} />{block.caption && <figcaption>{block.caption}</figcaption>}</figure>;
+  if (block.type === "image") {
+    const src = articleImageSrc(block.url, site);
+    // An image the help host cannot serve first-party is left out rather than fetched from
+    // the commercial media host (RFC-057 §13).
+    return src ? <figure className={styles.articleImage}><img alt={block.alt} height={900} loading="lazy" src={src} width={1600} />{block.caption && <figcaption>{block.caption}</figcaption>}</figure> : null;
+  }
   return <aside className={styles.resourceLink}><strong>{block.label}</strong>{block.description && <p>{block.description}</p>}<a href={block.url} {...(isExternal(block.url) ? { rel: "noopener noreferrer", target: "_blank" } : {})}>{block.label} <span aria-hidden="true">↗</span></a></aside>;
 }
 
@@ -73,7 +85,7 @@ export function LearningArticleRelated({ relatedArticles, messages, hrefFor }: {
   return <section className={`${styles.related} ${handoffStyles.related}`} aria-labelledby="related-reading-title" data-nav-theme="cream"><header data-motion-reveal><p className={styles.kicker}>{messages.ui.relatedReading}</p><h2 id="related-reading-title">READ NEXT</h2></header><ol>{relatedArticles.map((related, index) => <li key={related.id}><Link href={hrefFor(articlePath(related))}><span>{String(index + 1).padStart(2, "0")}</span><span>{related.category.replaceAll("-", " ")}</span><strong>{related.title}</strong><span>{related.excerpt}</span><i aria-hidden="true">↗</i></Link></li>)}</ol></section>;
 }
 
-export function LearningArticleView({ article, categoryTitle, relatedArticles = [], relatedArticlesSlot, messages, hrefFor, programmePath, preview = false, offerBridge = null }: {
+export function LearningArticleView({ article, categoryTitle, relatedArticles = [], relatedArticlesSlot, messages, hrefFor, programmePath, preview = false, offerBridge = null, site = "main" }: {
   article: AdminArticle;
   categoryTitle: string;
   relatedArticles?: PublicArticle[];
@@ -84,6 +96,12 @@ export function LearningArticleView({ article, categoryTitle, relatedArticles = 
   preview?: boolean;
   /** Bonus, casino-choice and payment guides only, and only where published offers may be presented. */
   offerBridge?: LearnOfferBridge | null;
+  /**
+   * RFC-057 §6.5. On the help host the "Editorial methodology →" line is left out: /methodology
+   * is COMMERCIAL and answers 404 there, and the guide images are served first-party so that no
+   * help page asks the browser for an image from media.b4gamble.com (§13).
+   */
+  site?: SiteClass;
 }) {
   const headings = article.bodyBlocks.filter((block): block is Extract<ArticleBlock, { type: "heading" }> => block.type === "heading");
   const published = article.publishedAt ? new Intl.DateTimeFormat(article.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(article.publishedAt)) : "Not published";
@@ -91,12 +109,15 @@ export function LearningArticleView({ article, categoryTitle, relatedArticles = 
   const protectedCategory = article.category === "responsible-gambling";
   // Protected guides lead to the Programme and never to offers (Founder, 30 Sep 2026: LEARN-COMMERCIAL-LOCALIZED-2026-09-30);
   // offer-bridged guides lead to offers instead of a second Programme block.
+  const heroImageSrc = article.heroImageUrl ? articleImageSrc(article.heroImageUrl, site) : null;
+  const methodologyPath = helpRoutePath("/methodology", site);
+  const methodologyHref = methodologyPath ? hrefFor(methodologyPath) : null;
   const programmeBridgeAt = offerBridge && !protectedCategory ? -1 : midArticleBridgeIndex(article.bodyBlocks);
   const earlyOfferBridgeAt = offerBridge && !protectedCategory ? earlyOfferBridgeIndex(article.bodyBlocks) : -1;
 
   return <article className={`${styles.page} ${handoffStyles.page}`} data-article-id={article.id} data-article-updated-at={article.updatedAt} data-learning-article data-figma-authority="633:4341" data-runtime-renderer="postgresql-learn-article" data-header-autohide="">
     <header className={`${styles.hero} ${handoffStyles.hero} ${article.heroImageUrl ? styles.heroWithImage : ""}`} data-nav-theme="dark">
-      {article.heroImageUrl && <img alt={article.heroImageAlt || ""} className={styles.heroImage} height={900} src={article.heroImageUrl} width={1600} />}
+      {heroImageSrc && <img alt={article.heroImageAlt || ""} className={styles.heroImage} height={900} src={heroImageSrc} width={1600} />}
       <div className={styles.heroContent}>
         <nav className={`${styles.breadcrumbs} ${handoffStyles.breadcrumbs}`} aria-label={messages.ui.breadcrumb}><Link href={hrefFor("/learn")}>{messages.ui.learn}</Link><span aria-hidden="true">→</span><Link href={hrefFor(`/learn?category=${encodeURIComponent(article.category)}`)}>{categoryTitle}</Link></nav>
         <div className={`${styles.heroGrid} ${handoffStyles.heroGrid}`}><div>{preview ? <p className={styles.kicker}>Authenticated draft preview</p> : null}<h1>{article.title}</h1></div><div className={`${styles.heroSummary} ${handoffStyles.heroSummary}`}><p>{article.excerpt}</p><dl><div><dt>Published</dt><dd>{published}</dd></div>{reviewed && <div><dt>Reviewed</dt><dd>{reviewed}</dd></div>}{article.readingTime && <div><dt>{messages.ui.readingTime}</dt><dd>{article.readingTime}</dd></div>}{article.difficulty && <div><dt>Level</dt><dd>{article.difficulty}</dd></div>}</dl></div></div>
@@ -104,7 +125,7 @@ export function LearningArticleView({ article, categoryTitle, relatedArticles = 
     </header>
     <div className={`${styles.readingLayout} ${handoffStyles.readingLayout}`} data-nav-theme="light">
       <aside className={`${styles.toc} ${handoffStyles.toc}`} aria-label={messages.ui.onThisPage}><p className={styles.kicker}>{messages.ui.onThisPage}</p>{headings.length ? <ol>{headings.map((heading, index) => <li key={heading.id}><a href={`#${headingId(heading)}`}>{String(index + 1).padStart(2, "0")} {heading.text}</a></li>)}</ol> : <p>Structured guide</p>}{protectedCategory && <div className={handoffStyles.supportCard}><strong>Control & support</strong><p>Need a neutral next step away from gambling content?</p><Link href={hrefFor("/help")}>Open protected Help →</Link></div>}</aside>
-      <div className={`${styles.articleBody} ${handoffStyles.articleBody}`}>{article.bodyBlocks.map((block, index) => <Fragment key={block.id}>{index === programmeBridgeAt ? <ProgrammeBridge hub={messages.hub} href={`${programmePath}?entry=start`} /> : null}{offerBridge && index === earlyOfferBridgeAt ? <OfferBridgeCompact bridge={offerBridge} /> : null}<ArticleBlockView block={block} /></Fragment>)}{offerBridge && !protectedCategory ? <OfferBridge bridge={offerBridge} /> : null}<div className={handoffStyles.articleReview}><span>Published {published}{reviewed ? ` · reviewed ${reviewed}` : ""}</span><Link href={hrefFor("/methodology")}>Editorial methodology →</Link></div></div>
+      <div className={`${styles.articleBody} ${handoffStyles.articleBody}`}>{article.bodyBlocks.map((block, index) => <Fragment key={block.id}>{index === programmeBridgeAt ? <ProgrammeBridge hub={messages.hub} href={`${programmePath}?entry=start`} /> : null}{offerBridge && index === earlyOfferBridgeAt ? <OfferBridgeCompact bridge={offerBridge} /> : null}<ArticleBlockView block={block} site={site} /></Fragment>)}{offerBridge && !protectedCategory ? <OfferBridge bridge={offerBridge} /> : null}<div className={handoffStyles.articleReview}><span>Published {published}{reviewed ? ` · reviewed ${reviewed}` : ""}</span>{methodologyHref ? <Link href={methodologyHref}>Editorial methodology →</Link> : null}</div></div>
     </div>
     {relatedArticlesSlot ?? <LearningArticleRelated hrefFor={hrefFor} messages={messages} relatedArticles={relatedArticles} />}
     {protectedCategory ? <aside className={styles.protectedBridge} aria-label={messages.ui.controlSupport} data-nav-theme="dark"><div><p className={styles.kicker}>{messages.ui.controlSupport}</p><h2>{messages.hub[21]}<em>{messages.hub[22]}</em></h2></div><div><p>{messages.hub[23]}</p><div className={styles.protectedActions}><Link data-learn-programme-start="protected" href={`${programmePath}?entry=start`} prefetch={false}>{messages.hub[24]} <span aria-hidden="true">→</span></Link><Link href={hrefFor("/responsible-gambling")}>{messages.ui.exploreResponsible} <span aria-hidden="true">↗</span></Link><Link href={hrefFor("/help")}>{messages.ui.openHelp} <span aria-hidden="true">↗</span></Link></div></div></aside> : <aside className={`${styles.commercial} ${handoffStyles.commercial}`} aria-label={messages.ui.optionalTransition} data-nav-theme="dark"><div><p className={styles.kicker}>{messages.ui.afterAnswer}</p><h2>{messages.hub[21]}<em>{messages.hub[22]}</em></h2></div><div><p>{messages.hub[23]}</p><Link href={programmePath}>{messages.hub[24]}</Link></div></aside>}

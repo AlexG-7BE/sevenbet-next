@@ -21,6 +21,19 @@ export const GUIDE_NAVIGATION = [
   { label: "Help", href: "/help", safety: true },
 ] as const;
 
+/**
+ * The help host's whole menu (RFC-057 §6, rule 3): 10 Steps · Pause plan · Guides · Help.
+ * No commercial destination, no research door, no `/about`, `/methodology`, `/faq`,
+ * `/affiliate-disclosure` or `/for-creators`, and no hidden children — the links are not built
+ * at all here, so none of them travels in the inline page data either.
+ */
+export const HELP_NAVIGATION = [
+  { label: "10 Steps", href: "/10-steps" },
+  { label: "Pause plan", href: "/pause-plan" },
+  { label: "Guides", href: "/learn" },
+  { label: "Help", href: "/help", safety: true },
+] as const;
+
 const commercialMarketOnlyRoutes = new Set(["/best-offers", "/bonuses"]);
 
 export function publicNavigationForCommercialState(commercialProductsAvailable: boolean) {
