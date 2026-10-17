@@ -2,10 +2,13 @@
 // and a data: icon. It requests nothing else, so the geo-block and the Firewall rule may
 // refuse every other resource. No links, offers, forms, scripts or trackers.
 //
-// The wordmark is the one part that depends on the host. The country block runs before the
-// help gate (RFC-057 §7.1 step 2), so from phase 2 a blocked visitor of the help host would
-// otherwise be shown the B4GAMBLE mark on a site that carries no B4GAMBLE mark anywhere
-// (Q2, 17 October 2026) — and the Founder's own machine sits behind a blocked IP.
+// The wordmark is the one part that depends on the host. Since 18 October 2026 the country
+// block does not reach the help site at all (`geoBlockGate` returns null there), so the gate
+// never renders this page with `site: "help"`. The help wordmark is kept anyway, and on
+// purpose: it is three lines that make it impossible for the B4GAMBLE mark to appear on a site
+// that carries no B4GAMBLE mark anywhere (Q2, 17 October 2026) if this page is ever rendered
+// for the help host again — by a re-extended block, a second caller or a new blocked country.
+// Deleting it would move that guarantee from the code into somebody's memory.
 
 import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 

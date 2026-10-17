@@ -12,14 +12,33 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## The help site on a second domain is approved — phase 1 has begun, every switch off
+## The help site on a second domain is approved — phase 2 is live, not indexed
 
 **Founder decision, 17 October 2026** (chat, «ок, начинай первый этап»;
 [decision](07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md),
 [RFC-057](06_RFC/RFC-057-Help-Site-on-a-Second-Domain.md), now `ACTIVE`).
-**APPROVED — PHASE 1 IN PROGRESS, DARK.** Phase 0 is done. Phase 1 is written as several pull
-requests with every switch off, so the main site behaves exactly as before; nothing a visitor
-sees has changed, on either site, and nothing is live on `pauseplan.help`.
+Phase 0 and phase 1 are done.
+
+**DETECTED in Vercel, 18 October 2026: phase 2 is live.** `HELP_SITE_SERVING` is `true` in
+Production (set that morning) and `pauseplan.help` answers as the help site. `HELP_SITE_REDIRECTS`
+is still unset, so this is "live, not indexed, not linked": every help-host response carries
+`X-Robots-Tag: noindex, nofollow`, the main host still serves the help routes, and no page is
+indexable on both hosts at once. The phase-1 sections below describe the code as merged; where
+they say a switch is unset or the domain is unattached, that was true when they were written and
+is superseded by this paragraph.
+
+**The country block does not apply to the help site (Founder decision, 18 October 2026).** He
+opened `https://pauseplan.help` from Kazakhstan — the first thing phase 2 showed him — and got
+the 451 page. He lifted it: the block exists because of gambling-advertising law, and the help
+site carries no casino, bonus, offer or `/r/` link at all, so the reason for it does not reach
+that host. `geoBlockGate` returns null for `site === "help"`, above the switch, the country
+signal and the owner cookie; the owner unlock and logout stay above the lift and work on both
+hosts. `b4gamble.com` answers 451 to every blocked country exactly as before.
+**One layer still disagrees and only the Founder can change it:** the Vercel Firewall rule
+`rule_geo_block_static_assets_oCzoN1` has no host condition, so from Kazakhstan the help site
+serves its HTML and `/icon.svg` but answers 403 for every stylesheet, script, web font and
+photograph under `/_next/` (**DETECTED from a KZ exit, 18 October 2026**). The exact condition he
+needs to add is in [the geo-block runbook](06_Operations/Geo-Block-Runbook.md).
 
 ### Phase 1, the host foundation (PR #535, merged 17 October 2026 as `7e171506`)
 
@@ -67,17 +86,20 @@ classes, and nothing a visitor can reach:
 - **The help-host Firewall rule is written down** in `lib/security/help-host-firewall-rule.ts`
   and in the geo-block runbook, as a default deny over everything the middleware matcher cannot
   see (raster images, fonts, `/_next/image`), with `/_next/static/` served on both hosts. It is
-  **not created yet**; phase 2 creates it before the switch, and it is what refuses
-  `/favicon.ico` and `/brand/b4gamble-logo-512.png` on the help host, which no code can.
-- The country block is unchanged and host-independent for its 451 **decision**; the owner
-  cookie is host-only anywhere but `b4gamble.com`. Its **page** takes the site: the block runs
-  before the help gate, so from phase 2 the 451 page is the first help-host page a blocked
-  visitor sees — and the Founder's own machine sits behind a blocked IP — so on the help host
-  it prints "Pause Plan" and never the B4GAMBLE wordmark (Q2). The CSP builder narrows
+  what refuses `/favicon.ico` and `/brand/b4gamble-logo-512.png` on the help host, which no code
+  can. **DETECTED live, 18 October 2026:** published as
+  `rule_help_site_deny_commercial_assets_lCrOh2` and active, over both `pauseplan.help` and
+  `www.pauseplan.help`. The two Firewall field names the module marked UNKNOWN are now proved by
+  it: `{"type":"host","op":"inc","value":[…]}`, and a negated condition carries `"neg": true`.
+- The country block **does not run on the help host** (Founder, 18 October 2026 — see the top of
+  this section); on `b4gamble.com` it is unchanged. The owner cookie is host-only anywhere but
+  `b4gamble.com`, and the unlock and logout work on both hosts. The 451 page still takes the site
+  and still prints "Pause Plan" rather than the B4GAMBLE wordmark (Q2) — the gate no longer
+  renders it for the help host, and that branch is kept deliberately, so the mark cannot reach
+  the help domain if the page is ever rendered there again. The CSP builder narrows
   `img-src` to `'self' data: blob:` and drops the Google hosts from `connect-src` on the help
   host only (§13); the main site's policy is byte-for-byte unchanged. The CSP is a backstop,
-  not the guarantee: keeping the Google tag off the help host is the layout's job, and the
-  layout is a later phase-1 pull request.
+  not the guarantee: keeping the Google tag off the help host is the layout's job.
 
 ### Phase 1, the help shell and the help-host copy (PR #537, merged 17 October 2026)
 

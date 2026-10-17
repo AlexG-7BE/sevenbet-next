@@ -11,6 +11,12 @@ import type { SiteClass } from "@/lib/site/host-gate";
 // they carry a valid owner cookie. The country comes only from the trusted Vercel signal.
 // Static assets that skip middleware are covered by the Vercel Firewall rule in
 // lib/security/geo-block-firewall-rule.ts.
+//
+// The block applies to the **main site only** (Founder, 18 Oct 2026): the help site carries no
+// casino, bonus, offer or partner link, so the advertising law the block answers to does not
+// reach it. The Firewall rule above has no host condition and so still denies KZ the hashed
+// build files on both hosts — see docs/06_Operations/Geo-Block-Runbook.md, which records the
+// host exclusion the rule needs.
 
 export const OWNER_BYPASS_COOKIE = "b4g_owner";
 export const OWNER_BYPASS_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
@@ -208,18 +214,23 @@ function logUnknownCountry(request: NextRequest, config: GeoBlockConfig, pathnam
  * Returns the response that ends the request (owner unlock/logout redirect or the 451 page),
  * or null when the request continues through the ordinary middleware. A wrong key and a
  * logout without a cookie continue as an ordinary visit, so the owner path reveals nothing.
+ *
+ * The block decision depends on the site: the help host is never blocked (see below).
  */
 export async function geoBlockGate(
   request: NextRequest,
   config: GeoBlockConfig = geoBlockConfigFromProcessEnv(),
   nowMs = Date.now(),
-  /** Only the 451 page's wordmark depends on it; the block decision itself does not. */
+  /** `help` lifts the country block entirely; `main` keeps it exactly as it was. */
   site: SiteClass = "main",
 ): Promise<NextResponse | null> {
   const pathname = request.nextUrl.pathname.length > 1
     ? request.nextUrl.pathname.replace(/\/+$/, "")
     : request.nextUrl.pathname;
 
+  // The owner unlock and logout work on both hosts, so the Founder can take or drop the
+  // cookie on either domain. On the help host the cookie is host-only (ownerCookieDomain
+  // names b4gamble.com and nothing else), which is unchanged.
   if (config.unlockPath) {
     if (pathname === config.unlockPath && config.ownerKey) {
       const key = request.nextUrl.searchParams.get("key");
@@ -230,6 +241,18 @@ export async function geoBlockGate(
       return ownerLogoutResponse(request);
     }
   }
+
+  // The country block does not reach the help site (Founder, 18 October 2026). The block
+  // exists because of gambling-advertising law, and the help host carries no casino, bonus,
+  // offer or `/r/` link at all — RFC-057 and pull request #530 guarantee that — so the reason
+  // for the block does not reach it. The Founder opened `pauseplan.help` from a blocked
+  // country and was shown the 451 page; this is the line that lifts it. `b4gamble.com` is
+  // untouched: it still answers 451 to every blocked country exactly as before.
+  //
+  // This is deliberately decided before `config.enabled`, the country signal and the owner
+  // cookie, so the help host never depends on `BLOCKED_COUNTRIES`, on the trusted country
+  // header being present, or on the Founder holding a cookie on a second domain.
+  if (site === "help") return null;
 
   if (!config.enabled) return null;
 

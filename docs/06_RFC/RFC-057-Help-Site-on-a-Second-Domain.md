@@ -795,13 +795,18 @@ a casino catalogue. That is the asymmetry the audit's refusals asked for.
    host → `main`; exact help host with `HELP_SITE_SERVING` on → `help`;
    `www.<help-domain>` → 308 to `HELP_ORIGIN`; cron paths on generated hosts →
    continue; everything else → 308 to `b4gamble.com` (RFC-030, unchanged).
-2. **Country block** (`geoBlockGate`), unchanged. Corrected in this revision:
-   the gate is host-independent **for the 451 decision only**. It does read
-   the hostname — for the owner cookie's domain
-   (`ownerCookieDomain`, `lib/security/geo-block.ts:134-135`, used at `:153`
-   and `:168`) and for the log line (`:201`) — which is exactly what gives
-   the owner cookie `Domain=b4gamble.com` on the main host and a host-only
-   cookie everywhere else (§13). **DETECTED.**
+2. **Country block** (`geoBlockGate`), **main host only**. Amended by the
+   Founder's decision of 18 October 2026: the gate takes the site class and
+   returns null for `site === "help"`, so the help host is never blocked,
+   whatever `BLOCKED_COUNTRIES` says. The block answers to
+   gambling-advertising law and the help host carries no casino, bonus, offer
+   or `/r/` link at all, so the reason for it does not reach that host. The
+   earlier text of this step — "host-independent for the 451 decision only" —
+   is superseded; §13 records the decision and what it leaves open in the
+   Vercel Firewall. The owner unlock and logout are decided **above** the lift
+   and still work on both hosts, which is what still makes the hostname
+   matter here: `ownerCookieDomain` gives the cookie `Domain=b4gamble.com` on
+   the main host and a host-only cookie everywhere else (§13). **DETECTED.**
 3. **Help gate** (help host only): classify the path (§4). `COMMERCIAL`,
    `INTERNAL` or unknown → rewrite to a help-safe not-found page with status
    404, `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`. While
@@ -1230,17 +1235,43 @@ from phase 2, one per site.
 
 ## 13. Country block, Vercel Firewall, CSP and media
 
+> **AMENDED by the Founder, 18 October 2026: the country block does not apply to
+> the help site.** He opened `https://pauseplan.help` from Kazakhstan, was shown
+> the 451 page, and lifted it: the block exists because of gambling-advertising
+> law, and the help host carries no casino, bonus, offer or partner link at all
+> (this RFC and pull request #530 guarantee that), so the reason for the block
+> does not reach it. `b4gamble.com` stays blocked exactly as it is.
+> `geoBlockGate` returns null for `site === "help"`, decided above
+> `config.enabled`, above the country signal and above the owner cookie, so the
+> help host depends on none of the three. The owner unlock and logout stay above
+> the lift and keep working on both hosts.
+>
+> **This leaves one layer disagreeing, and only the Founder can fix it.** The
+> Vercel Firewall rule `rule_geo_block_static_assets_oCzoN1` has no host
+> condition, is not in this repository and cannot read `HELP_SITE_SERVING`. Until
+> he adds `host is not any of pauseplan.help, www.pauseplan.help` to it, a Kazakh
+> visitor to the help site receives the HTML and `/icon.svg` but 403 for every
+> stylesheet, script, web font and photograph under `/_next/`. **DETECTED from a
+> KZ exit, 18 October 2026.** The exact condition, and the argument that it opens
+> nothing, are in `docs/06_Operations/Geo-Block-Runbook.md`.
+
 **DETECTED (`Geo-Block-Runbook.md`, `lib/security/geo-block*.ts`):**
 
-- Middleware answers 451 to Kazakhstan before any content. The 451 decision
-  itself does not depend on the host, so it will run on the help host too;
-  the gate does read the hostname for the owner cookie's domain and for its
-  log line (`geo-block.ts:134-135,153,168,201`), which is the next bullet.
+- Middleware answers 451 to Kazakhstan before any content, **on the main host**.
+  The sentence that stood here — "the 451 decision itself does not depend on the
+  host, so it will run on the help host too" — is **superseded by the amendment
+  above**: the decision does depend on the host and does not run on the help
+  host. The gate still reads the hostname for the owner cookie's domain and for
+  its log line (`geo-block.ts:134-135,153,168,201`), which is the next bullet.
 - The owner cookie `b4g_owner` gets `Domain=b4gamble.com` only on that host;
   on any other host it is host-only.
 - The Vercel Firewall rule for static assets has conditions on environment,
-  country, path and cookie, and none on host. **INFERRED:** it covers every
-  domain of the project, the help host included.
+  country, path and cookie, and none on host. The earlier **INFERRED** reading,
+  that it covers every domain of the project including the help host, is now
+  **DETECTED**: `rule_geo_block_static_assets_oCzoN1`, read from the live
+  Firewall config on 18 October 2026, carries exactly those four conditions, and
+  a KZ probe of `pauseplan.help/_next/static/...` answers 403. This is the layer
+  the amendment above leaves for the Founder.
 - The Cloudflare WAF rule covers only `media.b4gamble.com`.
 - `b4gamble.com` DNS is DNS-only in Cloudflare, so Vercel sets the trusted
   country header.
@@ -1253,12 +1284,15 @@ from phase 2, one per site.
 
 **PROPOSED:**
 
-- The help host blocks the same countries with the same variables. The owner
-  unlocks once on the help host (host-only cookie). The runbook gains a help-host
-  row and checks.
+- ~~The help host blocks the same countries with the same variables.~~
+  **Withdrawn by the amendment above (18 October 2026): the help host blocks no
+  country.** The owner unlock still works there and still issues a host-only
+  cookie, which is what lets the owner reach the main site's assets from the help
+  host's browser session; the runbook gains the help-host rows and the exclusion.
 - DNS stays at Vercel, so Vercel sets the country header on the help host
-  too. If DNS ever moves to Cloudflare, the record must be DNS-only; a proxied
-  record would hide the visitor's country and break the block.
+  too. That no longer gates anything on the help host, but it still decides the
+  market and language there. If DNS ever moves to Cloudflare, the record must be
+  DNS-only; a proxied record would hide the visitor's country.
 - The help-host deny rule for commercial static folders (§4.2) is added in
   phase 2 and listed in the runbook.
 - **Media:** help pages must not load images from `media.b4gamble.com`. The

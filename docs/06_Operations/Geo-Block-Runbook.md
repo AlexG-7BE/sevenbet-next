@@ -3,16 +3,26 @@
 Founder instruction, 28 Sep 2026: close b4gamble.com to visitors from
 Kazakhstan (KZ) and keep a personal owner bypass through a signed cookie.
 
+**Founder instruction, 18 Oct 2026: the block applies to `b4gamble.com` only.**
+`pauseplan.help` is not blocked. The block answers to gambling-advertising law,
+and the help site carries no casino, bonus, offer or `/r/` link at all
+(RFC-057, pull request #530), so the reason for the block does not reach it. He
+opened `https://pauseplan.help` from Kazakhstan, was shown the 451 page, and
+lifted it. `b4gamble.com` is unchanged.
+
 ## How it works
 
 The block has three layers. Each layer refuses a request before any content is
 served, and before any CDN cache lookup.
 
-| Layer | Covers | Response | Configured in |
-| --- | --- | --- | --- |
-| `middleware.ts` → `lib/security/geo-block.ts` | Pages, API routes, RSC navigation payloads, `sitemap.xml`, `robots.txt`, `llms.txt`, SVG and other documents | HTTP 451 page, `Cache-Control: private, no-store`, `noindex` | Vercel environment variables |
-| Vercel Firewall custom rule (`lib/security/geo-block-firewall-rule.ts`) | Assets that skip middleware: `/_next/*`, raster images, fonts, `favicon.ico` | HTTP 403 | Vercel Firewall (Production) |
-| Cloudflare WAF custom rule | `media.b4gamble.com` (uploaded casino and banner media, served by Cloudflare) | HTTP 403 | Cloudflare dashboard |
+| Layer | Covers | Response | Host | Configured in |
+| --- | --- | --- | --- | --- |
+| `middleware.ts` → `lib/security/geo-block.ts` | Pages, API routes, RSC navigation payloads, `sitemap.xml`, `robots.txt`, `llms.txt`, SVG and other documents | HTTP 451 page, `Cache-Control: private, no-store`, `noindex` | **`b4gamble.com` only** — `geoBlockGate` returns null for `site === "help"` | Vercel environment variables |
+| Vercel Firewall custom rule (`lib/security/geo-block-firewall-rule.ts`) | Assets that skip middleware: `/_next/*`, raster images, fonts, `favicon.ico` | HTTP 403 | **Every host of the project** — see the host exclusion below | Vercel Firewall (Production) |
+| Cloudflare WAF custom rule | `media.b4gamble.com` (uploaded casino and banner media, served by Cloudflare) | HTTP 403 | `media.b4gamble.com` | Cloudflare dashboard |
+
+The first two layers therefore **disagree about the help host** until the
+exclusion below is added to the Firewall rule by hand.
 
 - The country comes only from `x-vercel-ip-country`, and only on a Vercel
   Production or Preview runtime (`lib/jurisdiction/request-country.ts`). Vercel
@@ -84,12 +94,59 @@ Firewall → Configure → New Rule:
 `tests/geo-block.test.ts` checks that this pattern covers exactly the paths the
 middleware matcher skips. If the matcher changes, the rule must change with it.
 
-## Vercel Firewall rule (help host, RFC-057 §4.2) — PROPOSED, phase 2
+### The help-host exclusion this rule still needs — OPEN, Founder action
 
-Not created yet. It is added **before** `HELP_SITE_SERVING` is turned on, because
+The live rule `rule_geo_block_static_assets_oCzoN1` has **no host condition**, so
+it denies static assets to KZ on every host of the project, `pauseplan.help`
+included. The Firewall is not in this repository and cannot read
+`HELP_SITE_SERVING`, so the 18 Oct 2026 decision above cannot be carried out in
+code: **the Founder edits this rule by hand.** Add one condition to it:
+
+- Hostname **is not any of** `pauseplan.help`, `www.pauseplan.help`.
+
+In the Firewall API that is one more entry in the same `conditions` array, using
+the spelling the sibling help-host rule already proves:
+
+```json
+{ "type": "host", "op": "inc", "neg": true, "value": ["pauseplan.help", "www.pauseplan.help"] }
+```
+
+Then Review → Publish. Change it through `vercel firewall rules` (`add --json`
+→ `diff` → `publish`); a PUT over the whole config would drop the four
+rate-limit rules.
+
+**What it costs to leave it:** nothing on the help site is reachable from KZ
+except the HTML and `/icon.svg`. Verified from a KZ exit on 18 Oct 2026, with the
+rule as it stands: `/_next/static/css/*` → 403, `/_next/static/chunks/*.js` →
+403, `/_next/static/media/*.woff2` → 403, `/_next/image` → 403. So a Kazakh
+visitor to `pauseplan.help` would get the page text with **no stylesheet, no
+JavaScript, no web font and no photograph** — the help site's two photographs are
+static imports and live under `/_next/static/media/` too (RFC-057 §4.2
+amendment). The page would be readable but unstyled and unhydrated, which is not
+a state to leave the help site in.
+
+**Why the exclusion is safe:** `b4gamble.com`, `www.b4gamble.com` and the
+generated `*.vercel.app` host stay in the rule and keep answering 403 to KZ. On
+the help host the sibling rule
+`rule_help_site_deny_commercial_assets_lCrOh2` already denies the same path
+pattern to **everyone** except `^/_next/static/`, so excluding the help host here
+restores exactly what a non-KZ visitor to `pauseplan.help` already gets — the
+hashed build files both hosts serve by the Founder's decision of 25 Sep 2026 —
+and makes no commercial image, logo or `favicon.ico` reachable there.
+
+## Vercel Firewall rule (help host, RFC-057 §4.2) — LIVE
+
+**DETECTED, 18 Oct 2026:** published as `rule_help_site_deny_commercial_assets_lCrOh2`
+(rule 6), active. It was added before `HELP_SITE_SERVING` was turned on, because
 the middleware matcher skips raster images, fonts and the image optimizer, so the
 help gate never sees them: without this rule `pauseplan.help/brand/b4gamble-logo-512.png`,
 `/casino-brands/*.png` and `/favicon.ico` would answer 200 on the help site.
+
+The two field names that were UNKNOWN when it was written are now proved by the
+live rule: the host condition is `{"type":"host","op":"inc","value":[…]}` over a
+list, and a negated condition carries `"neg": true` beside its own operator
+rather than a separate operator name. Its live `host` list is both
+`pauseplan.help` and `www.pauseplan.help`.
 
 The request body comes from `helpHostFirewallRule()` in
 `lib/security/help-host-firewall-rule.ts`. It is a **default deny over everything
@@ -97,7 +154,7 @@ middleware cannot see**, not a list of today's `public/` folders, so a new folde
 app icon or metadata image is denied without anyone remembering to add it:
 
 - Environment equals `production`.
-- Host equals `pauseplan.help`.
+- Host is any of `pauseplan.help`, `www.pauseplan.help`.
 - Path matches the regex `^/_next/|\.(?:png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)$`.
 - Path does **not** match `^/_next/static/` — hashed build files, fonts included, are
   served on both hosts (Founder decision, 25 September 2026).
@@ -106,8 +163,11 @@ app icon or metadata image is denied without anyone remembering to add it:
 `/data/*.csv` (the regulator tables `/pause-statistics` links) is not matched at
 all: `.csv` is not an excluded file ending, so middleware sees it and the route
 manifest decides it. `tests/help-site-host.test.ts` checks the two patterns against
-the matcher; **confirm the `host` condition and the negated-regex operator against
-the Firewall API when the rule is created**, as the field names are UNKNOWN until then.
+the matcher.
+
+This is the rule that makes the help-host exclusion of the country rule safe: on
+`pauseplan.help` everything but `^/_next/static/` is already denied to every
+visitor, so excluding that host from the country rule opens nothing new.
 
 ## Cloudflare WAF rule (`media.b4gamble.com`)
 
