@@ -21,10 +21,11 @@ This checkpoint supersedes older candidate/draft/current-state language where it
 requests with every switch off, so the main site behaves exactly as before; nothing a visitor
 sees has changed, on either site, and nothing is live on `pauseplan.help`.
 
-### Phase 1, the host foundation (branch `feat/help-site-host-foundation`)
+### Phase 1, the host foundation (PR #535, merged 17 October 2026 as `7e171506`)
 
-**DETECTED in the repository, PROPOSED until merged and deployed.** The first phase-1 pull
-request carries the host decision and the route classes, and nothing a visitor can reach:
+**DETECTED in the repository and deployed to Production with every switch unset, so nothing it
+contains is reachable.** The first phase-1 pull request carries the host decision and the route
+classes, and nothing a visitor can reach:
 
 - `lib/site/host-routes.ts` — the route-class manifest of RFC-057 §4. Every route root is
   `COMMERCIAL`, `HELP`, `SHARED` or `INTERNAL`, and `tests/help-site-host.test.ts` walks every
@@ -45,17 +46,49 @@ request carries the host decision and the route classes, and nothing a visitor c
   with; no component reads `Host`.
 - `app/robots.ts` renders per request and names only its own host's sitemap; `app/llms.txt` and
   the IndexNow key file lose their shared `public` cache entry the moment the help host is
-  served (§7.4). With the switches off all three bodies and headers are what they are today.
-- The country block is unchanged and host-independent for its 451 decision; the owner cookie is
-  host-only anywhere but `b4gamble.com`. The CSP builder narrows `img-src` to
-  `'self' data: blob:` and drops the Google hosts from `connect-src` on the help host only
-  (§13); the main site's policy is byte-for-byte unchanged.
+  served (§7.4). With the switches off all three **bodies** are byte-for-byte what they are
+  today, and so are the headers — but `/robots.txt` is no longer a file built once: it became
+  `force-dynamic`, so every request to `b4gamble.com/robots.txt` is now a function invocation.
+  That is the only observable change this pull request makes on the main host. Its
+  `Cache-Control` is set in middleware (a metadata route cannot send one of its own) and is
+  `public, max-age=0, must-revalidate` — today's value — until `HELP_SITE_SERVING` is on.
+- **The interlock (added by the review follow-up of PR #535).** `HELP_SHELL_READY` in
+  `lib/site/host-routes.ts` is a **source constant**, not an environment variable, and it is
+  `false`. While it is false the help host answers the gate's 404 for **every** path, not only
+  the commercial ones, because the help site's own shell, home and metadata do not exist yet
+  and the route classes alone would hand `/`, `/learn`, `/privacy` and `/login` over with the
+  commercial shell and the full casino menu. Turning `HELP_SITE_SERVING` on early therefore
+  cannot publish the catalogue on `pauseplan.help` — it is a 404-only host until the pull
+  request that lands the help shell flips the constant in the same commit.
+- **The help host's `robots.txt` refuses every crawler and names no sitemap** while
+  `HELP_SITE_REDIRECTS` is off, which is all of phase 2: the pages it serves are the pages the
+  main host still serves, and an allow-all file naming a sitemap on the help domain would
+  invite a crawler into a file listing `b4gamble.com` addresses.
+- **The help-host Firewall rule is written down** in `lib/security/help-host-firewall-rule.ts`
+  and in the geo-block runbook, as a default deny over everything the middleware matcher cannot
+  see (raster images, fonts, `/_next/image`), with `/_next/static/` served on both hosts. It is
+  **not created yet**; phase 2 creates it before the switch, and it is what refuses
+  `/favicon.ico` and `/brand/b4gamble-logo-512.png` on the help host, which no code can.
+- The country block is unchanged and host-independent for its 451 **decision**; the owner
+  cookie is host-only anywhere but `b4gamble.com`. Its **page** takes the site: the block runs
+  before the help gate, so from phase 2 the 451 page is the first help-host page a blocked
+  visitor sees — and the Founder's own machine sits behind a blocked IP — so on the help host
+  it prints "Pause Plan" and never the B4GAMBLE wordmark (Q2). The CSP builder narrows
+  `img-src` to `'self' data: blob:` and drops the Google hosts from `connect-src` on the help
+  host only (§13); the main site's policy is byte-for-byte unchanged. The CSP is a backstop,
+  not the guarantee: keeping the Google tag off the help host is the layout's job, and the
+  layout is a later phase-1 pull request.
 - **Not in this pull request, and still to come in phase 1:** the help shell and the host-aware
   root not-found, the help home, host-aware root metadata and the help share image, per-site
   origins (`helpUrl`) and site-keyed caches, the Better Auth two-host configuration, per-host
   search files and the second IndexNow key, e-mail origins, the Learn origin by category, the
   first-party help images, the help-host copy, the owner page and data statement, the link guard
-  and the two-host browser specs.
+  and the two-host browser specs. Three named items of that list are what `HELP_SHELL_READY`
+  waits for: the help shell, the help home and the host-aware root metadata. The same pull
+  request replaces the gate's own 404 body (`lib/site/help-not-found-page.ts`, today a
+  self-contained page in Swedish, Danish and English with no link of any kind) with the help
+  site's own not-found page, and gives the help host its own icon in place of the B4GAMBLE
+  mark at `/icon.svg` and `/favicon.ico`.
 
 - **Two sites, one Vercel project.** `b4gamble.com` stays the commercial site; `pauseplan.help`
   becomes the help site, carrying the Programme, the 10 steps, the pause plans (sv/da/en), the

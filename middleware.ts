@@ -10,12 +10,13 @@ import {
   CSP_NONCE_REQUEST_HEADER,
 } from "@/lib/security/content-security-policy";
 import { helpHostNotFoundHtml } from "@/lib/site/help-not-found-page";
+import { hostVaryingCacheControl } from "@/lib/site/host-cache";
 import {
   helpSiteSwitchesFromProcessEnv,
   resolveSiteHost,
   SITE_CLASS_HEADER,
 } from "@/lib/site/host-gate";
-import { helpHostServes } from "@/lib/site/host-routes";
+import { helpHostServesRequest } from "@/lib/site/host-routes";
 import {
   isLocalizedPublicDestination,
   neutralRouteDestination,
@@ -263,11 +264,27 @@ export async function middleware(request: NextRequest) {
     if (site === "help" && !helpSite.redirects && !response.headers.has("X-Robots-Tag")) {
       response.headers.set("X-Robots-Tag", "noindex, nofollow");
     }
+    // §7.4: /robots.txt is a file-convention metadata route, so Next writes
+    // `public, max-age=0, must-revalidate` into the generated handler and the route cannot
+    // send a header of its own. Its body names the requested host's sitemap, so it is the one
+    // body this pull request makes differ by host — and the §7.4 rule says no such body may be
+    // sent with a cache entry two hosts could share. Set here instead: byte-for-byte today's
+    // value while the help host is redirected away, private the moment it is served.
+    if (pathname === "/robots.txt" && !response.headers.has("Location")) {
+      response.headers.set(
+        "Cache-Control",
+        hostVaryingCacheControl("public, max-age=0, must-revalidate", helpSite.serving),
+      );
+    }
     return response;
   };
 
   if (siteHost.kind === "redirect") {
-    return secureResponse(NextResponse.redirect(siteHost.location, siteHost.status));
+    const redirect = secureResponse(NextResponse.redirect(siteHost.location, siteHost.status));
+    // A 308 is cacheable by default and browsers keep it; a sticky copy of "the help domain
+    // sends you to b4gamble.com" is the association the second domain exists to avoid (§7.4).
+    if (siteHost.noStore) redirect.headers.set("Cache-Control", "no-store");
+    return redirect;
   }
   if (siteHost.kind === "reject") {
     return secureResponse(NextResponse.json(
@@ -287,14 +304,19 @@ export async function middleware(request: NextRequest) {
   // Country geo-block (Founder, 28 Sep 2026): a blocked country gets HTTP 451 before any
   // content, page, API, RSC payload or sitemap, unless it carries a valid owner cookie. The
   // 451 decision does not depend on the host, so it runs on the help host too; the owner
-  // cookie is host-only there, because its domain is set only on b4gamble.com (§13).
-  const geoBlocked = await geoBlockGate(request);
+  // cookie is host-only there, because its domain is set only on b4gamble.com (§13). The page
+  // itself does depend on the host: it prints a wordmark, and the help site carries no
+  // B4GAMBLE wordmark at all (Q2). The Founder's own machine sits behind a KZ IP, so this is
+  // the first help-host page he would see.
+  const geoBlocked = await geoBlockGate(request, undefined, undefined, site);
   if (geoBlocked) return geoBlocked;
 
   // §7.1 step 3, the help gate. The help site is an allowlist: a COMMERCIAL route, an
   // INTERNAL route and any path with no class in lib/site/host-routes.ts all answer 404 here,
   // with no link of any kind in the body, so a new route can never appear on the help host.
-  if (site === "help" && !helpHostServes(pathname)) {
+  // While HELP_SHELL_READY is false that is every path, because the help site's own pages do
+  // not exist yet and the route classes alone would hand over the commercial shell.
+  if (site === "help" && !helpHostServesRequest(pathname)) {
     return secureResponse(new NextResponse(helpHostNotFoundHtml(nonce), {
       status: 404,
       headers: {

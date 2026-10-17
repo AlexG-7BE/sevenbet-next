@@ -26,6 +26,12 @@ export function buildContentSecurityPolicy(
      * Q3 is answered G3, so it carries no Google tag, no cookie banner and no optional
      * cookies. `frame-ancestors 'none'` stays on both. The default is the main site, whose
      * policy is unchanged.
+     *
+     * This is a backstop, not the guarantee. `script-src` keeps `'strict-dynamic'` on both
+     * hosts, so a nonced inline script could still load gtag.js here; what it blocks is the
+     * beacon (`connect-src 'self'`) and the pixel (`img-src` without `https:`). Keeping the
+     * Google tag and the cookie banner out of the help host is the layout's job, and the
+     * test that proves it belongs with the layout.
      */
     site?: SiteClass;
     upgradeInsecureRequests?: boolean;

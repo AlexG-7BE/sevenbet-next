@@ -16,10 +16,17 @@ import {
   MARKET_PROFILES,
   marketProfileByRouteMarket,
 } from "../lib/market/registry";
+import {
+  HELP_HOST_SERVED_UNGATED_PATH_PATTERN,
+  HELP_HOST_UNGATED_PATH_PATTERN,
+  helpHostFirewallRule,
+} from "../lib/security/help-host-firewall-rule";
+import { geoBlockPageHtml } from "../lib/security/geo-block-page";
 import { hostVaryingCacheControl } from "../lib/site/host-cache";
 import {
   HELP_CANONICAL_HOST,
   HELP_CANONICAL_ORIGIN,
+  HELP_SITE_NAME,
   helpSiteSwitches,
   resolveSiteHost,
   SITE_CLASS_HEADER,
@@ -30,7 +37,9 @@ import {
   classifyPublicAsset,
   classifyRoutePath,
   classifySitePath,
+  HELP_SHELL_READY,
   helpHostServes,
+  helpHostServesRequest,
   METADATA_ROUTE_MANIFEST,
   PUBLIC_ASSET_MANIFEST,
   SITE_ROUTE_MANIFEST,
@@ -56,6 +65,14 @@ const scheduledCronPaths = (
     crons?: { path: string; schedule: string }[];
   }
 ).crons?.map((cron) => cron.path) ?? [];
+
+/** The middleware matcher as Next compiles it (see tests/middleware-matcher.test.ts). */
+function middlewareMatcher() {
+  const source = readFileSync(join(repositoryRoot, "middleware.ts"), "utf8");
+  const literal = source.match(/matcher: \["(.+)"\]/)?.[1];
+  assert.ok(literal, "the matcher is a literal Next can read statically");
+  return new RegExp(`^${JSON.parse(`"${literal}"`) as string}$`);
+}
 
 async function withEnvironment<T>(
   values: Record<string, string | undefined>,
@@ -128,6 +145,11 @@ test("with HELP_SITE_SERVING off the help host is any other host and 308s to b4g
       kind: "redirect",
       location: `${PRODUCTION_CANONICAL_ORIGIN}${requested.pathname}${requested.search}`,
       status: 308,
+      // A 308 naming the help host on either end is never cached: between attaching the
+      // domain in phase 2 and the redeploy that turns the switch on, a sticky copy of this
+      // redirect is what shows a crawler or a blocker the help domain pointing at a
+      // gambling-affiliate site.
+      noStore: true,
     }, url);
   }
 });
@@ -182,11 +204,13 @@ test("www on the help host and an http request both land on the help origin, not
     kind: "redirect",
     location: `${HELP_CANONICAL_ORIGIN}/sv/pause-plan?x=1`,
     status: 308,
+    noStore: true,
   });
   assert.deepEqual(resolveSiteHost(`http://${HELP_CANONICAL_HOST}/10-steps`, production, SERVING), {
     kind: "redirect",
     location: `${HELP_CANONICAL_ORIGIN}/10-steps`,
     status: 308,
+    noStore: true,
   });
 });
 
@@ -304,7 +328,7 @@ test("the development host works locally and is ignored in Preview and Productio
 function routePathForFile(file: string) {
   const segments = file
     .replace(/^app\//, "")
-    .replace(/\/(page|route)\.tsx?$/, "")
+    .replace(/\/(?:page|route)\.(?:tsx|ts|jsx|js)$/, "")
     .split("/")
     .filter((segment) => segment.length > 0 && !/^\(.*\)$/.test(segment))
     .map((segment) => (/^\[.*\]$/.test(segment) ? "sample-segment" : segment));
@@ -316,7 +340,7 @@ function walk(directory: string, found: string[] = []) {
     const absolute = join(directory, entry);
     if (statSync(absolute).isDirectory()) {
       walk(absolute, found);
-    } else if (entry === "page.tsx" || entry === "route.ts") {
+    } else if (/^(?:page|route)\.(?:tsx|ts|jsx|js)$/.test(entry)) {
       found.push(relative(repositoryRoot, absolute));
     }
   }
@@ -525,6 +549,32 @@ test("COMMERCIAL and INTERNAL routes answer 404 on the help host, under every pr
   }
 });
 
+test("a path that escapes a served prefix is refused, by this code and not by Next's parser", () => {
+  // Measured: NextRequest resolves `.` and `..` through the URL parser before middleware sees
+  // a path, and leaves `%2f` inside one segment, so none of these reaches a route today. The
+  // gate must not depend on that: a change in how the path is obtained would otherwise let
+  // /program/../casinos inherit the help host from /program. Each of these starts on a prefix
+  // the help host serves and points at one it does not.
+  for (const path of [
+    "/program/../casinos",
+    "/program/%2e%2e/casinos",
+    "/program/%2E%2E/casinos",
+    "/_next/../casinos",
+    "/data/../best-offers",
+    "/learn/responsible-gambling/..%2fcasino-bonuses",
+    "/program%2f..%2fcasinos",
+    "/help/./../admin",
+    "/pause-plan/%zz",
+  ]) {
+    assert.equal(helpHostServes(path), false, path);
+    assert.equal(classifySitePath(path), null, path);
+  }
+  // The shapes that are not an escape still classify normally.
+  assert.equal(classifySitePath("/learn/responsible-gambling/a-guide"), "HELP");
+  assert.equal(classifySitePath("/robots.txt"), "SHARED");
+  assert.equal(classifySitePath("/.well-known/x"), "INTERNAL");
+});
+
 test("an unknown path answers 404 on the help host", () => {
   for (const path of [
     "/not-a-real-route",
@@ -558,6 +608,28 @@ test("the manifest keeps every class to the four names and no duplicate exact en
 });
 
 // ---------------------------------------------------------------------------
+// §18 the shell interlock
+// ---------------------------------------------------------------------------
+
+test("the help host serves nothing at all until the help shell exists", () => {
+  // HELP_SITE_SERVING is a dashboard variable that phase 2 turns on; HELP_SHELL_READY is a
+  // source constant. While it is false, no order of operations and no environment change can
+  // publish the commercial shell, the casino menu and b4gamble.com addresses on the help
+  // domain, because the gate answers 404 for every path.
+  assert.equal(HELP_SHELL_READY, false, "flip this in the commit that lands the help shell");
+  for (const path of ["/", "/pause-plan", "/program", "/learn", "/privacy", "/robots.txt", "/sitemap.xml"]) {
+    assert.equal(helpHostServes(path), true, `${path} is a help-host route class`);
+    assert.equal(helpHostServesRequest(path, false), false, `${path} waits for the shell`);
+    assert.equal(helpHostServesRequest(path, true), true, `${path} is served once the shell lands`);
+  }
+  // The route classes still decide once the shell is ready: readiness never widens them.
+  for (const path of ["/casinos", "/admin", "/api/public/bonuses", "/not-a-real-route"]) {
+    assert.equal(helpHostServesRequest(path, true), false, path);
+    assert.equal(helpHostServesRequest(path, false), false, path);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // §7.2 the trusted site header
 // ---------------------------------------------------------------------------
 
@@ -579,6 +651,24 @@ test("middleware strips an incoming site header and sets its own", async () => {
       assert.equal(response.headers.get(`x-middleware-request-${SITE_CLASS_HEADER}`), "main");
     },
   );
+});
+
+test("a metadata route that can answer at an excluded file ending never reads the site header", () => {
+  // The site class reaches the page only through a header middleware sets, and the matcher
+  // skips every raster file ending. Next registers /opengraph-image/[__metadata_id__] beside
+  // /opengraph-image, and that sibling can end in .png — a path middleware never sees, where
+  // the header would silently be absent. Such a file must not depend on it.
+  const imageMetadataRoutes = Object.keys(METADATA_ROUTE_MANIFEST)
+    .filter((file) => /^app\/(?:opengraph-image|twitter-image|icon|apple-icon)\.[jt]sx?$/.test(file));
+  assert.ok(imageMetadataRoutes.length > 0, "the walk found the image metadata routes");
+  for (const file of imageMetadataRoutes) {
+    const source = readFileSync(join(repositoryRoot, file), "utf8");
+    assert.equal(
+      source.includes("resolveServerSite"),
+      false,
+      `${file} can answer at a path the matcher skips, so it cannot read the site header`,
+    );
+  }
 });
 
 test("middleware source never reads Host to decide the site", () => {
@@ -611,17 +701,55 @@ test("llms.txt and the IndexNow key file take the host-varying cache rule and ro
   assert.match(keyFile, /hostVaryingCacheControl\("public, max-age=86400"\)/);
   assert.doesNotMatch(keyFile, /"cache-control":\s*"public/);
 
+  // robots.txt is the one body this pull request makes differ by host. It is a file-convention
+  // metadata route, so Next writes `public, max-age=0, must-revalidate` into the generated
+  // handler and the route cannot send a header of its own; middleware sets it instead.
   const robotsSource = readFileSync(join(repositoryRoot, "app/robots.ts"), "utf8");
   assert.match(robotsSource, /export const dynamic = "force-dynamic"/);
+  const middlewareSource = readFileSync(join(repositoryRoot, "middleware.ts"), "utf8");
+  assert.match(
+    middlewareSource,
+    /hostVaryingCacheControl\("public, max-age=0, must-revalidate", helpSite\.serving\)/,
+  );
+});
+
+test("robots.txt keeps today's cache header while the help host is redirected away", async () => {
+  await withEnvironment(
+    { HELP_SITE_SERVING: undefined, HELP_SITE_REDIRECTS: undefined, VERCEL_ENV: "production" },
+    async () => {
+      const response = await middleware(new NextRequest(`${PRODUCTION_CANONICAL_ORIGIN}/robots.txt`));
+      assert.equal(response.headers.get("Cache-Control"), "public, max-age=0, must-revalidate");
+    },
+  );
+  await withEnvironment(
+    { HELP_SITE_SERVING: "true", HELP_SITE_REDIRECTS: undefined, VERCEL_ENV: "production" },
+    async () => {
+      const response = await middleware(new NextRequest(`${PRODUCTION_CANONICAL_ORIGIN}/robots.txt`));
+      assert.equal(response.headers.get("Cache-Control"), "private, no-store");
+    },
+  );
 });
 
 test("robots differs by host in the same process and each host names only its own sitemap", () => {
-  const main = robotsForSite("main");
-  const help = robotsForSite("help");
+  const main = robotsForSite("main", false);
+  const mainLive = robotsForSite("main", true);
+  const help = robotsForSite("help", true);
   assert.equal(main.sitemap, `${PRODUCTION_CANONICAL_ORIGIN}/sitemap.xml`);
+  assert.deepEqual(mainLive, main, "the main host's robots never depends on the help switches");
   assert.equal(help.sitemap, `${HELP_CANONICAL_ORIGIN}/sitemap.xml`);
   assert.deepEqual(main.rules, help.rules);
   assert.equal(JSON.stringify(help).includes("b4gamble.com"), false);
+});
+
+test("until the help host may be indexed its robots.txt refuses every crawler and names no sitemap", () => {
+  // Phase 2 is "help host live, not indexed, not linked". An allow-all robots.txt naming a
+  // sitemap on the help domain would invite a crawler into /sitemap.xml and /llms.txt, which
+  // are SHARED and built from the main origin — a file on the help domain listing
+  // b4gamble.com addresses is the one association the second domain exists to prevent.
+  const dark = robotsForSite("help", false);
+  assert.deepEqual(dark, { rules: [{ userAgent: "*", disallow: "/" }] });
+  assert.equal(JSON.stringify(dark).includes("sitemap"), false);
+  assert.equal(JSON.stringify(dark).includes("b4gamble.com"), false);
 });
 
 // ---------------------------------------------------------------------------
@@ -657,6 +785,95 @@ test("the help host narrows img-src and sends nothing to Google; the main policy
   assert.match(help, new RegExp(`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`));
 });
 
+test("the 451 page carries the help site's own name on the help host, never the B4GAMBLE mark", () => {
+  // The country block runs before the help gate (§7.1 step 2), so this page is the first thing
+  // a blocked visitor of the help host sees — and the Founder's own machine sits behind a
+  // blocked IP, with a KZ-exit check in the phase-2 gate.
+  const nonce = "11111111-1111-4111-8111-111111111111";
+  const main = geoBlockPageHtml(nonce);
+  const help = geoBlockPageHtml(nonce, "help");
+  assert.equal(geoBlockPageHtml(nonce, "main"), main, "naming the main site changes nothing");
+  assert.match(main, /<title>451 · B4GAMBLE<\/title>/);
+  assert.match(main, />B4GAMBLE</);
+  assert.equal(help.includes("B4GAMBLE"), false, "the help site carries no B4GAMBLE wordmark");
+  assert.match(help, new RegExp(`<title>451 · ${HELP_SITE_NAME}</title>`));
+  assert.match(help, new RegExp(`>${HELP_SITE_NAME}<`));
+  // Still a page that requests nothing, on either host.
+  for (const forbidden of [/<a\b/i, /<script\b/i, /<img\b/i, /https?:\/\//i]) {
+    assert.doesNotMatch(help, forbidden, String(forbidden));
+  }
+  assert.match(
+    readFileSync(join(repositoryRoot, "middleware.ts"), "utf8"),
+    /geoBlockGate\(request, undefined, undefined, site\)/,
+    "middleware tells the block which site is answering",
+  );
+});
+
+test("the phase-2 Firewall rule denies everything on the help host that middleware cannot see", () => {
+  const matcher = middlewareMatcher();
+  const denied = new RegExp(HELP_HOST_UNGATED_PATH_PATTERN);
+  const served = new RegExp(HELP_HOST_SERVED_UNGATED_PATH_PATTERN);
+  const refusedOnTheHelpHost = (path: string) => denied.test(path) && !served.test(path);
+
+  for (const path of [
+    "/favicon.ico",
+    "/brand/b4gamble-logo-512.png",
+    "/casino-brands/playojo.png",
+    "/best-offers/hero.avif",
+    "/about/team.jpg",
+    "/home/responsive/chapter-1.webp",
+    "/learn/magazine-shelf.jpg",
+    "/demo-casinos/x.png",
+    "/partner-preview/x.png",
+    "/bonus-directory/x.png",
+    "/casino-directory/x.png",
+    "/_next/image",
+    // The sibling path Next registers for a dynamic metadata file. It ends in an excluded
+    // file ending, so the route manifest never sees it; this rule is what refuses it.
+    "/opengraph-image/1a2b3c.png",
+    "/icon/1a2b3c.png",
+  ]) {
+    assert.ok(!matcher.test(path), `${path} skips middleware`);
+    assert.ok(refusedOnTheHelpHost(path), `${path} must be refused on the help host`);
+  }
+
+  // Hashed build files are served on both hosts (Founder, 25 September 2026), fonts included.
+  for (const path of [
+    "/_next/static/chunks/1255-8b646a1ae88725c1.js",
+    "/_next/static/css/84a81a068b129809.css",
+    "/_next/static/media/c214ffb7f5362987-s.p.woff2",
+  ]) {
+    assert.ok(refusedOnTheHelpHost(path) === false, `${path} is served on both hosts`);
+  }
+
+  // Everything middleware does see is left to the gate, the regulator tables included.
+  for (const path of ["/", "/sv/pause-plan", "/icon.svg", "/robots.txt", "/data/spelpaus-registrations.csv"]) {
+    assert.ok(matcher.test(path), `${path} runs through middleware`);
+    assert.ok(!refusedOnTheHelpHost(path), `${path} is the gate's decision, not the Firewall's`);
+  }
+
+  const rule = helpHostFirewallRule();
+  const conditions = rule.conditionGroup[0].conditions;
+  assert.deepEqual(conditions.find((condition) => condition.type === "host"), {
+    type: "host",
+    op: "eq",
+    value: HELP_CANONICAL_HOST,
+  });
+  assert.equal(rule.action.mitigate.action, "deny");
+});
+
+test("lib/site.ts and lib/site/ stay unambiguous", () => {
+  // `lib/site.ts` is the absolute-URL authority and `lib/site/` holds the host gate. Node and
+  // the bundler resolve "@/lib/site" to the file today, but one accidental lib/site/index.ts
+  // would shadow the whole module — and §8 adds `helpUrl` to that file next.
+  for (const shadow of ["index.ts", "index.tsx", "index.js", "index.mjs"]) {
+    assert.throws(
+      () => statSync(join(repositoryRoot, "lib/site", shadow)),
+      `lib/site/${shadow} would shadow lib/site.ts`,
+    );
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Everything dark
 // ---------------------------------------------------------------------------
@@ -687,25 +904,43 @@ test("with the switches off the main site answers exactly as it does today", asy
   );
 });
 
-test("the help gate answers 404 with no link of any kind for a commercial path", async () => {
+test("the help gate answers 404 with no link of any kind, and that is every path until the shell lands", async () => {
   await withEnvironment(
     { HELP_SITE_SERVING: "true", HELP_SITE_REDIRECTS: undefined, VERCEL_ENV: "production" },
     async () => {
-      const refused = await middleware(new NextRequest(`${HELP_CANONICAL_ORIGIN}/sv/casinos`));
-      assert.equal(refused.status, 404);
-      assert.equal(refused.headers.get("Cache-Control"), "private, no-store");
-      assert.equal(refused.headers.get("X-Robots-Tag"), "noindex, nofollow, noarchive");
-      const body = await refused.text();
-      assert.equal(/href=|src=|b4gamble/i.test(body), false, "the help 404 carries no address at all");
-      assert.match(
-        refused.headers.get("Content-Security-Policy") ?? "",
-        /img-src 'self' data: blob:;/,
-      );
-
-      const served = await middleware(new NextRequest(`${HELP_CANONICAL_ORIGIN}/privacy`));
-      assert.notEqual(served.status, 404);
-      assert.equal(served.headers.get(`x-middleware-request-${SITE_CLASS_HEADER}`), "help");
-      assert.equal(served.headers.get("X-Robots-Tag"), "noindex, nofollow");
+      for (const path of [
+        "/sv/casinos",
+        "/best-offers",
+        "/admin",
+        // Next's URL parser resolves the dot segments before middleware sees the path, and
+        // the gate refuses the shape as well; either way this is a 404, never /casinos
+        // inheriting the help host from /program.
+        "/help/../casinos",
+        "/program/%2e%2e/casinos",
+        // Until HELP_SHELL_READY is flipped, a route the help host will serve answers 404
+        // too: its own page does not exist yet, and the commercial shell must never render
+        // on this host.
+        "/",
+        "/sv/pause-plan",
+        "/privacy",
+        "/robots.txt",
+      ]) {
+        const refused = await middleware(new NextRequest(`${HELP_CANONICAL_ORIGIN}${path}`));
+        assert.equal(refused.status, 404, path);
+        assert.equal(refused.headers.get("Cache-Control"), "private, no-store", path);
+        assert.equal(refused.headers.get("X-Robots-Tag"), "noindex, nofollow, noarchive", path);
+        const body = await refused.text();
+        assert.equal(
+          /href=|src=|b4gamble/i.test(body),
+          false,
+          `the help 404 for ${path} carries no address at all`,
+        );
+        assert.match(
+          refused.headers.get("Content-Security-Policy") ?? "",
+          /img-src 'self' data: blob:;/,
+          path,
+        );
+      }
     },
   );
 });

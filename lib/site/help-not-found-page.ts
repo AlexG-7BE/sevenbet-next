@@ -9,6 +9,13 @@ const BACKGROUND = "#100F0F";
 const TEXT = "#FAFAF7";
 const MUTED = "rgba(250,250,247,.72)";
 
+/** The help site publishes Swedish, Danish and English, so the gate's 404 speaks all three. */
+export const HELP_NOT_FOUND_MESSAGES = {
+  en: "This page is not part of this site.",
+  sv: "Den här sidan finns inte på den här webbplatsen.",
+  da: "Denne side findes ikke på dette websted.",
+} as const;
+
 export function helpHostNotFoundHtml(nonce: string) {
   if (!/^[A-Za-z0-9-]+$/.test(nonce)) throw new Error("Invalid CSP nonce");
   return `<!doctype html>
@@ -32,14 +39,17 @@ body {
   padding: 24px;
   text-align: center;
 }
-h1 { font-size: 20px; font-weight: 600; margin: 0 0 8px }
-p { color: ${MUTED}; font-size: 16px; margin: 0 }
+h1 { font-size: 20px; font-weight: 600; margin: 0 0 12px }
+p { color: ${MUTED}; font-size: 16px; margin: 0 0 8px }
+p:last-child { margin: 0 }
 </style>
 </head>
 <body>
 <main>
 <h1>Page not found</h1>
-<p>This page is not part of this site.</p>
+<p lang="sv">${HELP_NOT_FOUND_MESSAGES.sv}</p>
+<p lang="da">${HELP_NOT_FOUND_MESSAGES.da}</p>
+<p lang="en">${HELP_NOT_FOUND_MESSAGES.en}</p>
 </main>
 </body>
 </html>`;
