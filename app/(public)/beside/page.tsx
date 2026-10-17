@@ -8,8 +8,11 @@ import styles from "./Beside.module.css";
 import { besideLocale, besideMessages } from "@/lib/i18n/static-pages/beside";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { resolveServerSite } from "@/lib/site/server-site";
 import { absoluteUrl } from "@/lib/site";
+import { CleanRouteRevenueLine } from "@/components/clean-route/CleanRouteRevenueLine";
+import { resolveServerSite } from "@/lib/site/server-site";
+import { HELP_HOST, withHelpOrigin } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -26,14 +29,13 @@ export async function generateMetadata(): Promise<Metadata> {
  * nothing in the menu.
  */
 export default async function BesidePage() {
-  const presentation = await resolveServerPresentationContext();
-  const site = await resolveServerSite();
+  const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const messages = besideMessages(presentation.locale);
   const contentLocale = besideLocale(presentation.locale);
   const url = absoluteUrl(productCanonicalPath(presentation, "/beside"), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;
   const schema = [
-    { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/", site) } },
+    { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: site === "help" ? HELP_SITE_NAME : "B4GAMBLE", url: absoluteUrl("/", site) } },
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
   ];
 
@@ -43,7 +45,7 @@ export default async function BesidePage() {
       <small>{messages.eyebrow}</small>
       <h1>{messages.titleLead} <em>{messages.titleEmphasis}</em></h1>
       <p>{messages.intro}</p>
-      <p className={styles.revenue} data-clean-route-line>{messages.revenueLine}</p>
+      <p className={styles.revenue} data-clean-route-line><CleanRouteRevenueLine mainLine={messages.revenueLine} presentation={presentation} site={site} /></p>
     </div></header>
 
     <div className={styles.body}>
@@ -56,8 +58,8 @@ export default async function BesidePage() {
       <section className={`${styles.card} ${styles.message}`} data-nav-theme="dark">
         <h2>{messages.message.heading}</h2>
         <p>{messages.message.intro}</p>
-        <CopyText className={styles.copy} copiedLabel={messages.message.copied} copyLabel={messages.message.copy} text={messages.message.text} />
-        <p className={styles.note}>{messages.message.after} <Link href={productHref(presentation, messages.planLink)}>b4gamble.com{productCanonicalPath(presentation, messages.planLink)}</Link></p>
+        <CopyText className={styles.copy} copiedLabel={messages.message.copied} copyLabel={messages.message.copy} text={withHelpOrigin(messages.message.text, site)} />
+        <p className={styles.note}>{messages.message.after} <Link href={productHref(presentation, messages.planLink)}>{site === "help" ? HELP_HOST : "b4gamble.com"}{productCanonicalPath(presentation, messages.planLink)}</Link></p>
       </section>
 
       <section className={`${styles.card} ${styles.dayEleven}`} data-nav-theme="dark">

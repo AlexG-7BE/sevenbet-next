@@ -52,10 +52,13 @@ export const HELP_HOST_SERVED_CLASSES: readonly SiteRouteClass[] = ["HELP", "SHA
  * publish the commercial site on the help host. While it is `false` the help host answers the
  * gate's 404 for every path, which is a correct dark state.
  *
- * **Flip it to `true` in the same commit as the pull request that lands the help shell, the
- * help home and the host-aware root metadata, and nowhere else.**
+ * **Flipped to `true` on 17 October 2026**, in the pull request that landed the help shell, the
+ * help home (the pause plan, Q5 (b)), the host-aware root metadata and the help share image.
+ * `HELP_SITE_SERVING` is still off in every Vercel environment, so the help host is still
+ * redirected away before it reaches this gate; this constant only says the page it would
+ * reach now exists.
  */
-export const HELP_SHELL_READY = false;
+export const HELP_SHELL_READY = true;
 
 export const SITE_ROUTE_MANIFEST = [
   // ---------------------------------------------------------------- SHARED
@@ -117,6 +120,18 @@ export const SITE_ROUTE_MANIFEST = [
   // §4.1 names this one path, not the folder: a future /tools/<anything> must be classified
   // deliberately rather than inherit the help host from its parent.
   { path: "/tools/budget-calculator", match: "EXACT", siteClass: "HELP" },
+  // The owner disclosure (§17) and the data statement (§16.3), written under the help site's
+  // own name. They are HELP, so the main host serves them until phase 3 and then 301s them;
+  // both are `noindex` until the help host is the only host that serves them (§7.3).
+  { path: "/who-runs-this", match: "EXACT", siteClass: "HELP" },
+  { path: "/for-organisations", match: "EXACT", siteClass: "HELP" },
+  // The help host's default social image (§8). SUBTREE for the same reason /opengraph-image is:
+  // a dynamic image route registers a sibling path for its generated id.
+  { path: "/help-share-image", match: "SUBTREE", siteClass: "HELP" },
+  // The first-party help-guide image route (§13). It serves only content-addressed Learn keys,
+  // so no help page asks the browser for an image from media.b4gamble.com. /api/media stays
+  // COMMERCIAL and answers 404 here.
+  { path: "/api/help-media", match: "SUBTREE", siteClass: "HELP" },
   // The protected help guides: the one Learn category that carries no offer bridge
   // (lib/articles/article-bridges.ts) and whose related reading stays inside the category.
   { path: "/learn/responsible-gambling", match: "SUBTREE", siteClass: "HELP" },

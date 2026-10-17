@@ -1,0 +1,70 @@
+/* Mobile first, and never below the 12px floor the typography audit enforces. */
+.page {
+  margin: 0 auto;
+  max-width: 44rem;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.header small {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.75rem;
+  opacity: 0.68;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  font-size: 2rem;
+  line-height: 1.12;
+  margin: 0 0 1rem;
+}
+
+.intro {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0.86;
+}
+
+.section {
+  margin-top: 2.25rem;
+}
+
+.section h2 {
+  font-size: 1.125rem;
+  line-height: 1.3;
+  margin: 0 0 0.75rem;
+}
+
+.section p {
+  font-size: 1rem;
+  line-height: 1.65;
+  margin: 0 0 0.85rem;
+}
+
+.contact {
+  border-top: 1px solid rgba(128, 128, 128, 0.28);
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+}
+
+.contact p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 0.75rem;
+}
+
+.contact a {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 44px;
+  min-height: 44px;
+}
+
+@media (min-width: 760px) {
+  .page { padding: 4rem 2rem 6rem; }
+  .header h1 { font-size: 2.75rem; }
+}

@@ -59,13 +59,18 @@ test("no door is left in the shell: the menu is built from the lists alone", () 
 
   // Desktop list and drawer: the guide links keep their places from 10 October and the commercial
   // destinations sit between them, shown to everyone. Help keeps its own block in the drawer.
+  // Since RFC-057 the same two groups are rendered through `routeLink`, which picks the main
+  // site's guide link or the help host's own; the order the Founder chose is unchanged.
   const desktop = navigation.slice(navigation.indexOf("className={styles.primaryNavigation}"), navigation.indexOf("className={styles.accountNavigation}"));
-  assert.ok(desktop.indexOf('{leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}') >= 0);
-  assert.ok(desktop.indexOf('{leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}') < desktop.indexOf("{PUBLIC_NAVIGATION.map("));
-  assert.ok(desktop.indexOf("{PUBLIC_NAVIGATION.map(") < desktop.indexOf('{trailingGuideNavigation.map((item) => guideLink(item, "desktop"))}'), "10 Steps · Best Offers · Casinos · Bonuses · Learn · Help");
+  assert.ok(desktop.indexOf('{leadingGuideNavigation.map((item) => routeLink(item, "desktop"))}') >= 0);
+  assert.ok(desktop.indexOf('{leadingGuideNavigation.map((item) => routeLink(item, "desktop"))}') < desktop.indexOf("PUBLIC_NAVIGATION).map("));
+  assert.ok(desktop.indexOf("PUBLIC_NAVIGATION).map(") < desktop.indexOf('{trailingGuideNavigation.map((item) => routeLink(item, "desktop"))}'), "10 Steps · Best Offers · Casinos · Bonuses · Learn · Help");
   const drawer = navigation.slice(navigation.indexOf('id="public-mobile-navigation"'), navigation.indexOf("</details>"));
-  assert.ok(drawer.indexOf('{leadingGuideNavigation.map((item) => guideLink(item, "mobile"))}') < drawer.indexOf("{PUBLIC_NAVIGATION.map("));
+  assert.ok(drawer.indexOf('{leadingGuideNavigation.map((item) => routeLink(item, "mobile"))}') < drawer.indexOf("PUBLIC_NAVIGATION).map("));
   assert.ok(!drawer.includes("trailingGuideNavigation"), "Help keeps its own block in the drawer");
+  // On the help host the commercial list is not iterated at all, so its addresses are absent
+  // from the HTML and from the inline page data alike (RFC-057 §6, rule 3).
+  assert.equal(navigation.match(/\{\(help \? \[\] : PUBLIC_NAVIGATION\)\.map\(/g)?.length, 2, "desktop list and drawer");
 
   // The Programme's shell is the one place the commercial links are not built (PR #530).
   assert.ok(footer.includes('const researchLinks = new Set(["/best-offers", "/casinos", "/bonuses"]);'));
@@ -73,6 +78,9 @@ test("no door is left in the shell: the menu is built from the lists alone", () 
   assert.equal(navigation.match(/if \(!researchNavigation && "commercial" in item\) return null;/g)?.length, 2, "desktop list and drawer");
   assert.equal(programmeLayout.match(/researchNavigation=\{false\}/g)?.length, 2, "the Programme header and footer");
   assert.doesNotMatch(publicLayout, /researchNavigation/, "every public page builds them");
+  // The public layout passes the resolved site to both shells, which is what gives the help
+  // host its own menu without a second component (RFC-057 §6.5).
+  assert.equal(publicLayout.match(/site=\{site\}/g)?.length, 2, "the header and the footer read the site");
 });
 
 test("nothing outside the Programme and letter guards names the commercial roots", () => {

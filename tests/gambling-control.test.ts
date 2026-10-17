@@ -127,7 +127,10 @@ test("the four pages are localizable public routes in the sitemap, built like th
   }
   assert.match(read("app/sitemap.ts"), /coreRoutes/);
   const parts = read("app/(public)/gambling-control/ControlPage.tsx");
-  assert.match(parts, /data-clean-route-line>\{shared\.revenueLine\}/, "the revenue model is stated in the header");
+  // Since RFC-057 §17.1 one component decides which sentence the header prints: the
+  // commission line on the commercial site, and on the help host the line that is true there
+  // (it earns nothing) with a link to the owner page. `mainLine` is still `shared.revenueLine`.
+  assert.match(parts, /data-clean-route-line><CleanRouteRevenueLine mainLine=\{shared\.revenueLine\}/, "the revenue model is stated in the header");
   assert.match(parts, /<time dateTime=\{CONTROL_PAGES_UPDATED\}>\{shared\.updatedDate\}<\/time>/, "a visible update line");
   assert.equal(CONTROL_PAGES_UPDATED, "2026-10-17");
   assert.equal(controlSharedMessages("en-GB").updatedDate, "17 October 2026");

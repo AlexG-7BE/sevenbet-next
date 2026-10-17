@@ -7,8 +7,10 @@ import styles from "./PauseStatistics.module.css";
 import { pauseStatisticsLocale, pauseStatisticsMessages, type StatisticsRow } from "@/lib/i18n/static-pages/pause-statistics";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { resolveServerSite } from "@/lib/site/server-site";
 import { absoluteUrl } from "@/lib/site";
+import { CleanRouteRevenueLine } from "@/components/clean-route/CleanRouteRevenueLine";
+import { resolveServerSite } from "@/lib/site/server-site";
+import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -31,14 +33,13 @@ function Table({ rows }: { rows: readonly StatisticsRow[] }) {
  * cut of the forum corpus. No casino is named or linked; the page's only call is the day after.
  */
 export default async function PauseStatisticsPage() {
-  const presentation = await resolveServerPresentationContext();
-  const site = await resolveServerSite();
+  const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const messages = pauseStatisticsMessages(presentation.locale);
   const contentLocale = pauseStatisticsLocale(presentation.locale);
   const url = absoluteUrl(productCanonicalPath(presentation, "/pause-statistics"), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;
   const schema = [
-    { "@context": "https://schema.org", "@type": "Dataset", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, license: "https://creativecommons.org/licenses/by/4.0/", creator: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/", site) }, distribution: [{ "@type": "DataDownload", encodingFormat: "text/csv", contentUrl: absoluteUrl(messages.register.csvHref, site) }] },
+    { "@context": "https://schema.org", "@type": "Dataset", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, license: "https://creativecommons.org/licenses/by/4.0/", creator: { "@type": "Organization", name: site === "help" ? HELP_SITE_NAME : "B4GAMBLE", url: absoluteUrl("/", site) }, distribution: [{ "@type": "DataDownload", encodingFormat: "text/csv", contentUrl: absoluteUrl(messages.register.csvHref, site) }] },
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
   ];
 
@@ -48,7 +49,7 @@ export default async function PauseStatisticsPage() {
       <small>{messages.eyebrow}</small>
       <h1>{messages.titleLead} <em>{messages.titleEmphasis}</em></h1>
       <p>{messages.intro}</p>
-      <p className={styles.revenue} data-clean-route-line>{messages.revenueLine}</p>
+      <p className={styles.revenue} data-clean-route-line><CleanRouteRevenueLine mainLine={messages.revenueLine} presentation={presentation} site={site} /></p>
     </div></header>
 
     <div className={styles.body}>

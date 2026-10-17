@@ -217,11 +217,14 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   assert.match(shellCatalog, /commissionDisclosure: "We may earn commission from clearly labelled affiliate links\."/);
   assert.equal(footer.match(/"\/affiliate-disclosure"/g)?.length, 1);
   assert.equal(footer.match(/"\/responsible-gambling"/g)?.length, 1);
-  // The Help group link and the compliance line's "Outside Great Britain? Find local help".
-  assert.equal(footer.match(/"\/help"/g)?.length, 2);
-  assert.equal(footer.match(/"\/terms"/g)?.length, 1);
-  assert.equal(footer.match(/"\/privacy"/g)?.length, 1);
-  assert.equal(footer.match(/"\/contact"/g)?.length, 1);
+  // The Help group link and the compliance line's "Outside Great Britain? Find local help",
+  // plus (since RFC-057 §6.5) the help host's own footer, which lists the same four addresses
+  // once each in its own branch. Counting both branches keeps this guard honest about what a
+  // reader of either site is shown.
+  assert.equal(footer.match(/"\/help"/g)?.length, 3);
+  assert.equal(footer.match(/"\/terms"/g)?.length, 3);
+  assert.equal(footer.match(/"\/privacy"/g)?.length, 3);
+  assert.equal(footer.match(/"\/contact"/g)?.length, 3);
   assert.match(bonusesPage, /inventoryMode === "DEMO_ONLY" \|\| result\.inventoryMode === "MIXED" \? <aside[^>]+role="note"><strong>\{messages\.common\.demoData\}<\/strong><p>\{messages\.common\.demoDisclosure\}<\/p><\/aside>/);
   assert.match(outbound, /messages\?\.affiliateNote/);
   assert.doesNotMatch(outbound, /messages\?\.description|You are leaving B4GAMBLE|<dialog/);

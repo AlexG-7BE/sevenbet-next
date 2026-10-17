@@ -13,9 +13,11 @@ import { CONTROL_PATHS, controlSharedMessages } from "@/lib/i18n/static-pages/ga
 import { pausePlanLocale, pausePlanMessages } from "@/lib/i18n/static-pages/pause-plan";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { resolveServerSite } from "@/lib/site/server-site";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
+import { helpRevenueLine, helpRevenueLinkLabel, HELP_OWNER_PATH } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -40,17 +42,26 @@ export async function generateMetadata(): Promise<Metadata> {
  * of registers (lib/articles/pause-hub.server.ts).
  */
 export default async function PausePlanPage() {
+  return <PausePlanView pathname="/pause-plan" site={await resolveServerSite()} />;
+}
+
+/**
+ * The plan itself, so that the help site can render it as its home page (RFC-057 §4.1, Founder
+ * answer Q5 (b): "the pause plan is the home page of the help site"). `pathname` is the address
+ * the page is being served at, which decides its canonical and its breadcrumb; everything else
+ * is identical, because the plan is the same plan.
+ */
+export async function PausePlanView({ pathname, site }: { pathname: string; site: SiteClass }) {
   const presentation = await resolveServerPresentationContext();
-  const site = await resolveServerSite();
   const messages = pausePlanMessages(presentation.locale);
   const contentLocale = pausePlanLocale(presentation.locale);
-  const url = absoluteUrl(productCanonicalPath(presentation, "/pause-plan"), site);
+  const url = absoluteUrl(productCanonicalPath(presentation, pathname), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
   const registerName = messages.hubTag ?? (messages.register === "both" ? "" : messages.registers[messages.register]?.name ?? "");
   const guides = await pauseHubGuides(contentLocale, registerName);
   const schema = [
-    { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/", site) } },
+    { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: site === "help" ? HELP_SITE_NAME : "B4GAMBLE", url: absoluteUrl("/", site) } },
     { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: messages.faq.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
   ];
@@ -61,7 +72,7 @@ export default async function PausePlanPage() {
       <small>{messages.eyebrow}</small>
       <h1>{messages.titleLead} <em>{messages.titleEmphasis}</em></h1>
       <p>{messages.intro}</p>
-      <p className={styles.revenue} data-clean-route-line>{messages.revenueLine}</p>
+      <p className={styles.revenue} data-clean-route-line>{site === "help" ? <>{helpRevenueLine(presentation.locale)} <Link href={productHref(presentation, HELP_OWNER_PATH)}>{helpRevenueLinkLabel(presentation.locale)}</Link></> : messages.revenueLine}</p>
     </div></header>
 
     <PausePlanTool days={messages.days} ics={messages.ics} letters={pauseLettersEnabled()} locale={contentLocale} messages={messages.tool} register={messages.register} registers={messages.registers} />

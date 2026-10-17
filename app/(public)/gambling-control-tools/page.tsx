@@ -10,9 +10,9 @@ import { controlToolsMessages } from "@/lib/i18n/static-pages/gambling-control-t
 import { controlPageSchema } from "@/lib/seo/control-page-schema";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { resolveServerSite } from "@/lib/site/server-site";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -29,8 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * The table is a real <table>; on a phone each tool becomes a card (GamblingControl.module.css).
  */
 export default async function GamblingControlToolsPage() {
-  const presentation = await resolveServerPresentationContext();
-  const site = await resolveServerSite();
+  const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const messages = controlToolsMessages(presentation.locale);
   const shared = controlSharedMessages(presentation.locale);
   const contentLocale = controlLocale(presentation.locale);
@@ -38,6 +37,7 @@ export default async function GamblingControlToolsPage() {
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
   const { columns } = messages;
   const schema = controlPageSchema({
+    site,
     name: messages.question,
     description: messages.metadataDescription,
     url,
@@ -52,7 +52,7 @@ export default async function GamblingControlToolsPage() {
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="gambling-control-tools" lang={contentLocale === presentation.locale ? undefined : "en"}>
     <JsonLd data={schema} />
-    <ControlHeader answer={messages.answer} eyebrow={messages.eyebrow} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
+    <ControlHeader presentation={presentation} site={site} answer={messages.answer} eyebrow={messages.eyebrow} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
 
     <div className={styles.body}>
       <ControlCard heading={messages.tableHeading} id="tools">
@@ -100,7 +100,7 @@ export default async function GamblingControlToolsPage() {
         </ul>
       </section>
 
-      <ControlRelated heading={shared.relatedHeading} hrefFor={(href) => productHref(presentation, href)} links={controlRelatedLinks(presentation.locale, CONTROL_PATHS.tools)} />
+      <ControlRelated site={site} heading={shared.relatedHeading} hrefFor={(href) => productHref(presentation, href)} links={controlRelatedLinks(presentation.locale, CONTROL_PATHS.tools)} />
     </div>
   </div>;
 }

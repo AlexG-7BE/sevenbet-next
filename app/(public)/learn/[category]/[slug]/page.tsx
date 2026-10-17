@@ -21,10 +21,11 @@ import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { articleService } from "@/lib/services";
 import { editorialAuthor, modifiedNotBeforePublished, organizationReference } from "@/lib/seo/structured-data";
 import { absoluteUrl } from "@/lib/site";
-import type { SiteClass } from "@/lib/site/host-gate";
-import { resolveServerSite } from "@/lib/site/server-site";
 
 import { LearningArticleRelated, LearningArticleView, type LearnOfferBridge } from "./LearningArticleView";
+import { helpMediaUrl } from "@/lib/site/help-media";
+import type { SiteClass } from "@/lib/site/host-gate";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 export const dynamic = "force-dynamic";
 
@@ -43,8 +44,7 @@ const loadArticle = cache(async function loadArticle(category: string, slug: str
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string; slug: string }> }): Promise<Metadata> {
   const { category, slug } = await params;
-  const presentation = await resolveServerPresentationContext();
-  const site = await resolveServerSite();
+  const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const article = await loadArticle(category, slug, presentation.locale);
   const messages = learningMessages(presentation.locale);
   if (!article) return productMetadata({ presentation, pathname: `/learn/${category}/${slug}`, title: messages.ui.learningGuide, description: messages.ui.metadataDescription, robots: { index: false, follow: false }, site });
@@ -56,7 +56,12 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
     openGraphType: "article",
     languageAlternates: articleLanguageAlternates(article, site),
     site,
-    ...(article.heroImageUrl ? { images: [{ url: article.heroImageUrl, alt: article.heroImageAlt || article.title }] } : {}),
+    // On the help host the social image is the first-party one or none at all: a
+    // media.b4gamble.com URL in a help page's metadata is a commercial address (§13).
+    ...(() => {
+      const image = site === "help" ? helpMediaUrl(article.heroImageUrl) : article.heroImageUrl;
+      return image ? { images: [{ url: image, alt: article.heroImageAlt || article.title }] } : {};
+    })(),
   });
   if (!article.canonicalUrl) return metadata;
   const canonical = storedCanonicalUrl(article.canonicalUrl, site);
@@ -92,14 +97,18 @@ function articleSchema(article: PublicArticle, presentation: PresentationResolut
     author: editorialAuthor(site),
     publisher: organizationReference(site),
     mainEntityOfPage: absoluteUrl(productCanonicalPath(presentation, articlePath(article)), site),
-    ...(article.heroImageUrl ? { image: [absoluteUrl(article.heroImageUrl, site)] } : {}),
+    // On the help host the image is the first-party one or none at all (RFC-057 §13); a
+    // media.b4gamble.com URL may not appear in a help page's JSON-LD either (§6 rule 1).
+    ...(() => {
+      const image = site === "help" ? helpMediaUrl(article.heroImageUrl) : article.heroImageUrl;
+      return image ? { image: [absoluteUrl(image, site)] } : {};
+    })(),
   };
 }
 
 export default async function LearningArticlePage({ params }: { params: Promise<{ category: string; slug: string }> }) {
   const { category, slug } = await params;
-  const presentation = await resolveServerPresentationContext();
-  const site = await resolveServerSite();
+  const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const article = await loadArticle(category, slug, presentation.locale);
   if (!article) {
     // A guide not published in this language opens in English, where it exists. A neutral
@@ -130,6 +139,7 @@ export default async function LearningArticlePage({ params }: { params: Promise<
       offerBridge={offerBridgeFor(article, presentation)}
       programmePath={programmePathForPresentationLocale(presentation.locale)}
       relatedArticlesSlot={<Suspense fallback={null}><RelatedLearningArticles article={article} presentation={presentation} /></Suspense>}
+      site={site}
     />
   </>;
 }

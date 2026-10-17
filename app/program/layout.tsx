@@ -9,11 +9,13 @@ import { resolveServerPresentationContext } from "@/lib/market/server";
 import { marketEditorialPublicationApproved } from "@/lib/market/registry";
 import { accountNavigationFor } from "@/lib/public-shell";
 import { isProgrammeLocale, programmePath } from "@/lib/programme/presentation";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 export default async function ProgrammeLayout({ children }: { children: ReactNode }) {
-  const [requestHeaders, presentation] = await Promise.all([
+  const [requestHeaders, presentation, site] = await Promise.all([
     headers(),
     resolveServerPresentationContext(),
+    resolveServerSite(),
   ]);
   // Header navigation is presentational. Mission pages and APIs continue to
   // resolve the authoritative session before granting access or writing data.
@@ -28,9 +30,9 @@ export default async function ProgrammeLayout({ children }: { children: ReactNod
   return (
     <>
       <a className="skipLink" href="#main-content">{messages.skipToMain}</a>
-      <PublicHeader account={account} authenticated={authenticated} commercialProductState="EDITORIAL_ONLY" presentation={presentation} programme={{ locale, localizePublicLinks }} researchNavigation={false} />
+      <PublicHeader account={account} authenticated={authenticated} commercialProductState="EDITORIAL_ONLY" presentation={presentation} programme={{ locale, localizePublicLinks }} researchNavigation={false} site={site} />
       <div id="main-content" data-public-programme-shell>{children}</div>
-      <PublicFooter authenticated={authenticated} commercialProductState="EDITORIAL_ONLY" presentation={presentation} programme={{ path, localizePublicLinks }} researchNavigation={false} />
+      <PublicFooter authenticated={authenticated} commercialProductState="EDITORIAL_ONLY" presentation={presentation} programme={{ path, localizePublicLinks }} researchNavigation={false} site={site} />
     </>
   );
 }

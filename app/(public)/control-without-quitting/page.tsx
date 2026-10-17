@@ -10,9 +10,9 @@ import { currentProgrammeJourney } from "@/lib/i18n/static-pages/ten-steps";
 import { controlPageSchema } from "@/lib/seo/control-page-schema";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { resolveServerSite } from "@/lib/site/server-site";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -29,8 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * (read from the catalogue, never written here) and the first step when gambling already hurts.
  */
 export default async function ControlWithoutQuittingPage() {
-  const presentation = await resolveServerPresentationContext();
-  const site = await resolveServerSite();
+  const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const messages = withoutQuittingMessages(presentation.locale);
   const shared = controlSharedMessages(presentation.locale);
   const contentLocale = controlLocale(presentation.locale);
@@ -38,6 +37,7 @@ export default async function ControlWithoutQuittingPage() {
   const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.withoutQuitting), site);
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
   const schema = controlPageSchema({
+    site,
     name: messages.question,
     description: messages.metadataDescription,
     url,
@@ -52,7 +52,7 @@ export default async function ControlWithoutQuittingPage() {
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="control-without-quitting" lang={contentLocale === presentation.locale ? undefined : "en"}>
     <JsonLd data={schema} />
-    <ControlHeader answer={messages.answer} eyebrow={messages.eyebrow} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
+    <ControlHeader presentation={presentation} site={site} answer={messages.answer} eyebrow={messages.eyebrow} shared={shared} titleEmphasis={messages.titleEmphasis} titleLead={messages.titleLead} />
 
     <div className={styles.body}>
       <ControlCard heading={messages.control.heading} id="control">
@@ -77,7 +77,7 @@ export default async function ControlWithoutQuittingPage() {
 
       <ControlFaqSection faq={messages.faq} heading={shared.faqHeading} />
 
-      <ControlRelated heading={shared.relatedHeading} hrefFor={(href) => productHref(presentation, href)} links={controlRelatedLinks(presentation.locale, CONTROL_PATHS.withoutQuitting)} />
+      <ControlRelated site={site} heading={shared.relatedHeading} hrefFor={(href) => productHref(presentation, href)} links={controlRelatedLinks(presentation.locale, CONTROL_PATHS.withoutQuitting)} />
     </div>
   </div>;
 }

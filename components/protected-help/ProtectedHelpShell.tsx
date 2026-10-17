@@ -3,6 +3,8 @@ import Link from "next/link";
 import type { FirstWaveMarketEvidenceProfile } from "@/lib/market/first-wave-evidence";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
+import { HELP_OWNER_PATH } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import styles from "./ProtectedHelp.module.css";
 
 const localizedShellCopy = {
@@ -20,16 +22,18 @@ export function protectedHelpShellCopy(profile?: FirstWaveMarketEvidenceProfile 
   return profile ? localizedShellCopy[profile.locale] : null;
 }
 
-export function ProtectedHelpHeader({ presentation, profile }: { presentation?: PresentationResolution; profile?: FirstWaveMarketEvidenceProfile | null }) {
+export function ProtectedHelpHeader({ presentation, profile, site = "main" }: { presentation?: PresentationResolution; profile?: FirstWaveMarketEvidenceProfile | null; site?: SiteClass }) {
   const copy = protectedHelpShellCopy(profile);
+  // The help host carries no B4GAMBLE wordmark anywhere, this shell included (Founder, Q2).
+  const brand = site === "help" ? HELP_SITE_NAME : "B4GAMBLE";
   const helpHref = presentation && profile ? productHref(presentation, "/help") : "/help";
   const homeHref = presentation && profile ? productHref(presentation, "/") : "/";
   return (
     <div className={styles.headerWrap}>
       <header className={styles.header} data-protected-help="header">
         <div className={styles.identity}>
-          <Link className={styles.brand} href={helpHref} aria-label={`B4GAMBLE ${copy?.help ?? "Help"}`} translate="no">
-            B4GAMBLE
+          <Link className={styles.brand} href={helpHref} aria-label={`${brand} ${copy?.help ?? "Help"}`} translate="no">
+            {brand}
           </Link>
           <span className={styles.protectedBadge}>{copy?.badge ?? "Protected Help"}</span>
         </div>
@@ -48,10 +52,13 @@ export function ProtectedHelpHeader({ presentation, profile }: { presentation?: 
   );
 }
 
-export function ProtectedHelpFooter({ presentation, profile }: { presentation?: PresentationResolution; profile?: FirstWaveMarketEvidenceProfile | null }) {
+export function ProtectedHelpFooter({ presentation, profile, site = "main" }: { presentation?: PresentationResolution; profile?: FirstWaveMarketEvidenceProfile | null; site?: SiteClass }) {
   const copy = protectedHelpShellCopy(profile);
+  const brand = site === "help" ? HELP_SITE_NAME : "B4GAMBLE";
   const helpHref = presentation && profile ? productHref(presentation, "/help") : "/help";
-  const aboutHref = presentation && profile ? productHref(presentation, "/about") : "/about";
+  // On the help host "About" is the help site's owner page, not the commercial /about (§6.5).
+  const aboutPath = site === "help" ? HELP_OWNER_PATH : "/about";
+  const aboutHref = presentation && profile ? productHref(presentation, aboutPath) : aboutPath;
   return (
     <div className={styles.footerWrap}>
       <footer className={styles.footer} data-protected-help="footer">
@@ -59,7 +66,7 @@ export function ProtectedHelpFooter({ presentation, profile }: { presentation?: 
           <p className={styles.footerEyebrow}>{profile?.copy.eyebrow ?? <>Control &amp; support</>}</p>
           <p className={styles.footerTitle}>{profile?.copy.helpTitle ?? "Help stays non-commercial."}</p>
           <p className={styles.footerCopy}>
-            {profile?.copy.disclaimer ?? "B4GAMBLE provides information, not emergency or clinical care. External support opens on another site and should be checked for your location."}
+            {profile?.copy.disclaimer ?? `${brand} provides information, not emergency or clinical care. External support opens on another site and should be checked for your location.`}
           </p>
           <p className={styles.footerCopy}>{profile?.copy.nonCommercial ?? "Your activity here is never used for offers, rankings or ads."}</p>
         </div>
@@ -71,7 +78,7 @@ export function ProtectedHelpFooter({ presentation, profile }: { presentation?: 
             <Link href="/terms">{copy?.terms ?? "Terms"}</Link>
             <Link href={aboutHref}>{copy?.about ?? "About"}</Link>
           </nav>
-          <p className={styles.copyright}>© 2026 B4GAMBLE</p>
+          <p className={styles.copyright}>© 2026 {brand}</p>
         </div>
       </footer>
     </div>

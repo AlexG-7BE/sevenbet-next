@@ -49,7 +49,10 @@ function textContent(html: string) {
 
 test("mounted 10 Steps component keeps the approved hierarchy inside the Public Shell", () => {
   assert.match(page, /import \{ TenStepsPage as TenStepsPresentation \} from "\.\/TenStepsPage"/);
-  assert.match(page, /<TenStepsPresentation aboutHref=\{productHref\(presentation, "\/about"\)\} control=\{control\} locale=\{presentation\.locale\} programmePath=\{programmePath\} \/>/);
+  // RFC-057 §6.5: "About" is /about on the commercial site and /who-runs-this on the help
+  // host, so the page resolves the path before it links it. `helpRoutePath` returns the
+  // argument unchanged on the main host.
+  assert.match(page, /<TenStepsPresentation aboutHref=\{aboutPath \? productHref\(presentation, aboutPath\) : undefined\} control=\{control\} locale=\{presentation\.locale\} programmePath=\{programmePath\} \/>/);
   // AEO-CONTROL-PAGES-2026-10-15: the final section links to the gambling control answers where they speak the page's language.
   assert.match(page, /const controlLabel = controlHubLinkLabel\(presentation\.locale\);/);
   assert.match(page, /productHref\(presentation, CONTROL_PATHS\.hub\)/);

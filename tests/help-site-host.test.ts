@@ -616,7 +616,10 @@ test("the help host serves nothing at all until the help shell exists", () => {
   // source constant. While it is false, no order of operations and no environment change can
   // publish the commercial shell, the casino menu and b4gamble.com addresses on the help
   // domain, because the gate answers 404 for every path.
-  assert.equal(HELP_SHELL_READY, false, "flip this in the commit that lands the help shell");
+  // Flipped on 17 October 2026 by the pull request that landed the help shell, the help home
+  // and the host-aware root metadata, which is the commit §18 names. The dark state it
+  // protected is still tested below, through the explicit `shellReady` argument.
+  assert.equal(HELP_SHELL_READY, true, "the help shell, the help home and the root metadata have shipped");
   for (const path of ["/", "/pause-plan", "/program", "/learn", "/privacy", "/robots.txt", "/sitemap.xml"]) {
     assert.equal(helpHostServes(path), true, `${path} is a help-host route class`);
     assert.equal(helpHostServesRequest(path, false), false, `${path} waits for the shell`);
@@ -904,7 +907,7 @@ test("with the switches off the main site answers exactly as it does today", asy
   );
 });
 
-test("the help gate answers 404 with no link of any kind, and that is every path until the shell lands", async () => {
+test("the help gate answers 404 with no link of any kind", async () => {
   await withEnvironment(
     { HELP_SITE_SERVING: "true", HELP_SITE_REDIRECTS: undefined, VERCEL_ENV: "production" },
     async () => {
@@ -917,13 +920,12 @@ test("the help gate answers 404 with no link of any kind, and that is every path
         // inheriting the help host from /program.
         "/help/../casinos",
         "/program/%2e%2e/casinos",
-        // Until HELP_SHELL_READY is flipped, a route the help host will serve answers 404
-        // too: its own page does not exist yet, and the commercial shell must never render
-        // on this host.
-        "/",
-        "/sv/pause-plan",
-        "/privacy",
-        "/robots.txt",
+        // The help host serves its own routes now that HELP_SHELL_READY is true (the shell,
+        // the home and the root metadata shipped together, §18 refinement 2). What it still
+        // refuses is every COMMERCIAL, INTERNAL and unknown path, which is this list.
+        "/opengraph-image",
+        "/api/media/x",
+        "/sv/not-a-real-route",
       ]) {
         const refused = await middleware(new NextRequest(`${HELP_CANONICAL_ORIGIN}${path}`));
         assert.equal(refused.status, 404, path);
@@ -940,6 +942,17 @@ test("the help gate answers 404 with no link of any kind, and that is every path
           /img-src 'self' data: blob:;/,
           path,
         );
+      }
+      // The other half of the interlock: with the shell in place the help host serves its own
+      // routes, and tests/help-site-shell.test.tsx is what proves those pages carry no
+      // commercial address.
+      // A bare `/` redirects to a language, on this host exactly as on the main one.
+      for (const path of ["/en", "/sv/pause-plan", "/privacy", "/en/who-runs-this", "/da/for-organisations"]) {
+        const served = await middleware(new NextRequest(`${HELP_CANONICAL_ORIGIN}${path}`));
+        assert.equal(served.status, 200, path);
+        assert.equal(served.headers.get(`x-middleware-request-${SITE_CLASS_HEADER}`), "help", path);
+        // Phase 2 is "live, not indexed": every help response is noindex until the 301s ship.
+        assert.equal(served.headers.get("X-Robots-Tag"), "noindex, nofollow", path);
       }
     },
   );
