@@ -164,6 +164,10 @@ export async function lastGoodMarketProductPaths(
         attempted = partialOf(cause);
         throw cause;
       }
+      // RFC-057 §7.4: the cached value holds absolute URLs built by absoluteUrl(), and the
+      // key has no site in it. Every route in it is COMMERCIAL, and absoluteUrl() still
+      // resolves against the one main origin, so one entry cannot yet hold the wrong host.
+      // The PR that gives the help site its own origin adds the site to this key.
     }, ["sitemap-market-products-v1", market.countryCode], { revalidate: 600 })();
   } catch (cause) {
     const partial = partialOf(cause) ?? attempted;

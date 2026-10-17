@@ -1,4 +1,5 @@
 import { GOOGLE_ANALYTICS_HOSTS } from "@/lib/analytics/google-analytics";
+import type { SiteClass } from "@/lib/site/host-gate";
 
 export const CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy";
 export const CSP_NONCE_REQUEST_HEADER = "x-nonce";
@@ -17,10 +18,22 @@ function normalizeFormActionOrigin(value: string) {
 
 export function buildContentSecurityPolicy(
   nonce: string,
-  options: { development?: boolean; formActionOrigins?: readonly string[]; upgradeInsecureRequests?: boolean } = {},
+  options: {
+    development?: boolean;
+    formActionOrigins?: readonly string[];
+    /**
+     * RFC-057 §13. The help host loads no third-party image and sends nothing to Google:
+     * Q3 is answered G3, so it carries no Google tag, no cookie banner and no optional
+     * cookies. `frame-ancestors 'none'` stays on both. The default is the main site, whose
+     * policy is unchanged.
+     */
+    site?: SiteClass;
+    upgradeInsecureRequests?: boolean;
+  } = {},
 ) {
   if (!nonce || /[<>&'";\s]/.test(nonce)) throw new Error("Invalid CSP nonce");
   const development = options.development ?? false;
+  const help = options.site === "help";
   const upgradeInsecureRequests = options.upgradeInsecureRequests ?? !development;
   const formActionOrigins = (options.formActionOrigins ?? []).map(normalizeFormActionOrigin);
   const directives = [
@@ -29,10 +42,10 @@ export function buildContentSecurityPolicy(
     "script-src-attr 'none'",
     `style-src 'self' 'nonce-${nonce}'`,
     "style-src-attr 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    help ? "img-src 'self' data: blob:" : "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     // Google Analytics sends after "Accept cookies"; gtag.js itself loads through 'strict-dynamic'.
-    `connect-src 'self' ${GOOGLE_ANALYTICS_HOSTS.join(" ")}${development ? " ws: wss:" : ""}`,
+    `connect-src 'self'${help ? "" : ` ${GOOGLE_ANALYTICS_HOSTS.join(" ")}`}${development ? " ws: wss:" : ""}`,
     "media-src 'self' blob:",
     "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
     "worker-src 'self' blob:",

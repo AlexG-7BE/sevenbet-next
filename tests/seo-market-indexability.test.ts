@@ -116,7 +116,14 @@ test("layout, sitemap, robots metadata, and canonicalization use the centralized
   assert.match(readFileSync("lib/market/neutral-route.ts", "utf8"), /publicPresentationAvailable/);
   assert.match(middleware, /languageRouteByPublicSlug/);
   assert.match(middleware, /withoutCountryQuery/);
-  assert.match(readFileSync("app/robots.ts", "utf8"), /sitemap: absoluteUrl\("\/sitemap\.xml"\)/);
+  // RFC-057 §7.4 and §12: each host names only its own sitemap. The main site's line is still
+  // the centralized absoluteUrl() contract; the help host names the help origin instead.
+  const robotsSource = readFileSync("app/robots.ts", "utf8");
+  assert.match(
+    robotsSource,
+    /sitemap: site === "help" \? `\$\{HELP_CANONICAL_ORIGIN\}\/sitemap\.xml` : absoluteUrl\("\/sitemap\.xml"\)/,
+  );
+  assert.match(robotsSource, /resolveServerSite\(\)/);
 });
 
 test("the sitemap lists no page that asks search engines not to index it", () => {

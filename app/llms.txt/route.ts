@@ -3,6 +3,7 @@ import { articleService } from "@/lib/services";
 import { buildLlmsTxt, llmsLaunchMarkets, type LlmsMarketCatalogue } from "@/lib/seo/llms";
 import { languageForLocale } from "@/lib/market/registry";
 import { stripPublicMarketPrefix } from "@/lib/market/routing";
+import { hostVaryingCacheControl } from "@/lib/site/host-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,8 @@ export async function GET() {
   return new Response(buildLlmsTxt({ markets, articles }), {
     headers: {
       "content-type": "text/plain; charset=utf-8",
-      "cache-control": "public, max-age=3600",
+      // RFC-057 §7.4: the body differs by host, so it may not share a cache entry between them.
+      "cache-control": hostVaryingCacheControl("public, max-age=3600"),
     },
   });
 }
