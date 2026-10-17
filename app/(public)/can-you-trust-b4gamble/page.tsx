@@ -24,8 +24,9 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * "Can you trust B4GAMBLE if it earns money from casinos?" (Founder decision, 15 October 2026):
  * how the site earns, what is free, what it does not do, when casino pages appear for a person in
- * the Programme and what stays private, each as the code behaves (see the copy module). It
- * names the casino pages and links to none of them.
+ * the Programme and what stays private, each as the code behaves (see the copy module). The page
+ * body links to no casino page; since 17 October 2026 the site menu around it does, and the copy
+ * says so (docs/07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md).
  */
 export default async function CanYouTrustPage() {
   const presentation = await resolveServerPresentationContext();
