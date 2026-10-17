@@ -8,12 +8,14 @@ import { transformHelpHandoff } from "@/lib/final-handoff/transforms";
 import { firstWaveSafetyProfile } from "@/lib/market/first-wave-evidence";
 import { firstWaveSafetyLanguageAlternates, productCanonicalPath, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 const title = "Gambling Help & Support | B4GAMBLE";
 const description = "Find practical pause, self-exclusion and access-control options without casino, bonus or affiliate prompts.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const profile = firstWaveSafetyProfile(presentation);
   return productMetadata({
     presentation,
@@ -21,18 +23,20 @@ export async function generateMetadata(): Promise<Metadata> {
     title: profile ? `${profile.copy.helpTitle} | B4GAMBLE` : title,
     description: profile?.copy.helpLead ?? description,
     robots: { index: true, follow: true },
-    languageAlternates: firstWaveSafetyLanguageAlternates("/help"),
+    languageAlternates: firstWaveSafetyLanguageAlternates("/help", site),
+    site,
   });
 }
 
 export default async function HelpPage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const profile = firstWaveSafetyProfile(presentation);
   const pageTitle = profile?.copy.helpTitle ?? title;
   const pageDescription = profile?.copy.helpLead ?? description;
-  const pageUrl = absoluteUrl(productCanonicalPath(presentation, "/help"));
+  const pageUrl = absoluteUrl(productCanonicalPath(presentation, "/help"), site);
   return <>
-    <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "B4GAMBLE", item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: pageTitle, item: pageUrl }] }} />
+    <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "B4GAMBLE", item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: pageTitle, item: pageUrl }] }} />
     <JsonLd data={{ "@context": "https://schema.org", "@type": "WebPage", name: pageTitle, description: pageDescription, url: pageUrl }} />
     {profile
       ? <FirstWaveSafetyPage presentation={presentation} profile={profile} variant="help" />

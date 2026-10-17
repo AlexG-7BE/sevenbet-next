@@ -4,15 +4,19 @@ import Link from "next/link";
 import { HandoffLegalPage } from "@/app/(public)/_legal/HandoffLegalPage";
 import { currentArticle27Representation } from "@/lib/legal/article-27-representation";
 import { absoluteUrl } from "@/lib/site";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 import styles from "./PrivacyRepresentatives.module.css";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | B4GAMBLE",
-  description: "How 7BE Inc., trading as B4GAMBLE, uses and protects personal data.",
-  alternates: { canonical: absoluteUrl("/privacy") },
-  robots: { index: false, follow: true },
-};
+// RFC-057 §8: the canonical is on the host that answered, so it is built per request.
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Privacy Policy | B4GAMBLE",
+    description: "How 7BE Inc., trading as B4GAMBLE, uses and protects personal data.",
+    alternates: { canonical: absoluteUrl("/privacy", await resolveServerSite()) },
+    robots: { index: false, follow: true },
+  };
+}
 
 const controller = <address>
   7BE Inc., trading as B4GAMBLE<br />

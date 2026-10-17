@@ -47,7 +47,7 @@ test("Hub hierarchy follows the approved desktop and mobile Protected Help famil
 test("metadata is canonical, indexable and limited to truthful WebPage schemas", () => {
   assert.match(page, /pathname: "\/help"/);
   assert.match(page, /productMetadata/);
-  assert.match(page, /firstWaveSafetyLanguageAlternates\("\/help"\)/);
+  assert.match(page, /firstWaveSafetyLanguageAlternates\("\/help", site\)/);
   assert.match(page, /robots: \{ index: true, follow: true \}/);
   assert.match(page, /productMetadata/);
   assert.match(page, /"@type": "BreadcrumbList"/);

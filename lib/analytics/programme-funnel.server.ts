@@ -7,9 +7,16 @@ import { programmeJourney } from "@/lib/programme/program-ai/mission-registry";
 
 /**
  * The weekly funnel count (Founder plan, 13 Oct 2026, PROGRAMME-FUNNEL-MCP-2026-10-14): for a
- * date range, how many accounts were created, how many Programmes were started, how many people
- * completed the third step (Mission 08, "Know who to turn to"; "Research responsibly" before 16 October 2026) and how many partner buttons signed-in people
- * pressed, by the country and by the source the account was created from.
+ * date range, how many accounts were created, how many Programmes were started and how many
+ * people completed the third step (Mission 08, "Know who to turn to"; "Research responsibly"
+ * before 16 October 2026), by the country and by the source the account was created from.
+ *
+ * **The partner-press stages are gone (RFC-057 Q7 (a), Founder, 17 October 2026.)** They
+ * counted `OutboundClick` rows beside Programme stages, which is the Programme and the casino
+ * side meeting in one number; new presses no longer store the account at all, so the count
+ * could not be read even if it were wanted. Partner presses are measured on the commercial
+ * side, by the aggregate daily projection (`outbound_click.service`), where no account is
+ * involved. This amends RFC-046 §7.
  *
  * Aggregate, read-only measurement. Each stage is counted by its own date, so a row is the week's
  * activity and not a cohort. Only two sign-up fields of an account are read beside the dates: its
@@ -30,7 +37,7 @@ const DAY_MS = 86_400_000;
 /** Progress rows store the Mission number; the third step people take is the third Mission of the journey (08). */
 const STEP_THREE_MISSION_NUMBER = programmeJourney[2];
 
-export const PROGRAMME_FUNNEL_METRICS = ["accountsCreated", "programmeStarts", "stepThreeCompletions", "outboundClicks", "partnerClicks"] as const;
+export const PROGRAMME_FUNNEL_METRICS = ["accountsCreated", "programmeStarts", "stepThreeCompletions"] as const;
 export type ProgrammeFunnelMetric = (typeof PROGRAMME_FUNNEL_METRICS)[number];
 
 const boundaryText = z.string().min(10).max(40);
@@ -46,8 +53,6 @@ const cellsSchema = z.object({
   accountsCreated: cellSchema,
   programmeStarts: cellSchema,
   stepThreeCompletions: cellSchema,
-  outboundClicks: cellSchema,
-  partnerClicks: cellSchema,
 }).strict();
 
 const countryRowSchema = cellsSchema.extend({ signupCountry: z.string().regex(/^[A-Z]{2}$/).nullable() }).strict();
@@ -89,12 +94,12 @@ export class ProgrammeFunnelError extends Error {
 }
 
 export const PROGRAMME_FUNNEL_NOTES = [
-  "Each stage is counted by its own date in the range: accounts by creation, Programme starts by the start of the enrolment, the third step (Mission 08, Know who to turn to) by its completion, partner buttons by the press. A row is the range's activity, not a cohort.",
+  "Each stage is counted by its own date in the range: accounts by creation, Programme starts by the start of the enrolment, the third step (Mission 08, Know who to turn to) by its completion. A row is the range's activity, not a cohort.",
   "Every count belongs to an account and is shown under the country and the source that account was created from. The source is the sign-up UTM source, or the acquisition source when there was no UTM tag; null means neither was recorded.",
-  "outboundClicks are partner-button presses by signed-in people; partnerClicks are those that reached the partner. Presses by people without an account are not here: social_traffic counts them per visit.",
+  "Partner-button presses are not here at all (Founder, 17 October 2026): a press is no longer stored with an account, and Programme numbers are never read next to casino clicks. Partner clicks are an aggregate commercial measure with no account in it.",
   "A Programme start here is an enrolment, which needs an account. People who began the first step without an account are counted by social_traffic (programmeStarts), not here.",
   "A cell of 1 or 2 is withheld (null). When only one cell of a column is withheld, the next smallest one is withheld too, so a total cannot reveal it. Zero is shown.",
-  "Staff accounts are excluded. Partner-button presses are Production human traffic only.",
+  "Staff accounts are excluded.",
 ] as const;
 
 export type ProgrammeFunnelRange = { from: Date; until: Date };
@@ -107,12 +112,10 @@ export type ProgrammeFunnelStore = {
   accountsCreated(range: ProgrammeFunnelRange): Promise<ProgrammeFunnelGroup[]>;
   programmeStarts(range: ProgrammeFunnelRange): Promise<ProgrammeFunnelGroup[]>;
   stepThreeCompletions(range: ProgrammeFunnelRange): Promise<ProgrammeFunnelGroup[]>;
-  partnerButtonPresses(range: ProgrammeFunnelRange): Promise<ProgrammeFunnelGroup[]>;
 };
 
 export type ProgrammeFunnelReader = (input: unknown) => Promise<ProgrammeFunnelResult>;
 
-const productionHuman = { environment: "PRODUCTION", trafficKind: "HUMAN" } as const;
 const notStaff = { adminUser: null } as const;
 const origin = { signupCountryCode: true, signupUtmSource: true, signupSource: true } as const;
 
@@ -161,20 +164,6 @@ export const prismaProgrammeFunnelStore: ProgrammeFunnelStore = {
     }));
     return completions.map(({ enrollment }) => ({ ...enrollment.user, metric: "stepThreeCompletions" as const, count: 1 }));
   },
-
-  async partnerButtonPresses({ from, until }) {
-    const presses = bounded(await prisma.outboundClick.findMany({
-      where: { ...productionHuman, attemptedAt: { gte: from, lt: until }, user: notStaff },
-      select: { state: true, user: { select: origin } },
-      take: PROGRAMME_FUNNEL_MAX_RECORDS + 1,
-    }));
-    return presses.flatMap(({ state, user }): ProgrammeFunnelGroup[] => user
-      ? [
-          { ...user, metric: "outboundClicks", count: 1 },
-          ...(state === "SUCCEEDED" ? [{ ...user, metric: "partnerClicks" as const, count: 1 }] : []),
-        ]
-      : []);
-  },
 };
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
@@ -210,7 +199,7 @@ export function resolveProgrammeFunnelRange(input: { from?: string; to?: string 
 type Counts = Record<ProgrammeFunnelMetric, number>;
 type Cells = Record<ProgrammeFunnelMetric, number | null>;
 
-const emptyCounts = (): Counts => ({ accountsCreated: 0, programmeStarts: 0, stepThreeCompletions: 0, outboundClicks: 0, partnerClicks: 0 });
+const emptyCounts = (): Counts => ({ accountsCreated: 0, programmeStarts: 0, stepThreeCompletions: 0 });
 
 function countryOf(group: ProgrammeFunnelOrigin) {
   const code = group.signupCountryCode?.trim().toUpperCase();
@@ -302,7 +291,6 @@ export async function readProgrammeFunnel(
       store.accountsCreated(range),
       store.programmeStarts(range),
       store.stepThreeCompletions(range),
-      store.partnerButtonPresses(range),
     ])).flat();
   } catch (error) {
     if (error instanceof ProgrammeFunnelError) throw error;

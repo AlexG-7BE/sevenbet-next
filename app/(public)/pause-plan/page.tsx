@@ -13,6 +13,7 @@ import { CONTROL_PATHS, controlSharedMessages } from "@/lib/i18n/static-pages/ga
 import { pausePlanLocale, pausePlanMessages } from "@/lib/i18n/static-pages/pause-plan";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
 
@@ -20,8 +21,9 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = pausePlanMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: "/pause-plan", title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: "/pause-plan", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 /**
@@ -39,17 +41,18 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function PausePlanPage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = pausePlanMessages(presentation.locale);
   const contentLocale = pausePlanLocale(presentation.locale);
-  const url = absoluteUrl(productCanonicalPath(presentation, "/pause-plan"));
+  const url = absoluteUrl(productCanonicalPath(presentation, "/pause-plan"), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
   const registerName = messages.hubTag ?? (messages.register === "both" ? "" : messages.registers[messages.register]?.name ?? "");
   const guides = await pauseHubGuides(contentLocale, registerName);
   const schema = [
-    { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") } },
+    { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/", site) } },
     { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: messages.faq.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
-    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
+    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
   ];
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="pause-plan" lang={contentLocale === presentation.locale ? undefined : "en"}>

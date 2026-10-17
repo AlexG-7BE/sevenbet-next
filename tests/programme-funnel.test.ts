@@ -57,10 +57,6 @@ const seeded = {
     ...Array.from({ length: 3 }, () => group("stepThreeCompletions", 1, "SE", "facebook")),
     group("stepThreeCompletions", 1, "DK", "lana"),
   ],
-  partnerButtonPresses: [
-    ...Array.from({ length: 4 }, () => group("outboundClicks", 1, "SE", "facebook")),
-    ...Array.from({ length: 3 }, () => group("partnerClicks", 1, "SE", "facebook")),
-  ],
 };
 
 function store(overrides: Partial<ProgrammeFunnelStore> = {}) {
@@ -70,7 +66,6 @@ function store(overrides: Partial<ProgrammeFunnelStore> = {}) {
     accountsCreated: read(seeded.accountsCreated),
     programmeStarts: read(seeded.programmeStarts),
     stepThreeCompletions: read(seeded.stepThreeCompletions),
-    partnerButtonPresses: read(seeded.partnerButtonPresses),
     ...overrides,
   };
   return { value, ranges };
@@ -101,7 +96,6 @@ test("invalid input is rejected before any read", async () => {
     accountsCreated: async () => { reads += 1; return []; },
     programmeStarts: async () => { reads += 1; return []; },
     stepThreeCompletions: async () => { reads += 1; return []; },
-    partnerButtonPresses: async () => { reads += 1; return []; },
   });
   for (const input of [{ userId: "someone" }, { email: "a@b.c" }, { groupBy: "user" }, { from: 20261012 }, { country: "SE" }, "x"]) {
     await rejectsWith(readProgrammeFunnel(input, counting.value, NOW), "INVALID_INPUT");
@@ -110,39 +104,43 @@ test("invalid input is rejected before any read", async () => {
   assert.equal(reads, 0);
 });
 
-test("the four stages are counted by sign-up country and by sign-up source, with one- and two-person cells withheld", async () => {
+test("the three stages are counted by sign-up country and by sign-up source, with one- and two-person cells withheld", async () => {
   const fake = store();
   const result = await readProgrammeFunnel(undefined, fake.value, NOW);
   assert.deepEqual(programmeFunnelResultSchema.parse(result), result);
-  assert.deepEqual(fake.ranges.map((range) => [range.from.toISOString(), range.until.toISOString()]), Array(4).fill(["2026-10-12T06:00:00.000Z", "2026-10-19T06:00:00.000Z"]));
+  assert.deepEqual(fake.ranges.map((range) => [range.from.toISOString(), range.until.toISOString()]), Array(3).fill(["2026-10-12T06:00:00.000Z", "2026-10-19T06:00:00.000Z"]));
   assert.deepEqual(result.range, { from: "2026-10-12T06:00:00.000Z", to: "2026-10-19T06:00:00.000Z", days: 7 });
   assert.equal(result.minimumCell, 3);
 
   // Totals cover every account; only a total of 1 or 2 would be withheld.
-  assert.deepEqual(result.totals, { accountsCreated: 21, programmeStarts: 12, stepThreeCompletions: 4, outboundClicks: 4, partnerClicks: 3 });
+  assert.deepEqual(result.totals, { accountsCreated: 21, programmeStarts: 12, stepThreeCompletions: 4 });
 
   assert.deepEqual(result.byCountry, [
     // "facebook" and "Facebook" are one source and one country row.
-    { signupCountry: "SE", accountsCreated: 10, programmeStarts: 7, stepThreeCompletions: null, outboundClicks: 4, partnerClicks: 3 },
-    { signupCountry: "DK", accountsCreated: 8, programmeStarts: null, stepThreeCompletions: null, outboundClicks: 0, partnerClicks: 0 },
-    { signupCountry: "GB", accountsCreated: null, programmeStarts: null, stepThreeCompletions: 0, outboundClicks: 0, partnerClicks: 0 },
-    { signupCountry: null, accountsCreated: null, programmeStarts: 0, stepThreeCompletions: 0, outboundClicks: 0, partnerClicks: 0 },
+    { signupCountry: "SE", accountsCreated: 10, programmeStarts: 7, stepThreeCompletions: null },
+    { signupCountry: "DK", accountsCreated: 8, programmeStarts: null, stepThreeCompletions: null },
+    { signupCountry: "GB", accountsCreated: null, programmeStarts: null, stepThreeCompletions: 0 },
+    { signupCountry: null, accountsCreated: null, programmeStarts: 0, stepThreeCompletions: 0 },
   ]);
   // Why SE's 3 third-step completions and DK's 4 starts are withheld: each column had exactly one
   // small cell (DK 1, GB 1), and the total would have given it away, so the next smallest goes too.
   assert.deepEqual(result.bySource, [
-    { signupSource: "facebook", accountsCreated: 10, programmeStarts: 7, stepThreeCompletions: null, outboundClicks: 4, partnerClicks: 3 },
-    { signupSource: "lana", accountsCreated: 5, programmeStarts: null, stepThreeCompletions: null, outboundClicks: 0, partnerClicks: 0 },
+    { signupSource: "facebook", accountsCreated: 10, programmeStarts: 7, stepThreeCompletions: null },
+    { signupSource: "lana", accountsCreated: 5, programmeStarts: null, stepThreeCompletions: null },
     // No UTM tag: the acquisition source names the row.
-    { signupSource: "organic_search", accountsCreated: 3, programmeStarts: 0, stepThreeCompletions: 0, outboundClicks: 0, partnerClicks: 0 },
-    { signupSource: null, accountsCreated: null, programmeStarts: null, stepThreeCompletions: 0, outboundClicks: 0, partnerClicks: 0 },
-    { signupSource: "youtube", accountsCreated: null, programmeStarts: 0, stepThreeCompletions: 0, outboundClicks: 0, partnerClicks: 0 },
+    { signupSource: "organic_search", accountsCreated: 3, programmeStarts: 0, stepThreeCompletions: 0 },
+    { signupSource: null, accountsCreated: null, programmeStarts: null, stepThreeCompletions: 0 },
+    { signupSource: "youtube", accountsCreated: null, programmeStarts: 0, stepThreeCompletions: 0 },
   ]);
   assert.deepEqual(result.omitted, { countries: 0, sources: 0 });
   assert.deepEqual(result.notes, [...PROGRAMME_FUNNEL_NOTES]);
   assert.ok(result.notes.some((note) => /A cell of 1 or 2 is withheld \(null\)/.test(note)));
   assert.ok(result.notes.some((note) => /not a cohort/.test(note)));
   assert.ok(result.notes.some((note) => /Staff accounts are excluded/.test(note)));
+  // RFC-057 Q7 (a): the partner-press stages are gone from the count, its notes and its schema.
+  assert.deepEqual(Object.keys(result.totals), ["accountsCreated", "programmeStarts", "stepThreeCompletions"]);
+  assert.doesNotMatch(JSON.stringify(result), /outboundClicks|partnerClicks|OutboundClick/);
+  assert.ok(result.notes.some((note) => /Partner-button presses are not here at all/.test(note)));
 
   // Nothing a person could be found by: only counts, two-letter countries and source names.
   const text = JSON.stringify({ ...result, notes: [] });
@@ -167,14 +165,14 @@ test("no published cell is 1 or 2, and one withheld cell never stands alone in a
   const next = (bound: number) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % bound; };
   for (let round = 0; round < 200; round += 1) {
     const groups = Array.from({ length: 1 + next(12) }, () => group(
-      (["accountsCreated", "programmeStarts", "stepThreeCompletions", "outboundClicks", "partnerClicks"] as const)[next(5)],
+      (["accountsCreated", "programmeStarts", "stepThreeCompletions"] as const)[next(3)],
       1 + next(6),
       ["SE", "DK", "GB", "NO", null][next(5)],
       ["facebook", "lana", "x", null][next(4)],
     ));
     const result = aggregateProgrammeFunnel(groups);
     for (const rows of [result.byCountry, result.bySource] as Record<string, unknown>[][]) {
-      for (const metric of ["accountsCreated", "programmeStarts", "stepThreeCompletions", "outboundClicks", "partnerClicks"]) {
+      for (const metric of ["accountsCreated", "programmeStarts", "stepThreeCompletions"]) {
         const column = rows.map((row) => row[metric] as number | null);
         for (const cell of column) assert.ok(cell === null || cell === 0 || cell >= 3, `published ${cell}`);
         const withheld = column.filter((cell) => cell === null).length;
@@ -196,7 +194,7 @@ test("more groups than the row cap are cut and counted, and broken stores fail c
   const broken = store({ programmeStarts: async () => { throw new Error("socket hang up at postgres://secret"); } });
   await assert.rejects(readProgrammeFunnel({}, broken.value, NOW), (error: unknown) => error instanceof ProgrammeFunnelError
     && error.code === "FUNNEL_UNAVAILABLE" && error.retryable && !/secret|postgres/.test(error.message));
-  const oversize = store({ partnerButtonPresses: async () => { throw new ProgrammeFunnelError("RESULT_TOO_LARGE", "Too many."); } });
+  const oversize = store({ stepThreeCompletions: async () => { throw new ProgrammeFunnelError("RESULT_TOO_LARGE", "Too many."); } });
   await rejectsWith(readProgrammeFunnel({}, oversize.value, NOW), "RESULT_TOO_LARGE");
 });
 
@@ -204,7 +202,7 @@ test("the Prisma store only reads, reads two sign-up fields and dates, and nothi
   const source = readFileSync("lib/analytics/programme-funnel.server.ts", "utf8");
   assert.doesNotMatch(source, /\.create\(|\.update\(|\.upsert\(|\.delete\(|deleteMany|updateMany|createMany|\$transaction|\$executeRaw|\$queryRaw/);
   const reads = source.match(/prisma\.\w+\.(?:findMany|findFirst|findUnique|groupBy|count|aggregate)\(/g) ?? [];
-  assert.deepEqual(reads, ["prisma.user.groupBy(", "prisma.programEnrollment.findMany(", "prisma.programmeMissionProgress.findMany(", "prisma.outboundClick.findMany("]);
+  assert.deepEqual(reads, ["prisma.user.groupBy(", "prisma.programEnrollment.findMany(", "prisma.programmeMissionProgress.findMany("]);
   // Every read is bounded and excludes staff accounts.
   assert.equal((source.match(/take: PROGRAMME_FUNNEL_MAX_RECORDS \+ 1/g) ?? []).length, reads.length);
   assert.equal((source.match(/notStaff/g) ?? []).length, reads.length + 1);
@@ -213,7 +211,6 @@ test("the Prisma store only reads, reads two sign-up fields and dates, and nothi
   assert.match(source, /const origin = \{ signupCountryCode: true, signupUtmSource: true, signupSource: true \} as const;/);
   assert.deepEqual([...new Set(source.match(/select: \{[^\n]*\}/g))].sort(), [
     "select: { enrollment: { select: { user: { select: origin } } } }",
-    "select: { state: true, user: { select: origin } }",
     "select: { user: { select: origin } }",
   ]);
   const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "").replace(/^export const PROGRAMME_FUNNEL_NOTES = \[[\s\S]*?\] as const;$/m, "");
@@ -223,7 +220,6 @@ test("the Prisma store only reads, reads two sign-up fields and dates, and nothi
   assert.equal(programmeJourney[2], 8);
   assert.equal(missionStep(8), 3);
   assert.match(source, /missionNumber: STEP_THREE_MISSION_NUMBER,\s+status: "COMPLETED",\s+completedAt: \{ gte: from, lt: until \}/);
-  assert.match(source, /\.\.\.productionHuman, attemptedAt: \{ gte: from, lt: until \}/);
   assert.match(source, /programmeFunnelResultSchema\.parse/);
 
   // One reader: the Learn MCP tool. No page, component, offer, ranking, route or letter imports it.
@@ -271,6 +267,9 @@ test("MCP discovery lists programme_funnel as a read-only tool next to social_tr
     assert.match(tool?.description ?? "", /withheld \(null\)/);
     assert.match(tool?.description ?? "", /Know who to turn to/);
     assert.match(tool?.description ?? "", /no account, user, session, email, IP, answer or pause data/);
+  // RFC-057 Q7 (a), 17 October 2026: no partner-press stage is offered or described.
+  assert.doesNotMatch(tool?.description ?? "", /outboundClicks|partnerClicks/);
+  assert.match(tool?.description ?? "", /Partner-button presses are not part of this count/);
     assert.equal(learnMcpToolSurfaceIsExpected(discovered.tools.map((candidate) => candidate.name)), true);
     assert.equal(learnMcpToolSurfaceIsExpected(["programme_funnel"]), false);
   } finally {

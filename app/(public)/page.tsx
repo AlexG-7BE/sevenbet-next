@@ -7,13 +7,15 @@ import { transformHomeHandoff, transformHomeHandoffCss } from "@/lib/final-hando
 import { homeMetadata } from "@/lib/i18n/home-catalog";
 import { productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { shouldStreamRouteFrame } from "@/lib/seo/route-frame";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const { title, description } = homeMetadata(presentation.locale);
-  return productMetadata({ presentation, pathname: "/", title, description, robots: { index: true, follow: true } });
+  return productMetadata({ presentation, pathname: "/", title, description, robots: { index: true, follow: true }, site });
 }
 
 async function HomeContent() {

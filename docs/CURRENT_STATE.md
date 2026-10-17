@@ -78,17 +78,79 @@ classes, and nothing a visitor can reach:
   host only (§13); the main site's policy is byte-for-byte unchanged. The CSP is a backstop,
   not the guarantee: keeping the Google tag off the help host is the layout's job, and the
   layout is a later phase-1 pull request.
-- **Not in this pull request, and still to come in phase 1:** the help shell and the host-aware
-  root not-found, the help home, host-aware root metadata and the help share image, per-site
-  origins (`helpUrl`) and site-keyed caches, the Better Auth two-host configuration, per-host
-  search files and the second IndexNow key, e-mail origins, the Learn origin by category, the
-  first-party help images, the help-host copy, the owner page and data statement, the link guard
-  and the two-host browser specs. Three named items of that list are what `HELP_SHELL_READY`
-  waits for: the help shell, the help home and the host-aware root metadata. The same pull
-  request replaces the gate's own 404 body (`lib/site/help-not-found-page.ts`, today a
-  self-contained page in Swedish, Danish and English with no link of any kind) with the help
-  site's own not-found page, and gives the help host its own icon in place of the B4GAMBLE
-  mark at `/icon.svg` and `/favicon.ico`.
+- **Not in that pull request:** see the per-host origins below, and what is still outstanding
+  after it.
+
+### Phase 1, per-host origins (PR #537, branch `feat/help-site-origins`)
+
+**DETECTED in the repository; nothing it contains is reachable, because `HELP_SHELL_READY` is
+still `false` and neither switch is set.** Every URL the application builds, every search file
+and the sign-in and letter configuration now take the site explicitly, and the default is the
+main site, so the main host behaves exactly as before:
+
+- `lib/site.ts` — `helpUrl` (the source constant `HELP_CANONICAL_ORIGIN`; only a local run can
+  move it, and only to the `HELP_SITE_DEV_HOST` middleware already serves), `originForSite(site)`
+  and `absoluteUrl(path, site)`. `siteUrl` keeps meaning the **main** origin. A server component
+  reads its site with `resolveServerSite()`; the one-argument form is unchanged.
+- **Canonicals, hreflang and JSON-LD follow the host that answered.** `productMetadata`,
+  `productLanguageAlternates`, `programmeSearchMetadata`, `articleLanguageAlternates`,
+  `controlPageSchema` and the structured-data helpers take the site, and the HELP and SHARED
+  pages pass it. No page ever names an alternate on the other host: two hosts are two sites,
+  not two languages of one (§12). `/start`, `/privacy`, `/terms` and the budget-calculator
+  layout build their canonical per request instead of from a module constant.
+- **One identity per site (§8).** `organizationSchema`, `websiteSchema`, `organizationReference`
+  and `editorialAuthor` take the site. On the help host the name is "Pause Plan" (Q2) and the
+  B4GAMBLE aliases, the brand's social profiles and the `b4gamble.com` logo URL are **absent**,
+  not rewritten; a test asserts no node of a help response contains the string at all. The main
+  site's nodes are byte-for-byte what they were.
+- **The sitemap is split by route class (§12).** `coreRoutesForSite` in
+  `lib/site/core-routes.ts` is the one place the list divides, and the route-manifest test keeps
+  it in step with the classes. `helpSitemap()` lists only help-origin URLs and loads no
+  catalogue, no offers and no reviews; `mainSitemap()` is today's sitemap and drops its `HELP`
+  routes and the help guides in the same deployment that starts the 301s. The market-product
+  cache entry now has the site in its key (§7.4).
+- **A second IndexNow key (§12).** The help host has its own key and its own key file
+  (`HELP`, so the main host answers 404 for it, as the help host does for the main one): a key
+  file shared by two domains is a public marker joining them. Announcements are grouped by
+  host, one POST per host with that host's key.
+- **Better Auth, two Production hosts, code only (§9.2).** With `HELP_SITE_SERVING` on,
+  Production uses the dynamic base URL with exactly the two source-constant hosts and refuses
+  any other value, including a `BETTER_AUTH_URL` that is not one of the two. **No environment
+  variable changed here**; what release governance sets, and when, is now a table in
+  `docs/06_Operations/Google-Authentication-and-Email-Readiness.md`. Preview is untouched.
+- **Auth letters accept the request's own origin (§9.2, §11).** `validAuthActionUrl` accepted
+  only `siteUrl`, so a verification or reset letter for an account created on the help host
+  would have been refused with `invalid-action-url` and never sent. The allowlist is the two
+  source constants and nothing else, and an auth letter's own links are built on the origin its
+  action URL came from, so nobody is sent across the split. A stored template may link either
+  site; the casino and partner refusal of PR #530 is untouched and applies to both.
+- **A guide's public origin follows its category (§14).** `learnArticleSite` is the one
+  function, and the verifier, the result URL, IndexNow, the sitemap, `learn_source` and
+  `learn_context` all read it. Only the **path** of a stored canonical is used, resolved
+  against the guide's own origin, so a stored absolute `b4gamble.com` canonical can never be
+  what a help guide declares.
+- **Q7 (a), the Programme/casino tie in the data.** A new partner press no longer stores the
+  account: `OutboundClick.userId` is written as `null`, and so is the account on the two
+  `OUTBOUND_REDIRECT_*` events, which are the same press by another name. The sign-in
+  back-fill that joined earlier anonymous presses to the account at the next sign-in is gone
+  (the analytics session, events and consent rows are still stitched, as before). The weekly
+  `programme_funnel` count loses its `outboundClicks` and `partnerClicks` stages, its
+  `OutboundClick` read and the notes that described them; its MCP description says so. **No
+  schema change, no migration, no column removed** — the field stays and receives nothing new.
+  Rows written before this keep their link until the separate data job clears them, which is
+  not part of phase 1, so `/who-runs-this` must say that plainly while it is true. Partner
+  clicks are still measured commercially, by the aggregate daily projection, where no account
+  is involved. Amends RFC-046 §7.
+- **Still to come in phase 1:** the help shell and the host-aware root not-found, the help
+  home, host-aware root metadata and the help share image (a help page names **no** share image
+  until it exists, rather than the commercial one), the per-host `llms.txt` body and the
+  help-host copy of §17.1, the first-party help images, the owner page and the data statement,
+  the link guard and the two-host browser specs. Three named items of that list are what
+  `HELP_SHELL_READY` waits for: the help shell, the help home and the host-aware root metadata.
+  The same pull request replaces the gate's own 404 body (`lib/site/help-not-found-page.ts`,
+  today a self-contained page in Swedish, Danish and English with no link of any kind) with the
+  help site's own not-found page, and gives the help host its own icon in place of the
+  B4GAMBLE mark at `/icon.svg` and `/favicon.ico`.
 
 - **Two sites, one Vercel project.** `b4gamble.com` stays the commercial site; `pauseplan.help`
   becomes the help site, carrying the Programme, the 10 steps, the pause plans (sv/da/en), the

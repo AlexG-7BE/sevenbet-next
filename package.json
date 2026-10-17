@@ -66,7 +66,7 @@
     "gambling-control:test": "node --import tsx --test tests/gambling-control.test.ts",
     "programme-no-casino:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/programme-no-casino-links.test.tsx",
     "programme-step3-help:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/programme-step3-help-lesson.test.tsx",
-    "help-site:test": "NEXT_PUBLIC_SITE_URL=https://b4gamble.com node --import tsx --test tests/help-site-host.test.ts",
+    "help-site:test": "NEXT_PUBLIC_SITE_URL=https://b4gamble.com node --import tsx --test tests/help-site-host.test.ts tests/help-site-origins.test.ts",
     "seo-crawler:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/crawler-ready-metadata.test.ts tests/indexnow-changed-reviews.test.ts",
     "seo:indexnow": "node scripts/indexnow-submit.mjs",
     "canonical-host:test": "NEXT_PUBLIC_SITE_URL=https://b4gamble.com node --import tsx --test tests/production-canonical-host.test.ts",

@@ -8,7 +8,9 @@ import {
   publicMarketPath,
 } from "@/lib/market/registry";
 import { reviewIndexable } from "@/lib/seo/review-indexing";
-import { absoluteUrl, siteUrl } from "@/lib/site";
+import { absoluteUrl, originForSite } from "@/lib/site";
+import { learnArticleSite } from "@/lib/site/core-routes";
+import type { SiteClass } from "@/lib/site/host-gate";
 
 /**
  * IndexNow (Bing, Yandex, Seznam, Naver; shared between them) lets the site announce changed
@@ -17,7 +19,24 @@ import { absoluteUrl, siteUrl } from "@/lib/site";
  */
 export const INDEXNOW_KEY = "219017cffaba5177842beab195a2564c";
 export const INDEXNOW_KEY_PATH = `/${INDEXNOW_KEY}.txt`;
+/**
+ * RFC-057 §12: the help host gets its own key and its own key file. The same key would work
+ * on both hosts, but a key file shared by two domains is a public marker anyone can use to
+ * join them — which is the one thing the second domain exists to avoid. Each host serves only
+ * its own key: the main file is `COMMERCIAL` and the help file is `HELP`, so each answers 404
+ * on the other host (lib/site/host-routes.ts).
+ */
+export const HELP_INDEXNOW_KEY = "fd78a34615b74c4e9db7fd7eb03f7659";
+export const HELP_INDEXNOW_KEY_PATH = `/${HELP_INDEXNOW_KEY}.txt`;
 export const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
+
+export function indexNowKey(site: SiteClass = "main") {
+  return site === "help" ? HELP_INDEXNOW_KEY : INDEXNOW_KEY;
+}
+
+export function indexNowKeyPath(site: SiteClass = "main") {
+  return site === "help" ? HELP_INDEXNOW_KEY_PATH : INDEXNOW_KEY_PATH;
+}
 
 type Environment = Record<string, string | undefined>;
 
@@ -26,8 +45,9 @@ export function indexNowEnabled(environment: Environment = process.env) {
   return environment.VERCEL_ENV === "production" && environment.INDEXNOW_DISABLED !== "true";
 }
 
-export function indexNowPayload(urls: readonly string[]) {
-  const host = new URL(siteUrl).host;
+/** One host's announcement: IndexNow accepts one host, with that host's key, per request. */
+export function indexNowPayload(urls: readonly string[], site: SiteClass = "main") {
+  const host = new URL(originForSite(site)).host;
   const urlList = [...new Set(urls)].filter((url) => {
     try {
       return new URL(url).host === host;
@@ -35,22 +55,40 @@ export function indexNowPayload(urls: readonly string[]) {
       return false;
     }
   });
-  return { host, key: INDEXNOW_KEY, keyLocation: absoluteUrl(INDEXNOW_KEY_PATH), urlList };
+  return { host, key: indexNowKey(site), keyLocation: absoluteUrl(indexNowKeyPath(site), site), urlList };
+}
+
+/**
+ * The announcements a list of URLs produces, grouped by host (§12). A list may hold both
+ * hosts' URLs at phase 3, when a moved guide is announced on the main host (so the 301 is
+ * read) and on the help host (so the new address is crawled); each group is one POST with
+ * that host's own key. A URL on neither host is dropped, as it always was.
+ */
+export function indexNowPayloadsByHost(urls: readonly string[]) {
+  return (["main", "help"] as const)
+    .map((site) => indexNowPayload(urls, site))
+    .filter((payload) => payload.urlList.length > 0);
 }
 
 export async function submitIndexNow(
   urls: readonly string[],
   options: { environment?: Environment; fetchImpl?: typeof fetch } = {},
 ) {
-  const payload = indexNowPayload(urls);
-  if (!indexNowEnabled(options.environment) || !payload.urlList.length) return { submitted: 0, status: null };
-  const response = await (options.fetchImpl ?? fetch)(INDEXNOW_ENDPOINT, {
-    method: "POST",
-    headers: { "content-type": "application/json; charset=utf-8" },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(5_000),
-  });
-  return { submitted: payload.urlList.length, status: response.status };
+  const payloads = indexNowPayloadsByHost(urls);
+  if (!indexNowEnabled(options.environment) || !payloads.length) return { submitted: 0, status: null };
+  let submitted = 0;
+  let status: number | null = null;
+  for (const payload of payloads) {
+    const response = await (options.fetchImpl ?? fetch)(INDEXNOW_ENDPOINT, {
+      method: "POST",
+      headers: { "content-type": "application/json; charset=utf-8" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5_000),
+    });
+    submitted += payload.urlList.length;
+    status = response.status;
+  }
+  return { submitted, status };
 }
 
 /**
@@ -90,8 +128,11 @@ export function productDirectoryUrls() {
 export function learnArticleUrls(category: string, slug: string, locale: string = DEFAULT_MARKET_PROFILE.defaultLocale) {
   const language = LANGUAGE_ROUTE_PROFILES.find((profile) => (profile.localeVariants as readonly string[]).includes(locale))
     ?? LANGUAGE_ROUTE_PROFILES.find((profile) => profile.defaultLocale === DEFAULT_MARKET_PROFILE.defaultLocale)!;
+  // A guide is announced under the host it lives on (§12, §14): the help guides move with
+  // their category when HELP_SITE_REDIRECTS is on, every other category stays on the main site.
+  const site = learnArticleSite(category);
   return [
-    absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, articlePath({ category, slug }))),
-    absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, "/learn")),
+    absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, articlePath({ category, slug })), site),
+    absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, "/learn"), site),
   ];
 }

@@ -120,7 +120,8 @@ test("metadata, JSON-LD and sitemap use visible canonical Article fields", () =>
   assert.match(route, /datePublished: article\.publishedAt/);
   // dateModified never precedes datePublished (crawler-ready metadata, 27 Sep 2026).
   assert.match(route, /dateModified: modifiedNotBeforePublished\(article\.publishedAt, article\.updatedAt\) \?\? article\.updatedAt/);
-  assert.match(route, /new URL\(article\.canonicalUrl, siteUrl\)\.href/);
+  // RFC-057 §14: only the path of a stored canonical is used, against the guide's own origin.
+  assert.match(route, /const canonical = storedCanonicalUrl\(article\.canonicalUrl, site\);/);
   assert.doesNotMatch(route, /FAQPage|structuredData/);
   assert.match(sitemap, /articleService\.listPublished/);
   assert.match(sitemap, /articlePath\(article\)/);

@@ -10,6 +10,7 @@ import { currentProgrammeJourney } from "@/lib/i18n/static-pages/ten-steps";
 import { controlPageSchema } from "@/lib/seo/control-page-schema";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
 
@@ -17,8 +18,9 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = withoutQuittingMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: CONTROL_PATHS.withoutQuitting, title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: CONTROL_PATHS.withoutQuitting, title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 /**
@@ -28,11 +30,12 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function ControlWithoutQuittingPage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = withoutQuittingMessages(presentation.locale);
   const shared = controlSharedMessages(presentation.locale);
   const contentLocale = controlLocale(presentation.locale);
   const steps = currentProgrammeJourney(contentLocale);
-  const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.withoutQuitting));
+  const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.withoutQuitting), site);
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
   const schema = controlPageSchema({
     name: messages.question,
@@ -41,8 +44,8 @@ export default async function ControlWithoutQuittingPage() {
     inLanguage: contentLocale,
     faq: messages.faq,
     breadcrumbs: [
-      { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) },
-      { name: shared.hubLabel, item: absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub)) },
+      { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) },
+      { name: shared.hubLabel, item: absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub), site) },
       { name: messages.breadcrumbLabel, item: url },
     ],
   });

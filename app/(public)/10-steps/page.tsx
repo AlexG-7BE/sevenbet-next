@@ -5,18 +5,21 @@ import { CONTROL_PATHS, controlHubLinkLabel } from "@/lib/i18n/static-pages/gamb
 import { tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
 import { TenStepsPage as TenStepsPresentation } from "./TenStepsPage";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = tenStepsTranslation(presentation.locale);
-  return productMetadata({ presentation, pathname: "/10-steps", title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: "/10-steps", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 export default async function TenStepsPage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = tenStepsTranslation(presentation.locale);
   const shell = publicShellMessages(presentation.locale);
   const canonicalPath = productCanonicalPath(presentation, "/10-steps");
@@ -24,7 +27,7 @@ export default async function TenStepsPage() {
   const controlLabel = controlHubLinkLabel(presentation.locale);
   const control = controlLabel ? { href: productHref(presentation, CONTROL_PATHS.hub), label: controlLabel } : undefined;
   return <>
-    <JsonLd data={[{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: shell.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.metadataTitle, item: absoluteUrl(canonicalPath) }] }, { "@context": "https://schema.org", "@type": "WebPage", name: messages.metadataTitle, description: messages.metadataDescription, url: absoluteUrl(canonicalPath) }]} />
+    <JsonLd data={[{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: shell.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.metadataTitle, item: absoluteUrl(canonicalPath, site) }] }, { "@context": "https://schema.org", "@type": "WebPage", name: messages.metadataTitle, description: messages.metadataDescription, url: absoluteUrl(canonicalPath, site) }]} />
     <TenStepsPresentation aboutHref={productHref(presentation, "/about")} control={control} locale={presentation.locale} programmePath={programmePath} />
   </>;
 }

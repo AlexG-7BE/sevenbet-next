@@ -7,7 +7,8 @@ import {
   DEFAULT_MARKET_PROFILE,
   type SupportedLocale,
 } from "@/lib/market/registry";
-import { absoluteUrl, siteUrl } from "@/lib/site";
+import { absoluteUrl, originForSite, siteUrl } from "@/lib/site";
+import { learnArticleSite } from "@/lib/site/core-routes";
 
 export type LearnPublicVerification = {
   verified: boolean;
@@ -132,15 +133,33 @@ export class LearnPublicVerifier {
     this.origin = dependencies.origin ?? configuredOrigin();
   }
 
+  /**
+   * RFC-057 §14: a guide is checked on the host it is published on. For every category but
+   * the help one that is the configured origin, exactly as before; a help guide moves to the
+   * help origin with the same deployment that starts the 301s, so the verifier cannot check
+   * one host while the guide answers on the other. A local or Preview run keeps its
+   * configured origin, which is the only host it has.
+   */
+  private originFor(category: string) {
+    const site = learnArticleSite(category);
+    if (site === "main") return this.origin;
+    return this.origin === siteUrl ? originForSite("help") : this.origin;
+  }
+
   async verify(article: AdminArticle, document: ArticleDocumentInput): Promise<LearnPublicVerification> {
     const path = publicLearnArticlePath(article.locale, article.category, article.slug);
     const collectionPath = path.slice(0, path.indexOf("/learn/") + "/learn".length);
-    const publicUrl = `${this.origin}${path}`;
-    const expectedCanonical = document.canonicalUrl
-      ? new URL(document.canonicalUrl, siteUrl).href
-      : absoluteUrl(path);
+    const origin = this.originFor(article.category);
+    const site = learnArticleSite(article.category);
+    const publicUrl = `${origin}${path}`;
+    // Only the path of a stored canonical is used, resolved against the guide's own origin
+    // (§14): a stored absolute `b4gamble.com` URL must not be what a help guide declares.
+    const storedCanonicalPath = document.canonicalUrl ? new URL(document.canonicalUrl, siteUrl) : null;
+    const expectedCanonical = storedCanonicalPath
+      ? absoluteUrl(`${storedCanonicalPath.pathname}${storedCanonicalPath.search}${storedCanonicalPath.hash}`, site)
+      : absoluteUrl(path, site);
     const language = languageRouteByLocale(article.locale as SupportedLocale);
-    const expectedSitemapUrl = absoluteUrl(path);
+    const expectedSitemapUrl = absoluteUrl(path, site);
     const expectedTitle = document.seoTitle || `${document.title} | B4GAMBLE`;
     const expectedDescription = document.seoDescription || document.excerpt;
     const imageUrls = [...new Set([
@@ -186,11 +205,11 @@ export class LearnPublicVerifier {
         }
         checks.push("open_graph");
 
-        const collection = await responseText(this.fetchImpl, `${this.origin}${collectionPath}`, this.timeoutMs);
+        const collection = await responseText(this.fetchImpl, `${origin}${collectionPath}`, this.timeoutMs);
         if (!collection.text.includes(path)) throw new Error("LEARN_COLLECTION_MISSING_ARTICLE");
         checks.push("learn_collection");
 
-        const sitemap = await responseText(this.fetchImpl, `${this.origin}/sitemap.xml`, this.timeoutMs);
+        const sitemap = await responseText(this.fetchImpl, `${origin}/sitemap.xml`, this.timeoutMs);
         const sitemapEntry = `<loc>${expectedSitemapUrl}</loc>`;
         if (language.indexable && !sitemap.text.includes(sitemapEntry)) throw new Error("SITEMAP_MISSING_ARTICLE");
         if (!language.indexable && sitemap.text.includes(sitemapEntry)) throw new Error("SITEMAP_INDEXING_POLICY_MISMATCH");

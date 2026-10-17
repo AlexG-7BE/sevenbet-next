@@ -58,6 +58,16 @@ The Preview value is deliberately operational rather than a permanent historical
 
 The approved canonical Production origin is `https://b4gamble.com`. Set `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` to that exact origin together through release governance. When Google Production activation is separately authorised, register that exact JavaScript origin and callback. Do not leave the Vercel hostname and custom domain mixed across state/cookie boundaries.
 
+**Two Production hosts from RFC-057 phase 2 (added 17 October 2026, code in place and dark).** Production serves a second exact host, the help site `https://pauseplan.help`, and Better Auth is configured for both. What release governance sets changes with the switch, and only then:
+
+| Variable | Today, and while `HELP_SITE_SERVING` is unset | From the deployment that sets `HELP_SITE_SERVING=true` |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | `https://b4gamble.com` | `https://b4gamble.com`, unchanged — it names the **main** origin, and the help origin is a source constant (`HELP_CANONICAL_ORIGIN`), never a variable |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | `https://b4gamble.com` | `https://b4gamble.com,https://pauseplan.help` |
+| `BETTER_AUTH_URL` | `https://b4gamble.com` | **unset it.** A fixed base URL ties every sign-in, callback and letter link to one host. With the switch on, the application uses the dynamic form with exactly the two source-constant hosts and refuses to start on any other value: a `BETTER_AUTH_URL` that is not one of the two throws, and one that is either of them is accepted and ignored |
+
+Register `https://pauseplan.help` as an authorised JavaScript origin and `https://pauseplan.help/api/auth/callback/google` as an authorised redirect URI on the **existing** Production client, and add `pauseplan.help` to the consent screen's authorised domains (Founder, Q8 (a): the current client is accepted while the help site is live but not announced). A second Google client in its own project, carrying the help site's own name "Pause Plan" and its own privacy and terms links, comes before the outreach phase (Q8 (b)). Session cookies stay host-only, so a person signs in on each site separately and a sign-in starts and finishes on one host.
+
 ## Google Cloud setup
 
 1. Confirm the Google Cloud organisation/project owner and the 7BE Inc./B4GAMBLE controller identity to display.

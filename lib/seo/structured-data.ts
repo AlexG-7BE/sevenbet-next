@@ -1,5 +1,6 @@
 import { BRAND_STATEMENT } from "@/lib/i18n/static-pages/gambling-control";
-import { absoluteUrl, siteUrl } from "@/lib/site";
+import { absoluteUrl, originForSite, siteUrl } from "@/lib/site";
+import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import { BRAND_SOCIAL_PROFILES } from "@/lib/social/brand-profiles";
 
 /**
@@ -9,6 +10,25 @@ import { BRAND_SOCIAL_PROFILES } from "@/lib/social/brand-profiles";
  */
 export const ORGANIZATION_ID = `${siteUrl}/#organization`;
 export const WEBSITE_ID = `${siteUrl}/#website`;
+
+/**
+ * RFC-057 §8. Each site has its own identity node on its own origin: a `b4gamble.com` URL in
+ * the JSON-LD of a help page would break the one-way link rule (§6, rule 1), and the help site
+ * carries no B4GAMBLE wordmark, alias or logo at all (Q2). The display name there is
+ * "Pause Plan"; the legal name stays 7BE Inc., which is the honest part and the one
+ * `/who-runs-this` repeats in words.
+ */
+export function organizationId(site: SiteClass = "main") {
+  return `${originForSite(site)}/#organization`;
+}
+
+export function websiteId(site: SiteClass = "main") {
+  return `${originForSite(site)}/#website`;
+}
+
+function siteName(site: SiteClass) {
+  return site === "help" ? HELP_SITE_NAME : "B4GAMBLE";
+}
 export const ORGANIZATION_LOGO_PATH = "/brand/b4gamble-logo-512.png";
 export const EDITORIAL_AUTHOR_NAME = "B4GAMBLE Editorial";
 
@@ -33,47 +53,60 @@ export const ORGANIZATION_PROFILES = [
   "https://www.trustpilot.com/review/b4gamble.com",
 ] as const;
 
-export function organizationSchema() {
+export function organizationSchema(site: SiteClass = "main") {
+  const help = site === "help";
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "@id": ORGANIZATION_ID,
-    name: "B4GAMBLE",
-    alternateName: [...BRAND_ALTERNATE_NAMES],
+    "@id": organizationId(site),
+    name: siteName(site),
+    // The B4GAMBLE aliases and the brand's social profiles belong to the main site. The help
+    // site's own profiles are the ones whose bios point at it, and there are none yet (§15).
+    ...(help ? {} : { alternateName: [...BRAND_ALTERNATE_NAMES] }),
     legalName: "7BE Inc.",
     // The one phrase (Founder, 15 October 2026), the same words llms.txt opens with.
-    description: BRAND_STATEMENT["en-GB"],
-    url: siteUrl,
-    sameAs: [...ORGANIZATION_PROFILES],
-    logo: {
-      "@type": "ImageObject",
-      url: absoluteUrl(ORGANIZATION_LOGO_PATH),
-      width: 512,
-      height: 512,
-    },
+    ...(help ? {} : { description: BRAND_STATEMENT["en-GB"] }),
+    url: originForSite(site),
+    ...(help ? {} : { sameAs: [...ORGANIZATION_PROFILES] }),
+    // The help host can neither resolve the logo against its own origin (the file is the
+    // B4GAMBLE mark) nor serve it first-party (§4.2 denies `public/brand/`), so the field is
+    // left out until the "Pause Plan" logo exists (§8).
+    ...(help ? {} : {
+      logo: {
+        "@type": "ImageObject",
+        url: absoluteUrl(ORGANIZATION_LOGO_PATH),
+        width: 512,
+        height: 512,
+      },
+    }),
   };
 }
 
-export function websiteSchema() {
+export function websiteSchema(site: SiteClass = "main") {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": WEBSITE_ID,
-    name: "B4GAMBLE",
-    alternateName: [...BRAND_ALTERNATE_NAMES],
-    url: siteUrl,
-    publisher: { "@id": ORGANIZATION_ID },
+    "@id": websiteId(site),
+    name: siteName(site),
+    ...(site === "help" ? {} : { alternateName: [...BRAND_ALTERNATE_NAMES] }),
+    url: originForSite(site),
+    publisher: { "@id": organizationId(site) },
   };
 }
 
 /** A reference to the sitewide Organization, for `publisher` fields. */
-export function organizationReference() {
-  return { "@type": "Organization", "@id": ORGANIZATION_ID, name: "B4GAMBLE", url: siteUrl };
+export function organizationReference(site: SiteClass = "main") {
+  return { "@type": "Organization", "@id": organizationId(site), name: siteName(site), url: originForSite(site) };
 }
 
 /** The editorial team as an organisation author; it is not a person. */
-export function editorialAuthor() {
-  return { "@type": "Organization", name: EDITORIAL_AUTHOR_NAME, url: siteUrl, parentOrganization: { "@id": ORGANIZATION_ID } };
+export function editorialAuthor(site: SiteClass = "main") {
+  return {
+    "@type": "Organization",
+    name: site === "help" ? `${HELP_SITE_NAME} Editorial` : EDITORIAL_AUTHOR_NAME,
+    url: originForSite(site),
+    parentOrganization: { "@id": organizationId(site) },
+  };
 }
 
 /**

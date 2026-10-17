@@ -7,14 +7,16 @@ import styles from "./PauseStatistics.module.css";
 import { pauseStatisticsLocale, pauseStatisticsMessages, type StatisticsRow } from "@/lib/i18n/static-pages/pause-statistics";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { absoluteUrl } from "@/lib/site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = pauseStatisticsMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: "/pause-statistics", title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: "/pause-statistics", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 function Table({ rows }: { rows: readonly StatisticsRow[] }) {
@@ -30,13 +32,14 @@ function Table({ rows }: { rows: readonly StatisticsRow[] }) {
  */
 export default async function PauseStatisticsPage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = pauseStatisticsMessages(presentation.locale);
   const contentLocale = pauseStatisticsLocale(presentation.locale);
-  const url = absoluteUrl(productCanonicalPath(presentation, "/pause-statistics"));
+  const url = absoluteUrl(productCanonicalPath(presentation, "/pause-statistics"), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;
   const schema = [
-    { "@context": "https://schema.org", "@type": "Dataset", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, license: "https://creativecommons.org/licenses/by/4.0/", creator: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }, distribution: [{ "@type": "DataDownload", encodingFormat: "text/csv", contentUrl: absoluteUrl(messages.register.csvHref) }] },
-    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
+    { "@context": "https://schema.org", "@type": "Dataset", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, license: "https://creativecommons.org/licenses/by/4.0/", creator: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/", site) }, distribution: [{ "@type": "DataDownload", encodingFormat: "text/csv", contentUrl: absoluteUrl(messages.register.csvHref, site) }] },
+    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
   ];
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="pause-statistics" lang={contentLocale === presentation.locale ? undefined : "en"}>

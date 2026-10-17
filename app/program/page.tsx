@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { isGoogleAuthAvailable } from "@/lib/auth/google-config";
 import { programmeText } from "@/lib/i18n/programme-catalog";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { programmeSearchMetadata } from "@/lib/seo/programme-metadata";
 import {
   isProgrammeLocale,
@@ -14,6 +15,7 @@ import {
   type ProgrammeLocale,
 } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
+import type { SiteClass } from "@/lib/site/host-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +24,10 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const locale = isProgrammeLocale(presentation.locale) ? presentation.locale : "en-GB";
   const title = programmeText(locale, "B4GAMBLE 10-Step Control Programme | Personal Control Plan");
   const description = programmeText(locale, "Begin B4GAMBLE's private 10-Step Control Programme with a personal exercise, then continue through structured goals, limits, reflection and review.");
-  return programmeSearchMetadata(locale, { title, description }, { queryVariant: Object.keys(query).length > 0 });
+  return programmeSearchMetadata(locale, { title, description }, { queryVariant: Object.keys(query).length > 0, site: await resolveServerSite() });
 }
 
-function breadcrumbSchema(locale: ProgrammeLocale) {
+function breadcrumbSchema(locale: ProgrammeLocale, site: SiteClass) {
   const path = programmePath(locale);
   return {
     "@context": "https://schema.org",
@@ -35,13 +37,13 @@ function breadcrumbSchema(locale: ProgrammeLocale) {
         "@type": "ListItem",
         position: 1,
         name: programmeText(locale, "Home"),
-        item: absoluteUrl(programmePublicHref(locale, "/")),
+        item: absoluteUrl(programmePublicHref(locale, "/"), site),
       },
       {
         "@type": "ListItem",
         position: 2,
         name: programmeText(locale, "10-Step Control Programme"),
-        item: absoluteUrl(path),
+        item: absoluteUrl(path, site),
       },
     ],
   };
@@ -49,11 +51,12 @@ function breadcrumbSchema(locale: ProgrammeLocale) {
 
 export default async function ProgramPage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const locale = isProgrammeLocale(presentation.locale) ? presentation.locale : "en-GB";
   const path = programmePath(locale);
   return (
     <>
-      <JsonLd data={breadcrumbSchema(locale)} />
+      <JsonLd data={breadcrumbSchema(locale, site)} />
       <div data-nav-theme="dark" data-public-programme-renderer="program-ai" tabIndex={-1}>
         <ProgramAiExperience entryOverview={<ProgrammeStepsOverview locale={locale} />} googleAvailable={isGoogleAuthAvailable()} locale={locale} programmePath={path} />
       </div>

@@ -8,14 +8,16 @@ import styles from "./Beside.module.css";
 import { besideLocale, besideMessages } from "@/lib/i18n/static-pages/beside";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { absoluteUrl } from "@/lib/site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = besideMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: "/beside", title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: "/beside", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 /**
@@ -25,13 +27,14 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function BesidePage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = besideMessages(presentation.locale);
   const contentLocale = besideLocale(presentation.locale);
-  const url = absoluteUrl(productCanonicalPath(presentation, "/beside"));
+  const url = absoluteUrl(productCanonicalPath(presentation, "/beside"), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;
   const schema = [
-    { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") } },
-    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
+    { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/", site) } },
+    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
   ];
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="beside" lang={contentLocale === presentation.locale ? undefined : "en"}>

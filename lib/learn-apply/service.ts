@@ -34,7 +34,7 @@ import {
   type PublishedApplyInspection,
 } from "@/lib/services/article.service";
 import { ServiceError, ValidationError } from "@/lib/services/service-error";
-import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
+import { learnArticleOrigin } from "@/lib/site/core-routes";
 
 type ArticleApplyPort = {
   inspectPublishedApply(input: {
@@ -316,7 +316,7 @@ export class LearnApplyService {
           errorCategory: error instanceof Error ? error.name : "unknown",
         });
         verification = verificationFailure(
-          `${PUBLIC_CANONICAL_ORIGIN}${publicLearnArticlePath(applied.article.locale, applied.article.category, applied.article.slug)}`,
+          `${learnArticleOrigin(applied.article.category)}${publicLearnArticlePath(applied.article.locale, applied.article.category, applied.article.slug)}`,
           "PUBLIC_VERIFICATION_FAILED",
         );
       }

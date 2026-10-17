@@ -6,12 +6,14 @@ import styles from "./Innan.module.css";
 import { innanLocale, innanMessages } from "@/lib/i18n/static-pages/innan";
 import { productCanonicalPath, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { absoluteUrl } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = innanMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: "/innan", title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: "/innan", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 /**
@@ -21,12 +23,13 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function InnanPage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = innanMessages(presentation.locale);
   const contentLocale = innanLocale(presentation.locale);
-  const url = absoluteUrl(productCanonicalPath(presentation, "/innan"));
+  const url = absoluteUrl(productCanonicalPath(presentation, "/innan"), site);
   const schema = [
-    { "@context": "https://schema.org", "@type": "WebPage", name: messages.title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") } },
-    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
+    { "@context": "https://schema.org", "@type": "WebPage", name: messages.title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/", site) } },
+    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.breadcrumbLabel, item: url }] },
   ];
 
   return <div className={styles.page} data-runtime-renderer="innan" lang={contentLocale === presentation.locale ? undefined : "en"}>

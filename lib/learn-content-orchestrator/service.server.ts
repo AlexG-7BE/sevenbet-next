@@ -3,7 +3,7 @@ import "server-only";
 import { ZodError } from "zod";
 
 import { publicLearnArticlePath } from "@/lib/learn-apply/public-verification";
-import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
+import { learnArticleOrigin } from "@/lib/site/core-routes";
 
 import {
   LEARN_CONTENT_ACTIVE_LEASE_HOURS,
@@ -90,7 +90,8 @@ function liveResultIsVerified(input: {
   if (result.result !== "LIVE" || !result.verified || result.persistence !== "COMMITTED" || result.status !== "PUBLISHED") return false;
   if (result.operation !== "CREATED" && result.operation !== "NO_CHANGE") return false;
   try {
-    const expectedUrl = `${PUBLIC_CANONICAL_ORIGIN}${publicLearnArticlePath(input.article.locale, input.article.category, input.article.slug)}`;
+    // RFC-057 §14: the guide's own public origin, which follows its category.
+    const expectedUrl = `${learnArticleOrigin(input.article.category)}${publicLearnArticlePath(input.article.locale, input.article.category, input.article.slug)}`;
     return new URL(result.url).href === expectedUrl;
   } catch {
     return false;

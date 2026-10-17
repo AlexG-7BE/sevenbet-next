@@ -9,6 +9,7 @@ import { CONTROL_PATHS, controlLocale, controlSharedMessages, gamblingControlHub
 import { controlPageSchema } from "@/lib/seo/control-page-schema";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
 
@@ -16,8 +17,9 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = gamblingControlHubMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: CONTROL_PATHS.hub, title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: CONTROL_PATHS.hub, title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 /**
@@ -26,10 +28,11 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function GamblingControlPage() {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = gamblingControlHubMessages(presentation.locale);
   const shared = controlSharedMessages(presentation.locale);
   const contentLocale = controlLocale(presentation.locale);
-  const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub));
+  const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub), site);
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
   const schema = controlPageSchema({
     name: `${messages.titleLead} ${messages.titleEmphasis}`,
@@ -38,7 +41,7 @@ export default async function GamblingControlPage() {
     inLanguage: contentLocale,
     faq: messages.faq,
     breadcrumbs: [
-      { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) },
+      { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) },
       { name: shared.hubLabel, item: url },
     ],
   });
