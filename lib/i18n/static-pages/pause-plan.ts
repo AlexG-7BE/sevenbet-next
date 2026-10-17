@@ -122,7 +122,7 @@ const sv: PausePlanMessages = {
     openEndedNote: "En avstängning tills vidare har inget slutdatum. Vi räknar med minst 12 månader.",
     dayLabel: "Dag",
     planHeading: "Alla tio på en kväll, eller ett om dagen",
-    planIntro: "Tio steg ur B4GAMBLE-programmet, i den ordning du gör dem. Varje steg tar 5–15 minuter och slutar med något du behåller. Du väljer takten: hela planen på en kväll, eller ett steg om dagen tills pausen är slut. Du fortsätter alltid där du slutade.",
+    planIntro: "Tio steg ur programmet, i den ordning du gör dem. Varje steg tar 5–15 minuter och slutar med något du behåller. Du väljer takten: hela planen på en kväll, eller ett steg om dagen tills pausen är slut. Du fortsätter alltid där du slutade.",
     stepLabel: "Steg",
     reminder: {
       label: "Din e-postadress",
@@ -200,7 +200,7 @@ const da: PausePlanMessages = {
     openEndedNote: "En endelig udelukkelse har ingen slutdato. Vi regner med mindst 12 måneder.",
     dayLabel: "Dag",
     planHeading: "Alle ti på én aften, eller ét om dagen",
-    planIntro: "Ti trin fra B4GAMBLE-programmet i den rækkefølge, du tager dem. Hvert trin tager 5–15 minutter og slutter med noget, du beholder. Du vælger tempoet: hele planen på én aften, eller ét trin om dagen, til pausen er slut. Du fortsætter altid, hvor du slap.",
+    planIntro: "Ti trin fra programmet i den rækkefølge, du tager dem. Hvert trin tager 5–15 minutter og slutter med noget, du beholder. Du vælger tempoet: hele planen på én aften, eller ét trin om dagen, til pausen er slut. Du fortsætter altid, hvor du slap.",
     stepLabel: "Trin",
     reminder: {
       label: "Din e-mailadresse",
@@ -316,7 +316,7 @@ const en: PausePlanMessages = {
     openEndedNote: "An open-ended exclusion has no end date. We count at least 12 months.",
     dayLabel: "Day",
     planHeading: "All ten in one evening, or one a day",
-    planIntro: "Ten steps from the B4GAMBLE Programme, in the order you take them. Each takes 5–15 minutes and ends with something you keep. You set the pace: the whole plan in one evening, or one step a day. You always continue where you left off.",
+    planIntro: "Ten steps from the Programme, in the order you take them. Each takes 5–15 minutes and ends with something you keep. You set the pace: the whole plan in one evening, or one step a day. You always continue where you left off.",
     stepLabel: "Step",
     reminder: {
       label: "Your email address",

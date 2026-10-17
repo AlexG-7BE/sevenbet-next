@@ -141,7 +141,9 @@ test("privacy and operations evidence describe only the implemented Google bound
   const exampleEnvironment = readFileSync(".env.example", "utf8");
 
   assert.match(privacy, /If you choose Google sign-in/);
-  assert.match(privacy, /does not provide B4GAMBLE with your date of birth, contacts, mailbox contents or a gambling profile/);
+  // "us", not "B4GAMBLE": the notice is served on both hosts and the sentence is true on both
+  // (Founder, 17 October 2026).
+  assert.match(privacy, /does not provide us with your date of birth, contacts, mailbox contents or a gambling profile/);
   assert.match(privacy, /Google sign-in, age confirmation, Terms acceptance and Programme participation do not create reminder or marketing permission/);
   assert.match(privacy, /Google credentials are used transiently by the server to verify the sign-in and are stripped before the application account relationship is stored/);
   assert.match(processors, /Google Identity \/ OAuth/);

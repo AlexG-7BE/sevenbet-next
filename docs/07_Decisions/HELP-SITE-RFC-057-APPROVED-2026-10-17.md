@@ -146,6 +146,41 @@ RFC-057 §19. If the Founder reverses the approval before phase 2, reverting the
 requests restores the previous behaviour exactly, and RFC-057 returns to `PROPOSED` with an
 amendment recorded here.
 
+## Amendment, 17 October 2026: «убери B4GAMBLE из текстов и перенеси картинки»
+
+A second Founder instruction on the same day, and the final internal authority on both points.
+It does not reverse anything above; it finishes Q2 and settles one open question of §4.2.
+
+**The name, in words as well as in marks.** Q2 took the B4GAMBLE wordmark and logo off the help
+host. Phase-1 screens then found the name still spoken in the body copy: "Ten steps from the
+B4GAMBLE Programme" in the pause plan (and its Swedish and Danish translations), the Programme
+consent line, the "Email me B4GAMBLE updates" checkbox, a "B4GAMBLE Help →" link inside a guide
+and the shell's "B4GAMBLE home" label. The instruction is that **no help-host response says the
+name at all** — not in the rendered text, not in a title, a meta tag, a piece of JSON-LD, an
+`alt`, an `aria-label` or the inline data a client navigation fetches.
+
+**How, and why not a second set of translations.** Each string is either made host-aware or
+rewritten to wording that is true and natural on both sites, and neutral wording is preferred
+wherever it reads as well, because wording that names nobody cannot leak. Host-aware means one
+rewrite over the rendered sentence (`withSiteName`, `withSiteNameDeep`), not a second copy of
+thirteen translations that would drift: the grammar glued to the wordmark travels with it, which
+is what the three published languages need. On `b4gamble.com` the name stays exactly where it is
+correct today, and the tests assert that in both directions.
+
+**The pictures.** §4.2's Firewall rule denies every raster image and font on the help host except
+under `/_next/static/`, because the middleware matcher never sees those paths. Three live paths
+fell under it: the `/10-steps` and `/start` hero, the guides-hub photograph and the tab icon.
+The two photographs are **static imports**, so the bundler serves them hashed under
+`/_next/static/` — the exception the rule already makes — and the tab icon became a route
+handler, which the gate can decide per host. **The rule is unchanged and still a default deny:
+no allowance was added for this.** The help site also gets a mark of its own rather than the
+B4GAMBLE one, which §12 had already asked for.
+
+**What it costs.** Two sentences on `b4gamble.com` lose the brand name where the neutral wording
+was the better answer for both sites (the Programme disclaimer and a handful of Privacy and
+protected-Help lines). Nothing else on the commercial site changes, and no visitor to it sees a
+different page.
+
 ## Evidence
 
 - RFC-057 §22, where each of these eight questions is written out with the recommendation he
@@ -155,3 +190,5 @@ amendment recorded here.
   and this record.
 - `docs/06_RFC/README.md`: RFC-057 is `ACTIVE`, the counts reconciled.
 - `docs/CURRENT_STATE.md`: the help site's state, as approved and not yet built.
+- The amendment above is built on branch `feat/help-site-own-brand`, with
+  `tests/help-site-own-brand.test.tsx` as its guard, in `ci:quality`.

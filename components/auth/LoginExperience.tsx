@@ -16,6 +16,7 @@ import {
   saveProgrammeMarketingPreference,
 } from "@/lib/customers/email-preference-client";
 import { programmeText } from "@/lib/i18n/programme-catalog";
+import { useSiteName, useSiteNameIn } from "@/components/site/SiteNameProvider";
 import {
   affirmAnonymousProgrammeAccess,
   forgetClaimMade,
@@ -54,7 +55,10 @@ type LoginExperienceProps = {
 
 export function LoginExperience({ authError, authState, googleAvailable, locale, programmePath, returnTo }: LoginExperienceProps) {
   const { data: session } = useSession();
-  const t = (key: Parameters<typeof programmeText>[1]) => programmeText(locale, key);
+  // §7.2 and Q2: the sign-in copy names the site that is serving it.
+  const name = useSiteName();
+  const inSite = useSiteNameIn();
+  const t = (key: Parameters<typeof programmeText>[1]) => inSite(programmeText(locale, key));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [marketingAllowed, setMarketingAllowed] = useState(PROGRAMME_MARKETING_OPT_IN_DEFAULT);
@@ -191,7 +195,7 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
         signUp: async (credentials) => {
           const journey = await affirmAnonymousProgrammeAccess(window.sessionStorage);
           // The confirmation link in the sign-up email lands on the Programme page.
-          return authClient.signUp.email({ ...credentials, name: credentials.email.split("@")[0] || "B4GAMBLE member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, journey) } });
+          return authClient.signUp.email({ ...credentials, name: credentials.email.split("@")[0] || "New member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, journey) } });
         },
       });
       if (entry.kind === "wrong-password" || entry.kind === "failed") {
@@ -230,7 +234,7 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
 
   return (
     <div className={styles.page} data-login-page>
-      <header className={styles.nav}><Link href={programmePublicHref(locale, "/")}>B4GAMBLE</Link><Link href={programmePublicHref(locale, "/")}>← {t("Back to site")}</Link></header>
+      <header className={styles.nav}><Link href={programmePublicHref(locale, "/")}>{name}</Link><Link href={programmePublicHref(locale, "/")}>← {t("Back to site")}</Link></header>
       <main className={styles.main}>
         <div aria-hidden="true" className={styles.glow} />
         <section aria-labelledby="login-title" className={styles.panel}>

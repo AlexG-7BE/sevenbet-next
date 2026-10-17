@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { contactMessages } from "@/lib/i18n/static-pages/contact";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { withSiteNameDeep } from "@/lib/site/help-copy";
 import { resolveServerSite } from "@/lib/site/server-site";
 import { absoluteUrl } from "@/lib/site";
 import { ContactForm } from "./ContactForm";
@@ -15,14 +16,16 @@ import styles from "./ContactPage.module.css";
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
   const site = await resolveServerSite();
-  const messages = contactMessages(presentation.locale);
+  // "Contact B4GAMBLE | Support and enquiries" in every language: the title names the site
+  // that is answering (Founder, 17 October 2026).
+  const messages = withSiteNameDeep(contactMessages(presentation.locale), site);
   return productMetadata({ presentation, pathname: "/contact", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 export default async function ContactPage() {
   const presentation = await resolveServerPresentationContext();
   const site = await resolveServerSite();
-  const messages = contactMessages(presentation.locale);
+  const messages = withSiteNameDeep(contactMessages(presentation.locale), site);
   const canonical = absoluteUrl(productCanonicalPath(presentation, "/contact"), site);
   return (
     <div className={styles.page} data-contact-page>

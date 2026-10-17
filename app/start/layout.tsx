@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { resolveServerSite } from "@/lib/site/server-site";
 import { StartFooter, StartHeader } from "./StartShell";
 import styles from "./StartShell.module.css";
 
@@ -9,11 +10,13 @@ import styles from "./StartShell.module.css";
  * them every casino, bonus and offer destination, never render here. The root
  * layout still supplies the cookie choice and the existing first-party analytics.
  */
-export default function StartLayout({ children }: { children: ReactNode }) {
+export default async function StartLayout({ children }: { children: ReactNode }) {
+  // §7.2: the one place this landing's shell learns which host answered.
+  const site = await resolveServerSite();
   return (
     <div className={styles.shell} data-start-shell="true">
       <a className={`skipLink ${styles.skipLink}`} href="#main-content">Skip to main content</a>
-      <StartHeader />
+      <StartHeader site={site} />
       <main id="main-content">{children}</main>
       <StartFooter />
     </div>

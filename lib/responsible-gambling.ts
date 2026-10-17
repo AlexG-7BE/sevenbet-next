@@ -98,7 +98,7 @@ export const protectedHelpArticles: ProtectedHelpArticle[] = [
       },
       {
         title: "When to consider it",
-        body: "Self-exclusion may be useful when ordinary planning tools are not enough to maintain control. B4GAMBLE presents this as education, not medical advice.",
+        body: "Self-exclusion may be useful when ordinary planning tools are not enough to maintain control. This is education, not medical advice.",
       },
     ],
   },

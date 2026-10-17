@@ -310,7 +310,9 @@ test("the end of a step: a keepsake card, the finish press without XP, the rewar
   assert.match(image, /canvas\.toBlob\(/);
   assert.match(image, /navigator\.canShare\(\{ files: \[file\] \}\)/);
   assert.match(image, /link\.download = fileName;/);
-  assert.ok(missionExperience.includes("const image = await keepsakeImage(keepsake, keepsakeFonts(document.body));"));
+  // The card is drawn with the name of the site the person is using: "B4GAMBLE" here, "Pause
+  // Plan" on the help host, because the image is saved and kept (Founder, 17 October 2026).
+  assert.ok(missionExperience.includes("const image = await keepsakeImage({ ...keepsake, brand: siteOwnName }, keepsakeFonts(document.body));"));
   assert.match(read("lib/security/content-security-policy.ts"), /"img-src 'self' data: blob: https:",/);
 
   // The completion screen carries no research block (Founder, 16 October 2026).

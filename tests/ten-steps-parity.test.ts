@@ -52,7 +52,9 @@ test("mounted 10 Steps component keeps the approved hierarchy inside the Public 
   // RFC-057 §6.5: "About" is /about on the commercial site and /who-runs-this on the help
   // host, so the page resolves the path before it links it. `helpRoutePath` returns the
   // argument unchanged on the main host.
-  assert.match(page, /<TenStepsPresentation aboutHref=\{aboutPath \? productHref\(presentation, aboutPath\) : undefined\} control=\{control\} locale=\{presentation\.locale\} programmePath=\{programmePath\} \/>/);
+  // `aboutLabel` and `art` since 17 October 2026: on the help host the "About" link is the owner
+  // page and the hero photograph is the hashed copy the Firewall rule allows (RFC-057 §4.2, §6.5).
+  assert.match(page, /<TenStepsPresentation aboutHref=\{aboutPath \? productHref\(presentation, aboutPath\) : undefined\} aboutLabel=\{help \? helpOwnerLinkLabel\(presentation\.locale\) : undefined\} art=\{art\} control=\{control\} locale=\{presentation\.locale\} programmePath=\{programmePath\} \/>/);
   // AEO-CONTROL-PAGES-2026-10-15: the final section links to the gambling control answers where they speak the page's language.
   assert.match(page, /const controlLabel = controlHubLinkLabel\(presentation\.locale\);/);
   assert.match(page, /productHref\(presentation, CONTROL_PATHS\.hub\)/);
@@ -213,7 +215,9 @@ test("unmounted legacy resolver derives only supplied server-owned progress", as
 
 test("unmounted legacy component retains isolated accessibility safeguards", () => {
   assert.match(legacyLanding, /import \{ programmeMissionTitles \}/);
-  assert.match(legacyLanding, /The B4GAMBLE Programme does not diagnose or treat gambling addiction\./);
+  // "The Programme": the sentence is served on both hosts and is true on both (Founder,
+  // 17 October 2026).
+  assert.match(legacyLanding, /The Programme does not diagnose or treat gambling addiction\./);
   assert.match(legacyLanding, /Completion does not mean gambling is safe or suitable\./);
   assert.match(legacyLanding, /<ol className=\{styles\.missionList\}>/);
   assert.match(legacyLanding, /<ActionLink/);

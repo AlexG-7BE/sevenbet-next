@@ -4,7 +4,7 @@ import { Fragment, type ReactNode } from "react";
 import { earlyOfferBridgeIndex, midArticleBridgeIndex, type OfferBridgeKind } from "@/lib/articles/article-bridges";
 import { articlePath, type AdminArticle, type ArticleBlock, type PublicArticle } from "@/lib/articles/article-types";
 import type { LearningMessages } from "@/lib/i18n/learning-center";
-import { helpRoutePath } from "@/lib/site/help-copy";
+import { helpRoutePath, withSiteName, withSiteNameDeep } from "@/lib/site/help-copy";
 import { helpMediaUrl } from "@/lib/site/help-media";
 import type { SiteClass } from "@/lib/site/host-gate";
 
@@ -76,16 +76,19 @@ function ArticleBlockView({ block, site }: { block: ArticleBlock; site: SiteClas
   return <aside className={styles.resourceLink}><strong>{block.label}</strong>{block.description && <p>{block.description}</p>}<a href={block.url} {...(isExternal(block.url) ? { rel: "noopener noreferrer", target: "_blank" } : {})}>{block.label} <span aria-hidden="true">↗</span></a></aside>;
 }
 
-export function LearningArticleRelated({ relatedArticles, messages, hrefFor }: {
+export function LearningArticleRelated({ relatedArticles: suppliedRelated, messages, hrefFor, site = "main" }: {
   relatedArticles: PublicArticle[];
   messages: LearningMessages;
   hrefFor: (href: string) => string;
+  /** The read-next titles are database text, so they are said in the serving site's name too. */
+  site?: SiteClass;
 }) {
+  const relatedArticles = withSiteNameDeep(suppliedRelated, site);
   if (!relatedArticles.length) return null;
   return <section className={`${styles.related} ${handoffStyles.related}`} aria-labelledby="related-reading-title" data-nav-theme="cream"><header data-motion-reveal><p className={styles.kicker}>{messages.ui.relatedReading}</p><h2 id="related-reading-title">READ NEXT</h2></header><ol>{relatedArticles.map((related, index) => <li key={related.id}><Link href={hrefFor(articlePath(related))}><span>{String(index + 1).padStart(2, "0")}</span><span>{related.category.replaceAll("-", " ")}</span><strong>{related.title}</strong><span>{related.excerpt}</span><i aria-hidden="true">↗</i></Link></li>)}</ol></section>;
 }
 
-export function LearningArticleView({ article, categoryTitle, relatedArticles = [], relatedArticlesSlot, messages, hrefFor, programmePath, preview = false, offerBridge = null, site = "main" }: {
+export function LearningArticleView({ article: suppliedArticle, categoryTitle: suppliedCategoryTitle, relatedArticles: suppliedRelated = [], relatedArticlesSlot, messages: suppliedMessages, hrefFor, programmePath, preview = false, offerBridge = null, site = "main" }: {
   article: AdminArticle;
   categoryTitle: string;
   relatedArticles?: PublicArticle[];
@@ -103,6 +106,19 @@ export function LearningArticleView({ article, categoryTitle, relatedArticles = 
    */
   site?: SiteClass;
 }) {
+  /**
+   * A guide's words come from the database, and the Learn UI's own words come from the
+   * catalogue; both name B4GAMBLE. The toolkit of every protected guide ends with a resource
+   * link labelled "B4GAMBLE Help", written by the Learn orchestrator
+   * (docs/06_Operations/Autonomous-Learn-Content-Orchestrator.md), and the hub strings carry
+   * "| B4GAMBLE" in each language. On this host the site is called Pause Plan (Founder,
+   * 17 October 2026), so everything that is rendered here is said in the serving site's name.
+   * On the main host the three objects come back unchanged, by reference.
+   */
+  const article = withSiteNameDeep(suppliedArticle, site);
+  const categoryTitle = withSiteName(suppliedCategoryTitle, site);
+  const relatedArticles = withSiteNameDeep(suppliedRelated, site);
+  const messages = withSiteNameDeep(suppliedMessages, site);
   const headings = article.bodyBlocks.filter((block): block is Extract<ArticleBlock, { type: "heading" }> => block.type === "heading");
   const published = article.publishedAt ? new Intl.DateTimeFormat(article.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(article.publishedAt)) : "Not published";
   const reviewed = article.lastReviewedAt ? new Intl.DateTimeFormat(article.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(article.lastReviewedAt)) : null;

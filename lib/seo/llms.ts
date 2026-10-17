@@ -8,6 +8,8 @@ import {
 } from "@/lib/market/registry";
 import { isLocalizedPublicDestination } from "@/lib/market/routing";
 import { absoluteUrl } from "@/lib/site";
+import { HELP_OWNER, helpShellCopy } from "@/lib/site/help-copy";
+import { HELP_CANONICAL_ORIGIN, HELP_SITE_NAME } from "@/lib/site/host-gate";
 import { BRAND_STATEMENT, CONTROL_PATHS } from "@/lib/i18n/static-pages/gambling-control";
 
 /**
@@ -218,6 +220,69 @@ export type LlmsFullMarket = {
  * no partner or `/r/` link and does not depend on who asks: every market is resolved from
  * the market itself, never from the requester's IP.
  */
+/**
+ * The help site's own `llms.txt` (RFC-057 §12): "the one phrase, the Programme, pause plans,
+ * help guides, control answers, owner page, data statement; no casino text".
+ *
+ * It is a separate text, not the commercial one with lines removed: the file above opens by
+ * saying the site compares casinos and earns commission, and every URL in it is
+ * `b4gamble.com`, which rule §6.1 forbids in a help-host response. The help site publishes
+ * three languages (§4.1), so each page is listed in English with its Swedish and Danish
+ * addresses beside it.
+ */
+export function buildHelpLlmsTxt(input: { articles: readonly PublicArticle[] }) {
+  const languages = [["en", "English"], ["sv", "Svenska"], ["da", "Dansk"]] as const;
+  const url = (language: string, pathname: string) => `${HELP_CANONICAL_ORIGIN}/${language}${pathname === "/" ? "" : pathname}`;
+  const entry = (pathname: string, title: string, description: string) => {
+    const versions = languages.slice(1).map(([language, label]) => `[${label}](${url(language, pathname)})`).join(" · ");
+    return `- [${title}](${url("en", pathname)}): ${description}. Also in ${versions}.`;
+  };
+  const guideLines = input.articles
+    .map((article) => `- [${oneLine(article.title)}](${HELP_CANONICAL_ORIGIN}${articlePath(article)}): ${oneLine(article.excerpt)}`);
+
+  return `# ${HELP_SITE_NAME}
+
+> ${helpShellCopy("en-GB").statement}
+
+This site carries no casino, no bonus, no advertising and no affiliate link, and it earns nothing. It is run by ${HELP_OWNER.legalName}, which also runs a casino-comparison site at a different address; who runs this site and how the company earns is answered in plain words on the owner page below.
+
+## Pause plan
+
+${entry("/", "Pause plan", "the ten-day plan for the days after a Spelpaus, ROFUS or GAMSTOP pause begins, with the dates filled in")}
+${entry("/pause-plan", "Pause plan", "the same plan at its own address")}
+${entry("/beside", "Beside someone who is pausing", "what to say and do for a person who has just paused")}
+${entry("/innan", "Before you play", "the questions to answer before a session")}
+${entry("/pause-statistics", "Pause statistics", "how many people register a pause in Sweden and Denmark, from the regulators' own tables")}
+
+## 10-Step Programme
+
+${entry("/program", "10-Step Programme", "the free private plan, one step at a time, with no casino link on any screen")}
+${entry("/10-steps", "The ten steps", "what each step covers before you begin")}
+${entry("/responsible-gambling", "Keeping control", "education, practical control and the way into Help")}
+${entry("/help", "Help", "support information, with no casino, bonus or affiliate link")}
+
+## Gambling control answers
+
+${entry(CONTROL_PATHS.hub, "Gambling control: straight answers", "the hub, and a link to every answer")}
+${entry(CONTROL_PATHS.withoutQuitting, "How can I keep my gambling under control without quitting?", "the amount and the time decided before playing, one person who knows, and a plan to review")}
+${entry(CONTROL_PATHS.tools, "Which gambling control tool fits you?", "national self-exclusion, blocking software, bank blocks, operator limits and helplines compared, with sources")}
+
+## Who runs this site
+
+${entry("/who-runs-this", "Who runs this site", "the owner, how the company earns, and what happens to what you write here")}
+${entry("/for-organisations", "For organisations", "the data answers a help service, clinic or regulator asks before linking to us")}
+
+## Guides
+${guideLines.length ? `\n${guideLines.join("\n")}` : "\nNo guide is published yet."}
+
+## Policies
+
+${entry("/privacy", "Privacy Notice", "what is processed, why, and for how long")}
+${entry("/terms", "Terms of Use", "the rules for using this site")}
+${entry("/contact", "Contact", "how to reach a person")}
+`;
+}
+
 export function buildLlmsFullTxt(input: { generatedAt: Date; markets: readonly LlmsFullMarket[] }) {
   const sections = input.markets.map(({ market, state, note, offers }) => {
     const language = languageRouteByLocale(market.defaultLocale);

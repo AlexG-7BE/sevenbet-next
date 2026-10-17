@@ -7,6 +7,7 @@ import { ProgrammeDocumentBoundary } from "@/components/programme/ProgrammeDocum
 import { AnalyticsConsentBanner } from "@/components/analytics/AnalyticsConsentBanner";
 import { AnalyticsPageView } from "@/components/analytics/AnalyticsPageView";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { SiteNameProvider } from "@/components/site/SiteNameProvider";
 import { googleTagBootstrap } from "@/lib/analytics/google-analytics";
 import { googleAnalyticsMeasurementId } from "@/lib/analytics/google-analytics.server";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
@@ -45,6 +46,25 @@ const instrumentSerif = Instrument_Serif({
  * "Pause Plan" (Founder, Q2) and the default social image is the help share image, because
  * `/opengraph-image` is COMMERCIAL and answers 404 there.
  */
+/**
+ * The icon links, which used to come from the two file conventions `app/favicon.ico` and
+ * `app/icon.svg` (RFC-057 §12). A file convention writes its link into every document on both
+ * hosts, and both files are the B4GAMBLE mark, so the help host would print the other brand's
+ * icon and ask for an `.ico` the phase-2 Firewall rule denies. Both are route handlers now and
+ * the icon is named here, per host, at the same addresses the main site has always used.
+ */
+const MAIN_ICONS: Metadata["icons"] = {
+  icon: [
+    { url: "/favicon.ico", type: "image/x-icon", sizes: "16x16" },
+    { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
+  ],
+};
+
+/** One icon, its own mark, and no `.ico` the help host cannot serve (Q2, §4.2). */
+const HELP_ICONS: Metadata["icons"] = {
+  icon: [{ url: "/icon.svg", type: "image/svg+xml", sizes: "any" }],
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const site = await resolveServerSite();
   if (site === "help") {
@@ -54,6 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
       metadataBase: new URL(HELP_CANONICAL_ORIGIN),
       title: { default: help.metadataTitle, template: "%s" },
       description: help.metadataDescription,
+      icons: HELP_ICONS,
       openGraph: {
         type: "website",
         siteName: HELP_SITE_NAME,
@@ -68,6 +89,7 @@ export async function generateMetadata(): Promise<Metadata> {
       default: "B4GAMBLE (Before Gamble) | Know your limits before you play",
       template: "%s",
     },
+    icons: MAIN_ICONS,
     description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
     openGraph: {
       type: "website",
@@ -106,7 +128,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${archivo.variable} ${instrumentSerif.variable}`}>
         <JsonLd data={organizationSchema(site)} />
         <JsonLd data={websiteSchema(site)} />
-        {children}
+        {/*
+          The site class reaches server code through the trusted header (§7.2); a client
+          component cannot read it, and the Programme, the sign-in forms and the keepsake card
+          all name the site in their own copy. This hands the decided class down once, so no
+          client component guesses a name and none of them needs a prop threaded through five
+          components to learn it.
+        */}
+        <SiteNameProvider site={site}>{children}</SiteNameProvider>
         {analyticsEnabled ? <AnalyticsPageView /> : null}
         {analyticsEnabled ? <AnalyticsConsentBanner locale={presentation.locale} /> : null}
         <ProgrammeDocumentBoundary />

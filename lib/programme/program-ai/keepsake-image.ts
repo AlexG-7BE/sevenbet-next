@@ -6,7 +6,19 @@
  */
 
 export type KeepsakeRow = { key: string; label: string; value: string };
-export type KeepsakeModel = { title: string; sentence?: string; rows: readonly KeepsakeRow[] };
+export type KeepsakeModel = {
+  title: string;
+  sentence?: string;
+  rows: readonly KeepsakeRow[];
+  /**
+   * The mark in the corner of the card: the name of the site the person is using (RFC-057 Q2,
+   * Founder, 17 October 2026). The picture is saved to their own device and shared, so it must
+   * not carry the other site's name.
+   */
+  brand?: string;
+};
+
+const DEFAULT_KEEPSAKE_BRAND = "B4GAMBLE";
 export type KeepsakeFonts = { sans: string; serif: string };
 
 /** A value longer than this takes the whole width of the card, on the screen and in the picture. */
@@ -110,7 +122,8 @@ function compose(context: Context, model: KeepsakeModel, fonts: KeepsakeFonts, p
   // The result's name and the brand mark.
   const title = model.title.toLocaleUpperCase();
   context.font = `900 12px ${sans}`;
-  const brandWidth = spacedWidth(context, "B4GAMBLE", 0.6);
+  const brand = model.brand ?? DEFAULT_KEEPSAKE_BRAND;
+  const brandWidth = spacedWidth(context, brand, 0.6);
   context.font = `700 12px ${sans}`;
   const titleLines = wrap(context, title, inner - brandWidth - 14, (line) => spacedWidth(context, line, 2.16));
   if (paint) {
@@ -118,7 +131,7 @@ function compose(context: Context, model: KeepsakeModel, fonts: KeepsakeFonts, p
     titleLines.forEach((line, index) => drawSpaced(context, line, left, y + index * 16, 2.16));
     context.font = `900 12px ${sans}`;
     context.fillStyle = INK;
-    drawSpaced(context, "B4GAMBLE", left + inner - brandWidth, y, 0.6);
+    drawSpaced(context, brand, left + inner - brandWidth, y, 0.6);
   }
   y += Math.max(1, titleLines.length) * 16;
 
@@ -186,11 +199,11 @@ function compose(context: Context, model: KeepsakeModel, fonts: KeepsakeFonts, p
 
 /** The card as a PNG. Fonts are the page's own: the families the card on screen is set in. */
 export async function keepsakeImage(model: KeepsakeModel, fonts: KeepsakeFonts): Promise<Blob> {
-  const text = [model.title, model.sentence ?? "", ...model.rows.flatMap((row) => [row.label, row.value]), "B4GAMBLE"].join(" ");
+  const text = [model.title, model.sentence ?? "", ...model.rows.flatMap((row) => [row.label, row.value]), model.brand ?? DEFAULT_KEEPSAKE_BRAND].join(" ");
   await Promise.all([
     document.fonts.load(`700 12px ${fonts.sans}`, text),
     document.fonts.load(`650 16px ${fonts.sans}`, text),
-    document.fonts.load(`900 12px ${fonts.sans}`, "B4GAMBLE"),
+    document.fonts.load(`900 12px ${fonts.sans}`, model.brand ?? DEFAULT_KEEPSAKE_BRAND),
     model.sentence ? document.fonts.load(`italic 400 35px ${fonts.serif}`, model.sentence) : Promise.resolve([]),
   ]).catch(() => undefined);
   const canvas = document.createElement("canvas");

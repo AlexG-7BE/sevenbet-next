@@ -8,13 +8,14 @@ import { productCanonicalPath, productMetadata } from "@/lib/market/product-cont
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { absoluteUrl } from "@/lib/site";
 import { CleanRouteRevenueLine } from "@/components/clean-route/CleanRouteRevenueLine";
+import { withSiteNameDeep } from "@/lib/site/help-copy";
 import { resolveServerSite } from "@/lib/site/server-site";
 import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
   const site = await resolveServerSite();
-  const messages = innanMessages(presentation.locale);
+  const messages = withSiteNameDeep(innanMessages(presentation.locale), site);
   return productMetadata({ presentation, pathname: "/innan", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
@@ -25,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function InnanPage() {
   const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
-  const messages = innanMessages(presentation.locale);
+  const messages = withSiteNameDeep(innanMessages(presentation.locale), site);
   const contentLocale = innanLocale(presentation.locale);
   const url = absoluteUrl(productCanonicalPath(presentation, "/innan"), site);
   const schema = [

@@ -5,6 +5,8 @@ import { passwordResetView } from "@/lib/auth/password-reset";
 import { safeAuthReturnTo } from "@/lib/auth/return-to";
 import { programmeText } from "@/lib/i18n/programme-catalog";
 import { programmeLocaleFromPath } from "@/lib/programme/presentation";
+import { withSiteName } from "@/lib/site/help-copy";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +21,10 @@ function single(value: string | string[] | undefined) {
 export async function generateMetadata({ searchParams }: ResetPasswordPageProps): Promise<Metadata> {
   const query = await searchParams;
   const locale = programmeLocaleFromPath(safeAuthReturnTo(single(query.returnTo))) ?? "en-GB";
+  const site = await resolveServerSite();
   return {
-    title: programmeText(locale, "Reset password | B4GAMBLE"),
-    description: programmeText(locale, "Choose a new password for your B4GAMBLE account."),
+    title: withSiteName(programmeText(locale, "Reset password | B4GAMBLE"), site),
+    description: withSiteName(programmeText(locale, "Choose a new password for your B4GAMBLE account."), site),
     robots: { index: false, follow: false },
   };
 }

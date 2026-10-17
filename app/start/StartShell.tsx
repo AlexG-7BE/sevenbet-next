@@ -7,6 +7,8 @@ import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import { analyticsConsentMessages } from "@/lib/i18n/analytics-consent-catalog";
 import { publicFooterMessages } from "@/lib/i18n/public-shell-catalog";
 import type { SupportedLocale } from "@/lib/market/registry";
+import { siteName } from "@/lib/site/help-copy";
+import type { SiteClass } from "@/lib/site/host-gate";
 
 import styles from "./StartShell.module.css";
 
@@ -17,11 +19,16 @@ import styles from "./StartShell.module.css";
  */
 export const START_LOCALE: SupportedLocale = "en-GB";
 
-export function StartHeader() {
+/**
+ * The wordmark is the site that is answering: this landing is `HELP`, so it is served on both
+ * hosts until phase 3 (Founder, Q2, 17 October 2026). The layout resolves the site once and
+ * hands it down, so this stays a plain component.
+ */
+export function StartHeader({ site }: { site: SiteClass }) {
   return (
     <header className={styles.header} data-start-shell="header">
       <div className={styles.headerInner}>
-        <span className={styles.brand} translate="no">B4GAMBLE</span>
+        <span className={styles.brand} translate="no">{siteName(site)}</span>
       </div>
     </header>
   );
@@ -54,7 +61,7 @@ export function StartFooter() {
           </ul>
         </section>
         <p className={styles.disclaimer}>
-          The B4GAMBLE Programme does not diagnose or treat gambling addiction. Completion does not mean gambling is safe or suitable.
+          The Programme does not diagnose or treat gambling addiction. Completion does not mean gambling is safe or suitable.
         </p>
         <FooterCompliance footer={footer} showAge={false} />
         <div className={styles.baseline}>

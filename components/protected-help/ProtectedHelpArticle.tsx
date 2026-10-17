@@ -40,7 +40,7 @@ function SourceCard({ article }: { article: ProtectedHelpArticle }) {
         <div>
           <p className={styles.articleStatus}>Verified source</p>
           <h2>GAMSTOP Online</h2>
-          <p>Official Great Britain online self-exclusion information. This link leaves B4GAMBLE and opens the provider&apos;s own site and privacy practices.</p>
+          <p>Official Great Britain online self-exclusion information. This link leaves this site and opens the provider&apos;s own site and privacy practices.</p>
         </div>
         <a href="https://www.gamstop.co.uk/" rel="noopener noreferrer" target="_blank">
           Review official terms <span aria-hidden="true">↗</span>
@@ -113,8 +113,8 @@ export function ProtectedHelpArticle({ article }: { article: ProtectedHelpArticl
           ))}
           <li>
             <span>{String(sections.length + 1).padStart(2, "0")}</span>
-            <h2>B4GAMBLE boundary</h2>
-            <p>Information only. B4GAMBLE does not diagnose, provide treatment, confirm a local tool or replace current official instructions.</p>
+            <h2>Where this page stops</h2>
+            <p>Information only. This site does not diagnose, provide treatment, confirm a local tool or replace current official instructions.</p>
           </li>
         </ol>
         <SourceCard article={article} />

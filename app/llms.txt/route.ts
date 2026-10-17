@@ -1,9 +1,10 @@
 import { indexableMarketProductPaths, indexableReviewCards, loadCrawlerBonusDirectory, loadMarketSitemapSnapshot } from "@/app/sitemap";
 import { articleService } from "@/lib/services";
-import { buildLlmsTxt, llmsLaunchMarkets, type LlmsMarketCatalogue } from "@/lib/seo/llms";
+import { buildHelpLlmsTxt, buildLlmsTxt, llmsLaunchMarkets, type LlmsMarketCatalogue } from "@/lib/seo/llms";
 import { languageForLocale } from "@/lib/market/registry";
 import { stripPublicMarketPrefix } from "@/lib/market/routing";
 import { hostVaryingCacheControl } from "@/lib/site/host-cache";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,22 @@ export const dynamic = "force-dynamic";
  * the two never disagree about what is published (see lib/seo/llms.ts for the wording).
  */
 export async function GET() {
+  // RFC-057 §12: each host answers with its own file. The commercial one opens by saying the
+  // site compares casinos and earns commission, and every URL in it is `b4gamble.com`, which a
+  // help-host response may not carry (§6 rule 1). The help file lists the help pages only, and
+  // none of the market or bonus queries below runs for it.
+  if (await resolveServerSite() === "help") {
+    const helpGuides = await articleService
+      .listPublished("en-GB", { take: 100 })
+      .then((articles) => articles.filter((article) => article.category === "responsible-gambling"))
+      .catch(() => []);
+    return new Response(buildHelpLlmsTxt({ articles: helpGuides }), {
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": hostVaryingCacheControl("public, max-age=3600"),
+      },
+    });
+  }
   const crawlerBonuses = await loadCrawlerBonusDirectory();
   const [markets, articles] = await Promise.all([
     Promise.all(llmsLaunchMarkets().map(async (market): Promise<LlmsMarketCatalogue> => {

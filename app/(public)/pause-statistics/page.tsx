@@ -9,6 +9,7 @@ import { productCanonicalPath, productHref, productMetadata } from "@/lib/market
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { absoluteUrl } from "@/lib/site";
 import { CleanRouteRevenueLine } from "@/components/clean-route/CleanRouteRevenueLine";
+import { withSiteNameDeep } from "@/lib/site/help-copy";
 import { resolveServerSite } from "@/lib/site/server-site";
 import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 
@@ -17,7 +18,7 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
   const site = await resolveServerSite();
-  const messages = pauseStatisticsMessages(presentation.locale);
+  const messages = withSiteNameDeep(pauseStatisticsMessages(presentation.locale), site);
   return productMetadata({ presentation, pathname: "/pause-statistics", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
@@ -34,7 +35,7 @@ function Table({ rows }: { rows: readonly StatisticsRow[] }) {
  */
 export default async function PauseStatisticsPage() {
   const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
-  const messages = pauseStatisticsMessages(presentation.locale);
+  const messages = withSiteNameDeep(pauseStatisticsMessages(presentation.locale), site);
   const contentLocale = pauseStatisticsLocale(presentation.locale);
   const url = absoluteUrl(productCanonicalPath(presentation, "/pause-statistics"), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;

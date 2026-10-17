@@ -7,6 +7,7 @@ import { isGoogleAuthAvailable } from "@/lib/auth/google-config";
 import { programmeText } from "@/lib/i18n/programme-catalog";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { resolveServerSite } from "@/lib/site/server-site";
+import { withSiteName } from "@/lib/site/help-copy";
 import { programmeSearchMetadata } from "@/lib/seo/programme-metadata";
 import {
   isProgrammeLocale,
@@ -20,11 +21,13 @@ import type { SiteClass } from "@/lib/site/host-gate";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
-  const [presentation, query] = await Promise.all([resolveServerPresentationContext(), searchParams]);
+  const [presentation, query, site] = await Promise.all([resolveServerPresentationContext(), searchParams, resolveServerSite()]);
   const locale = isProgrammeLocale(presentation.locale) ? presentation.locale : "en-GB";
-  const title = programmeText(locale, "B4GAMBLE 10-Step Control Programme | Personal Control Plan");
-  const description = programmeText(locale, "Begin B4GAMBLE's private 10-Step Control Programme with a personal exercise, then continue through structured goals, limits, reflection and review.");
-  return programmeSearchMetadata(locale, { title, description }, { queryVariant: Object.keys(query).length > 0, site: await resolveServerSite() });
+  // Both strings name the site in all thirteen languages, so they read the name of the site
+  // that is answering (Founder, 17 October 2026).
+  const title = withSiteName(programmeText(locale, "B4GAMBLE 10-Step Control Programme | Personal Control Plan"), site);
+  const description = withSiteName(programmeText(locale, "Begin B4GAMBLE's private 10-Step Control Programme with a personal exercise, then continue through structured goals, limits, reflection and review."), site);
+  return programmeSearchMetadata(locale, { title, description }, { queryVariant: Object.keys(query).length > 0, site });
 }
 
 function breadcrumbSchema(locale: ProgrammeLocale, site: SiteClass) {

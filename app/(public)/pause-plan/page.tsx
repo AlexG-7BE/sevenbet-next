@@ -15,7 +15,7 @@ import { productCanonicalPath, productHref, productMetadata } from "@/lib/market
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
-import { helpRevenueLine, helpRevenueLinkLabel, HELP_OWNER_PATH } from "@/lib/site/help-copy";
+import { HELP_OWNER_PATH, helpRevenueLine, helpRevenueLinkLabel, withSiteNameDeep } from "@/lib/site/help-copy";
 import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import { resolveServerSite } from "@/lib/site/server-site";
 
@@ -24,7 +24,7 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
   const site = await resolveServerSite();
-  const messages = pausePlanMessages(presentation.locale);
+  const messages = withSiteNameDeep(pausePlanMessages(presentation.locale), site);
   return productMetadata({ presentation, pathname: "/pause-plan", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
@@ -53,7 +53,7 @@ export default async function PausePlanPage() {
  */
 export async function PausePlanView({ pathname, site }: { pathname: string; site: SiteClass }) {
   const presentation = await resolveServerPresentationContext();
-  const messages = pausePlanMessages(presentation.locale);
+  const messages = withSiteNameDeep(pausePlanMessages(presentation.locale), site);
   const contentLocale = pausePlanLocale(presentation.locale);
   const url = absoluteUrl(productCanonicalPath(presentation, pathname), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;

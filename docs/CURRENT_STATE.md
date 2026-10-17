@@ -214,21 +214,76 @@ main site, so the main host behaves exactly as before:
   not part of phase 1, so `/who-runs-this` must say that plainly while it is true. Partner
   clicks are still measured commercially, by the aggregate daily projection, where no account
   is involved. Amends RFC-046 §7.
-- **Still to come in phase 1:** the help host's own icon in place of the B4GAMBLE mark at
-  `/icon.svg` and `/favicon.ico`, a help-site not-found page that replaces the gate's own
-  self-contained 404 body (`lib/site/help-not-found-page.ts`), the per-host `llms.txt` body,
-  the two-host Playwright specs of §20.2, and the copy follow-up below.
+- **Still to come in phase 1:** a help-site not-found page that replaces the gate's own
+  self-contained 404 body (`lib/site/help-not-found-page.ts`) and the two-host Playwright specs
+  of §20.2. The icon, the per-host `llms.txt` body and the copy follow-up below are done.
 - **Not verified, and the next pull request has to solve it:** a local two-host run still does
   not work. `HELP_SITE_DEV_HOST` was set at build time, at run time and in `.env.local` against
   a local production server and the edge middleware sandbox did not see it, although middleware
   itself was running. The help half is therefore proved by unit tests that call `middleware()`
   directly and by component renders, not by an HTTP round trip. §20.2's two-host browser specs
   need a working mechanism first.
-- **Named follow-up, copy:** §17.1's table is applied, but the brand name "B4GAMBLE" still
-  appears **inside the body copy** of the ten steps, the control pages and several help guides
-  (for example `BRAND_STATEMENT` and the control-page FAQ answers). That is a copy rewrite the
-  Founder sees before phase 2, not a code change; the shell, the metadata, the structured data,
-  the share image and the footer carry no wordmark today, which is what Q2 asks of the mark.
+### Phase 1, the name and the pictures (branch `feat/help-site-own-brand`)
+
+**Founder, 17 October 2026: «убери B4GAMBLE из текстов и перенеси картинки».** The copy
+follow-up recorded above is closed, and the two photographs the phase-2 Firewall rule would have
+denied are moved. **DETECTED in the repository; still nothing is reachable**, because
+`HELP_SITE_SERVING` is unset and `pauseplan.help` is not attached. On `b4gamble.com` every
+sentence, every address and every image below is what it is today.
+
+- **The name is read, never written.** `siteName(site)` and `withSiteName(text, site)` in
+  `lib/site/help-copy.ts` are the whole mechanism: a sentence that names the site is rewritten
+  as the serving host would say it, and on the main host it is returned unchanged, byte for
+  byte. `withSiteNameDeep` does it over a whole copy object, skipping machine identifiers
+  (`href`, `id`, `item`, `path`, `slug`, `src`, `url`) and moving the other site's address as
+  well, because a sentence that prints an address leaks exactly as much as one that prints a
+  name. One rewrite rather than a second set of thirteen translations: the grammar glued to
+  the wordmark travels with it, which is what Swedish and Danish need
+  ("B4GAMBLEs 10-stegsprogram" → "Pause Plans 10-stegsprogram").
+- **A client component reads the class from `SiteNameProvider`** (`components/site/`), which the
+  root layout fills from the trusted header of §7.2. The Programme, the sign-in and reset
+  screens, the keepsake card and the pause-plan tool all name the site, and none of them can
+  read a request header.
+- **What is now host-aware:** the `/10-steps` and `/program` titles and descriptions, the
+  sign-in and reset screens and their metadata, the Programme's own strings (the consent line
+  and the "Email me B4GAMBLE updates" checkbox included), the keepsake card's mark, the
+  Privacy and Terms trading name and lead, `/help`, `/responsible-gambling`, `/unsubscribe`,
+  the budget-calculator title, the guides' own database text (the toolkit link the Learn
+  orchestrator writes as "B4GAMBLE Help"), the Learn breadcrumbs and JSON-LD, the three
+  captured pages a help route serves, and the pause plan's calendar file, which carries the
+  serving site's name, host and file name because it outlives the visit.
+- **What is neutral instead, because it reads as well on both sites:** the Programme disclaimer
+  ("The Programme does not diagnose or treat gambling addiction"), the Google and provider
+  sentences of the Privacy Notice, the protected-help boundary card, the self-exclusion line of
+  `lib/responsible-gambling.ts`, and the default display name for a new account.
+- **The pause plan's body line** "Ten steps from the B4GAMBLE Programme" / "Tio steg ur
+  B4GAMBLE-programmet" / "Ti trin fra B4GAMBLE-programmet" is now "Ten steps from the
+  Programme" in all three languages: on both sites the Programme is the one being described.
+- **`llms.txt` is per host (§12).** The help host answers with its own file — the one phrase,
+  the Programme, the pause plans, the help guides, the control answers, the owner page and the
+  data statement, and no casino text — and runs none of the market or bonus queries.
+- **The two photographs moved, and the rule did not.** `/home/hero-plan.jpg` (`/10-steps`,
+  `/start`) and `/home/chapter-apply.jpg` (the guides hub) are static imports in
+  `lib/media/help-host-photos.ts`, so the bundler serves them from `/_next/static/media/` under
+  a content hash — the one exception the phase-2 Firewall rule already makes (Founder,
+  25 September 2026). The help host loads that module through a dynamic `import()` behind
+  `site === "help"`; the originals stay in `public/home/` and `b4gamble.com` serves the same
+  URLs it serves today. **No allowance was added to
+  `lib/security/help-host-firewall-rule.ts`**: it is still a default deny over everything the
+  middleware matcher cannot see, with `^/_next/static/` as its only exception.
+- **The tab icon is a route, not a file.** `app/favicon.ico` and `app/icon.svg` were file
+  conventions, and a file convention writes its `<link rel="icon">` into **every** document on
+  both hosts; both files are the B4GAMBLE mark, and the rule denies every `.ico`. They are
+  `app/favicon.ico/route.ts` and `app/icon.svg/route.ts` now, at the same two addresses with
+  the same bytes on `b4gamble.com`. The help host gets its own mark at `/icon.svg` — a pause in
+  the help palette, no wordmark — and a 404 for `/favicon.ico`, which is what the Firewall rule
+  would answer anyway; the root metadata names the icons per host.
+- **The guard** is `tests/help-site-own-brand.test.tsx` (14 tests, in `ci:quality` through
+  `help-site-shell:test`). It sweeps every copy table a help route reads in all three published
+  languages, every Programme string, the captured pages after the real transform pipeline, and
+  the rendered HTML **and element tree** of the components that print a name; it walks every
+  asset a help page requests against the Firewall rule's own patterns; and it asserts in the
+  other direction that the main host still says B4GAMBLE where it says it today.
 
 - **Two sites, one Vercel project.** `b4gamble.com` stays the commercial site; `pauseplan.help`
   becomes the help site, carrying the Programme, the 10 steps, the pause plans (sv/da/en), the

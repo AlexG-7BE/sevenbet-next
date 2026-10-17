@@ -10,7 +10,7 @@ import { programmePathForPresentationLocale } from "@/lib/programme/presentation
 import { absoluteUrl } from "@/lib/site";
 import { DEFAULT_MARKET_PROFILE, languageRouteByLocale, publicMarketPath } from "@/lib/market/registry";
 import { articleService } from "@/lib/services";
-import { helpLearnHubDescription } from "@/lib/site/help-copy";
+import { helpLearnHubDescription, withSiteName } from "@/lib/site/help-copy";
 import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 import { resolveServerSite } from "@/lib/site/server-site";
 
@@ -51,10 +51,15 @@ export default async function LearnPage() {
   const canonical = productCanonicalPath(presentation, "/learn");
   const programmePath = programmePathForPresentationLocale(presentation.locale);
   const localizedHref = (href: string) => productHref(presentation, href);
+  // §4.2: the hub's opening photograph is `public/home/`, which the help-host Firewall rule
+  // denies, so the help host takes the same picture hashed under `/_next/static/`.
+  const heroPhoto = site === "help"
+    ? (await import("@/lib/media/help-host-photos")).helpHostPhoto("chapter-apply.jpg")
+    : undefined;
   const englishArticleHref = (href: string) => publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, href);
   return <>
-    <JsonLd data={{ "@context": "https://schema.org", "@type": "CollectionPage", name: messages.ui.metadataTitle, description: site === "help" ? helpLearnHubDescription(presentation.locale) : messages.ui.metadataDescription, url: absoluteUrl(canonical, site) }} />
+    <JsonLd data={{ "@context": "https://schema.org", "@type": "CollectionPage", name: withSiteName(messages.ui.metadataTitle, site), description: site === "help" ? helpLearnHubDescription(presentation.locale) : messages.ui.metadataDescription, url: absoluteUrl(canonical, site) }} />
     <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.ui.home, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) }, { "@type": "ListItem", position: 2, name: messages.ui.learn, item: absoluteUrl(canonical, site) }] }} />
-    <HandoffPage headerAutoHide name="learn" programmePath={programmePath} revealHeadings transform={(html) => transformLearnHandoff(html, presentation.locale, localizedHref, articles, programmePath, englishFallback ? { articleHrefFor: englishArticleHref, articleLanguage: { lang: "en", label: messages.englishGuide } } : undefined, site)} />
+    <HandoffPage headerAutoHide name="learn" programmePath={programmePath} revealHeadings site={site} transform={(html) => transformLearnHandoff(html, presentation.locale, localizedHref, articles, programmePath, englishFallback ? { articleHrefFor: englishArticleHref, articleLanguage: { lang: "en", label: messages.englishGuide } } : undefined, site, heroPhoto)} />
   </>;
 }

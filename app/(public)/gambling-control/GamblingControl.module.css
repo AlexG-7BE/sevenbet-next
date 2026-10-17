@@ -56,8 +56,8 @@
 .table tbody th { min-width:9rem; font-size:16px; font-weight:800; }
 .table tbody th small { display:block; margin-top:4px; color:#aaa79e; font-size:13px; font-weight:400; }
 .table td { color:#e0ded7; }
-.table tr[data-control-tool="b4gamble"] th,.table tr[data-control-tool="b4gamble"] td { background:#1d1c14; }
-.table tr[data-control-tool="b4gamble"] th { color:#e4e24e; }
+.table tr[data-control-tool="b4gamble"] th,.table tr[data-control-tool="b4gamble"] td,.table tr[data-control-tool="this-site"] th,.table tr[data-control-tool="this-site"] td { background:#1d1c14; }
+.table tr[data-control-tool="b4gamble"] th,.table tr[data-control-tool="this-site"] th { color:#e4e24e; }
 
 .faq dl { margin:20px 0 0; display:grid; gap:12px; }
 .faq dl > div { padding:20px 22px; border:1px solid rgba(250,250,247,.12); border-radius:16px; background:#100f0f; }
