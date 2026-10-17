@@ -597,7 +597,7 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
   // Announcements are grouped by host, one POST per host with that host's own key (§12).
   const helpUrls = ["https://pauseplan.help/sv/pause-plan", "https://pauseplan.help/sv/learn"];
   const grouped = indexNowPayloadsByHost([...casinoReviewUrls("turbonino"), ...helpUrls, "https://elsewhere.example/page"]);
-  assert.deepEqual(grouped.map((group) => group.host), ["b4gamble.com", "pauseplan.help"]);
+  assert.deepEqual(grouped.map((group) => group.host), [new URL(siteUrl).host, "pauseplan.help"]);
   assert.deepEqual(grouped.map((group) => group.key), [INDEXNOW_KEY, HELP_INDEXNOW_KEY]);
   assert.deepEqual(grouped[1].urlList, helpUrls);
   assert.equal(grouped[1].keyLocation, `https://pauseplan.help/${HELP_INDEXNOW_KEY}.txt`);

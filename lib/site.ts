@@ -55,6 +55,17 @@ export function originForSite(site: SiteClass = "main") {
   return site === "help" ? helpUrl : siteUrl;
 }
 
+/**
+ * The **public canonical** origin of a site, which is the same everywhere: `siteUrl` follows
+ * the environment (a local run is `http://localhost:4173`), and code that talks about the
+ * published address of a page regardless of where it runs — the Learn tools, their URL
+ * schemas and the stored-canonical rule of RFC-057 §14 — must not. Both values are source
+ * constants, so no environment value ever names one.
+ */
+export function canonicalOriginForSite(site: SiteClass = "main") {
+  return site === "help" ? HELP_CANONICAL_ORIGIN : PUBLIC_CANONICAL_ORIGIN;
+}
+
 // Every route here goes into the sitemap, so noindex pages (Privacy, Terms) stay out.
 export const coreRoutes = [
   "",

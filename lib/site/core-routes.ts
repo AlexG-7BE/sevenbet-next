@@ -1,4 +1,4 @@
-import { coreRoutes, originForSite } from "@/lib/site";
+import { canonicalOriginForSite, coreRoutes } from "@/lib/site";
 import { helpSiteSwitchesFromProcessEnv, type SiteClass } from "@/lib/site/host-gate";
 import { classifyRoutePath, type SiteRouteClass } from "@/lib/site/host-routes";
 
@@ -50,8 +50,12 @@ export function learnArticleSite(
   return redirectsOn && category === HELP_LEARN_CATEGORY ? "help" : "main";
 }
 
+/**
+ * The published address of a guide's site, not the running origin: a guide's public URL is
+ * the same fact in CI, in a local run and in Production (`PUBLIC_CANONICAL_ORIGIN`).
+ */
 export function learnArticleOrigin(category: string, redirectsOn?: boolean) {
-  return originForSite(learnArticleSite(category, redirectsOn));
+  return canonicalOriginForSite(learnArticleSite(category, redirectsOn));
 }
 
 /**
@@ -60,5 +64,5 @@ export function learnArticleOrigin(category: string, redirectsOn?: boolean) {
  * guide must use is `learnArticleSite` above.
  */
 export function publicLearnOrigins(): readonly string[] {
-  return [originForSite("main"), originForSite("help")];
+  return [canonicalOriginForSite("main"), canonicalOriginForSite("help")];
 }

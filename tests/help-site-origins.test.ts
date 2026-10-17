@@ -17,7 +17,7 @@ import {
   organizationSchema,
   websiteSchema,
 } from "../lib/seo/structured-data";
-import { absoluteUrl, coreRoutes, helpUrl, originForSite, resolveHelpSiteUrl, siteUrl } from "../lib/site";
+import { absoluteUrl, canonicalOriginForSite, coreRoutes, helpUrl, originForSite, PUBLIC_CANONICAL_ORIGIN, resolveHelpSiteUrl, siteUrl } from "../lib/site";
 import {
   coreRoutesForSite,
   HELP_LEARN_CATEGORY,
@@ -205,9 +205,13 @@ test("a guide's public origin follows its category, and nothing else moves", () 
   assert.equal(learnArticleSite("responsible-gambling", true), "help");
   assert.equal(learnArticleSite("casino-bonuses", true), "main");
   assert.equal(learnArticleSite("payments", true), "main");
+  // The published address of a guide is the same fact in CI, in a local run and in
+  // Production, so these are the canonical origins and not the running one.
   assert.equal(learnArticleOrigin("responsible-gambling", true), HELP_CANONICAL_ORIGIN);
-  assert.equal(learnArticleOrigin("responsible-gambling", false), siteUrl);
-  assert.deepEqual([...publicLearnOrigins()], [siteUrl, HELP_CANONICAL_ORIGIN]);
+  assert.equal(learnArticleOrigin("responsible-gambling", false), PUBLIC_CANONICAL_ORIGIN);
+  assert.deepEqual([...publicLearnOrigins()], [PUBLIC_CANONICAL_ORIGIN, HELP_CANONICAL_ORIGIN]);
+  assert.equal(canonicalOriginForSite("main"), PUBLIC_CANONICAL_ORIGIN);
+  assert.equal(canonicalOriginForSite("help"), HELP_CANONICAL_ORIGIN);
 
   assert.equal(learnCategoryBelongsToSite("responsible-gambling", "help", true), true);
   assert.equal(learnCategoryBelongsToSite("casino-bonuses", "help", true), false);
