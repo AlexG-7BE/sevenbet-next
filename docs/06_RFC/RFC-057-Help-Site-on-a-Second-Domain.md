@@ -1505,10 +1505,12 @@ lines of test:
 after the change (as the geo-block runbook says), so every switch flip is
 followed by a redeploy.
 
-**Not waiting for phase 1:** the pause-letters cron gap (§21.9) is fixed in its
-own bug-fix PR before `PAUSE_LETTERS_ENABLED` is turned on, with a test in
-`tests/production-canonical-host.test.ts` that walks every `vercel.json` cron
-path. Phase 1 keeps that test when it rewrites the resolver.
+**Not waiting for phase 1, and now DONE:** the pause-letters cron gap (§21.9)
+was fixed in its own bug-fix PR before `PAUSE_LETTERS_ENABLED` is turned on —
+PR #534, merged on 17 October 2026 as `abded8ee`, with the test in
+`tests/production-canonical-host.test.ts:114` that walks every `vercel.json`
+cron path and fails when one is missing from `PRODUCTION_CRON_PATHS`. Phase 1
+keeps that test when it rewrites the resolver.
 
 ## 19. Rollback
 
