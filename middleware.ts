@@ -3,13 +3,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   getAdminLoginUrl,
 } from "@/lib/auth/policy";
-import { resolveRuntimeCanonicalHost } from "@/lib/auth/runtime-canonical-host";
 import {
   buildContentSecurityPolicy,
   CONTENT_SECURITY_POLICY_HEADER,
   createCspNonce,
   CSP_NONCE_REQUEST_HEADER,
 } from "@/lib/security/content-security-policy";
+import { helpHostNotFoundHtml } from "@/lib/site/help-not-found-page";
+import {
+  helpSiteSwitchesFromProcessEnv,
+  resolveSiteHost,
+  SITE_CLASS_HEADER,
+} from "@/lib/site/host-gate";
+import { helpHostServes } from "@/lib/site/host-routes";
 import {
   isLocalizedPublicDestination,
   neutralRouteDestination,
@@ -218,10 +224,20 @@ function isolateMarketResponse(response: NextResponse, equivalentPathname: strin
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
+
+  // RFC-057 §7.1 step 1. The host is classified once, from source constants, before anything
+  // else reads it, and every later decision reads that class. No request value ever chooses
+  // an origin. With HELP_SITE_SERVING off this is exactly RFC-030's rule and `site` is `main`
+  // for every request.
+  const helpSite = helpSiteSwitchesFromProcessEnv();
+  const siteHost = resolveSiteHost(request.url, process.env, helpSite);
+  const site = siteHost.kind === "next" ? siteHost.site : "main";
+
   const nonce = createCspNonce();
   const contentSecurityPolicy = buildContentSecurityPolicy(nonce, {
     development: process.env.NODE_ENV === "development",
     formActionOrigins: [],
+    site,
     upgradeInsecureRequests: request.nextUrl.protocol === "https:",
   });
   const requestHeaders = new Headers(request.headers);
@@ -229,6 +245,10 @@ export async function middleware(request: NextRequest) {
   requestHeaders.delete(PRESENTATION_LANGUAGE_HEADER);
   requestHeaders.delete(PRESENTATION_MARKET_HEADER);
   requestHeaders.delete(internalPresentationTokenHeader);
+  // §7.2: the site class reaches the page only through this header, stripped from every
+  // incoming request like the presentation headers and set here, after the host decision.
+  requestHeaders.delete(SITE_CLASS_HEADER);
+  requestHeaders.set(SITE_CLASS_HEADER, site);
   requestHeaders.set(CSP_NONCE_REQUEST_HEADER, nonce);
   requestHeaders.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
   const nextResponse = (rewriteUrl?: URL) => rewriteUrl
@@ -237,32 +257,55 @@ export async function middleware(request: NextRequest) {
   const secureResponse = (response: NextResponse) => {
     response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
     response.headers.set("X-Frame-Options", "DENY");
+    // §7.1 step 3 and §18: while HELP_SITE_REDIRECTS is off the main host still serves the
+    // help routes, so nothing on the help host may be indexed — no page is ever indexable on
+    // both hosts at once. The two switches flip in one deployment.
+    if (site === "help" && !helpSite.redirects && !response.headers.has("X-Robots-Tag")) {
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
     return response;
   };
 
-  const canonicalHost = resolveRuntimeCanonicalHost(request.url);
-  if (canonicalHost.kind === "redirect") {
-    return secureResponse(NextResponse.redirect(canonicalHost.location, canonicalHost.status));
+  if (siteHost.kind === "redirect") {
+    return secureResponse(NextResponse.redirect(siteHost.location, siteHost.status));
   }
-  if (canonicalHost.kind === "reject") {
+  if (siteHost.kind === "reject") {
     return secureResponse(NextResponse.json(
       {
         ok: false,
-        code: canonicalHost.reason === "metadata"
+        code: siteHost.reason === "metadata"
           ? "PREVIEW_CANONICAL_HOST_UNAVAILABLE"
           : "PREVIEW_HOST_NOT_ALLOWED",
       },
       {
-        status: canonicalHost.reason === "metadata" ? 503 : 421,
+        status: siteHost.reason === "metadata" ? 503 : 421,
         headers: { "Cache-Control": "no-store" },
       },
     ));
   }
 
   // Country geo-block (Founder, 28 Sep 2026): a blocked country gets HTTP 451 before any
-  // content, page, API, RSC payload or sitemap, unless it carries a valid owner cookie.
+  // content, page, API, RSC payload or sitemap, unless it carries a valid owner cookie. The
+  // 451 decision does not depend on the host, so it runs on the help host too; the owner
+  // cookie is host-only there, because its domain is set only on b4gamble.com (§13).
   const geoBlocked = await geoBlockGate(request);
   if (geoBlocked) return geoBlocked;
+
+  // §7.1 step 3, the help gate. The help site is an allowlist: a COMMERCIAL route, an
+  // INTERNAL route and any path with no class in lib/site/host-routes.ts all answer 404 here,
+  // with no link of any kind in the body, so a new route can never appear on the help host.
+  if (site === "help" && !helpHostServes(pathname)) {
+    return secureResponse(new NextResponse(helpHostNotFoundHtml(nonce), {
+      status: 404,
+      headers: {
+        "Cache-Control": "private, no-store",
+        "Content-Type": "text/html; charset=utf-8",
+        "Referrer-Policy": "no-referrer",
+        "X-Content-Type-Options": "nosniff",
+        "X-Robots-Tag": "noindex, nofollow, noarchive",
+      },
+    }));
+  }
 
   if (pathname === "/partner-preview" || pathname.startsWith("/partner-preview/")) {
     return secureResponse(new NextResponse(null, {
