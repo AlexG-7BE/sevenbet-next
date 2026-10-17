@@ -12,6 +12,43 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## The help site on a second domain is approved — decided, not built
+
+**Founder decision, 17 October 2026** (chat, «ок, начинай первый этап»;
+[decision](07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md),
+[RFC-057](06_RFC/RFC-057-Help-Site-on-a-Second-Domain.md), now `ACTIVE`).
+**APPROVED — NO CODE YET.** Phase 0 is done; phase 1 (code, with every switch off, so the main
+site behaves exactly as before) is the work in hand. Nothing a visitor sees has changed, on
+either site.
+
+- **Two sites, one Vercel project.** `b4gamble.com` stays the commercial site; `pauseplan.help`
+  becomes the help site, carrying the Programme, the 10 steps, the pause plans (sv/da/en), the
+  help guides, `/beside`, `/innan`, the control pages and the helplines. The request host is
+  classified once from source constants; every commercial and internal route answers 404 on the
+  help host, and `b4gamble.com` keeps exactly one quiet "need help" link and no other help
+  content once the move is done.
+- **DETECTED (Vercel, 17 October 2026):** `pauseplan.help` is bought (team `alexg-7bes-projects`,
+  Vercel nameservers, auto-renew on, expires October 2027) and is **not attached to the project**;
+  attaching it is phase 2. Until then the help host is "any other host" and is redirected to
+  `b4gamble.com`, which is today's behaviour.
+- **His answers, recorded in the decision record:** the help site gets its own name "Pause Plan"
+  with no B4GAMBLE wordmark or logo (Q2); no Google tag and no cookie banner on the help host,
+  counts from the server, and `b4gamble.com` keeps its 4 October 2026 GA4 decision unchanged (Q3);
+  no non-profit entity now (Q4); the pause plan is the help home page (Q5); the help mailbox moves
+  to the help domain later and `support@b4gamble.com` is acceptable for phase 2 (Q6); new partner
+  presses stop storing the account and the weekly `programme_funnel` count drops its partner-press
+  stages, with the older rows left to a separate data job (Q7); the current Google client is fine
+  for phase 2 and a second one comes before phase 4 (Q8); the home hero link stays exactly as it
+  is and will point at the help site, and the desktop homepage is not changed (Q9).
+- **Unchanged:** PR #530 — the Programme shows no casino, offer, bonus, comparison or `/r/` link
+  to anyone on either host, and `app/program/layout.tsx` keeps passing `researchNavigation={false}`
+  (**DETECTED** at `077e0233`, `:31` and `:33`). No database schema change, no column, no
+  migration. The desktop home page, commercial authority (RFC-042, RFC-047, RFC-049, RFC-054) and
+  the country-block policy are untouched.
+- **Way back:** nothing is deployed, so there is nothing to roll back; the way back from each
+  phase is RFC-057 §19, and reverting the phase-1 pull requests restores today's behaviour
+  exactly.
+
 ## The commercial menu reaches every visitor — in review
 
 **Founder decision, 17 October 2026** (chat, «Полное меню для всех»;
