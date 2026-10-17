@@ -175,6 +175,13 @@ test("IndexNow: each host announces its own URLs with its own key file", () => {
   assert.equal(classifyRoutePath(`/${INDEXNOW_KEY}.txt`), "COMMERCIAL");
   assert.equal(classifyRoutePath(`/${HELP_INDEXNOW_KEY}.txt`), "HELP");
 
+  // A `HELP` route is served on the main host until phase 3 and answers a 301 after it, and
+  // either would join the two domains for anyone who fetched the key file there, so the help
+  // key route refuses every host but its own and is kept out of the phase-3 301 list.
+  const helpKeyRoute = read(`app/${HELP_INDEXNOW_KEY}.txt/route.ts`);
+  assert.match(helpKeyRoute, /if \(await resolveServerSite\(\) !== "help"\) \{\n\s+return new Response\(null, \{ status: 404/);
+  assert.match(helpKeyRoute, /export const dynamic = "force-dynamic";/);
+
   const payload = indexNowPayload(["https://pauseplan.help/sv/pause-plan", "https://b4gamble.com/en/casinos"], "help");
   assert.deepEqual(payload, {
     host: "pauseplan.help",

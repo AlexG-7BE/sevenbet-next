@@ -109,10 +109,13 @@ main site, so the main host behaves exactly as before:
   catalogue, no offers and no reviews; `mainSitemap()` is today's sitemap and drops its `HELP`
   routes and the help guides in the same deployment that starts the 301s. The market-product
   cache entry now has the site in its key (§7.4).
-- **A second IndexNow key (§12).** The help host has its own key and its own key file
-  (`HELP`, so the main host answers 404 for it, as the help host does for the main one): a key
-  file shared by two domains is a public marker joining them. Announcements are grouped by
-  host, one POST per host with that host's key.
+- **A second IndexNow key (§12).** The help host has its own key and its own key file: a key
+  file answered by two domains is a public marker anyone can use to join them. The main key
+  file is `COMMERCIAL`, so the gate refuses it on the help host; the help key **route** refuses
+  every host but its own, because its `HELP` class alone would have it served on
+  `b4gamble.com` until phase 3 and answering a 301 after it, and either of those is the marker.
+  It is therefore also kept out of the phase-3 301 list. Announcements are grouped by host, one
+  POST per host with that host's key.
 - **Better Auth, two Production hosts, code only (§9.2).** With `HELP_SITE_SERVING` on,
   Production uses the dynamic base URL with exactly the two source-constant hosts and refuses
   any other value, including a `BETTER_AUTH_URL` that is not one of the two. **No environment
