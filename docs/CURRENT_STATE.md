@@ -707,7 +707,7 @@ more than five: "Read next" always showed the three newest guides of the languag
 Responsible Gambling). Casino reviews sit three or four clicks deep with two or three links
 in and a median of 294 words. Ten language pages serve the English text under an English
 title (`/sv|da|de/help`, `/sv|da|de/responsible-gambling`, `/de/pause-plan`, `/de/beside`,
-`/de/for-creators`, `/de/pause-statistics`). `/for-creators` and `/beside` are in the sitemap with no internal link;
+`/de/for-creators`, `/de/pause-statistics`, `/de/forum-study`). `/for-creators` and `/beside` are in the sitemap with no internal link;
 `/pause-statistics` is linked from the footer and `/forum-study` from
 `/pause-statistics` and `/pause-plan`.
 
