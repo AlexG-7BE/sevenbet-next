@@ -1505,6 +1505,34 @@ lines of test:
 after the change (as the geo-block runbook says), so every switch flip is
 followed by a redeploy.
 
+**Added on 17 October 2026 from the review of PR #535; no decision changes.**
+Three refinements the review of the foundation pull request produced, all
+carried out in its review follow-up:
+
+1. **Phase 2 order: the Firewall rule, then the switch and the redeploy, then
+   the domain.** Because an environment change reaches only later deployments,
+   attaching `<help-domain>` before the redeploy opens a window in which the
+   help host answers a 308 to `b4gamble.com` — and a 308 is cacheable by
+   default (RFC 7538), so a browser, a crawler or a blocker's classifier that
+   samples the domain in that window keeps the association the second domain
+   exists to avoid. Every redirect that names the help host is now sent
+   `Cache-Control: no-store`, which bounds the damage; this order removes the
+   window.
+2. **A source constant gates the switch.** `HELP_SHELL_READY` in
+   `lib/site/host-routes.ts` is `false` until the pull request that lands the
+   help shell, the help home and the host-aware root metadata flips it in the
+   same commit. While it is false the help host answers 404 for **every** path,
+   not only the `COMMERCIAL` and `INTERNAL` ones: the route classes alone would
+   hand `/`, `/learn`, `/privacy` and `/login` over with the commercial shell
+   and the full casino menu, and the phase ordering of this table was the only
+   thing preventing it. It is a source constant, not a variable, so no
+   dashboard change can publish the catalogue on the help domain.
+3. **The help host's `robots.txt` refuses every crawler and names no sitemap
+   while `HELP_SITE_REDIRECTS` is off**, which is all of phase 2 ("live, not
+   indexed, not linked"). The §12 row — allow all,
+   `Sitemap: HELP_ORIGIN/sitemap.xml` — is the phase-3 state, and it arrives
+   with the same deployment as the 301s.
+
 **Not waiting for phase 1, and now DONE:** the pause-letters cron gap (§21.9)
 was fixed in its own bug-fix PR before `PAUSE_LETTERS_ENABLED` is turned on —
 PR #534, merged on 17 October 2026 as `abded8ee`, with the test in

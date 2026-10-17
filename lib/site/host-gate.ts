@@ -14,6 +14,13 @@ import {
  */
 export const HELP_CANONICAL_ORIGIN = "https://pauseplan.help";
 
+/**
+ * The help site's own name (Founder, Q2, 17 October 2026). It carries no B4GAMBLE wordmark and
+ * no B4GAMBLE logo anywhere, because the whole point of the split is that the two sites are not
+ * visibly one. Every surface that prints a site name on the help host reads this constant.
+ */
+export const HELP_SITE_NAME = "Pause Plan";
+
 /** The trusted class header middleware sets for the page (§7.2). Never read from a client. */
 export const SITE_CLASS_HEADER = "x-b4gamble-site";
 
@@ -45,7 +52,21 @@ export type SiteHostEnvironment = {
 
 export type SiteHostDecision =
   | { kind: "next"; site: SiteClass }
-  | { kind: "redirect"; location: string; status: 307 | 308 }
+  | {
+    kind: "redirect";
+    location: string;
+    status: 307 | 308;
+    /**
+     * Set when the help host is on either end of the redirect. A 308 is cacheable by default
+     * (RFC 7538) and browsers keep it, so between attaching the domain in phase 2 and the
+     * redeploy that turns `HELP_SITE_SERVING` on, every request to the help host answers a
+     * sticky permanent redirect to `b4gamble.com`: the Founder testing the new domain in that
+     * window would poison his own browser, and a crawler or a blocker sampling it would
+     * record the help domain pointing at a gambling-affiliate site — exactly the
+     * categorisation the second domain was bought to avoid.
+     */
+    noStore?: boolean;
+  }
   | { kind: "reject"; reason: "host" | "metadata" };
 
 function switchOn(value: string | undefined) {
@@ -85,7 +106,18 @@ function helpOriginRedirect(requested: URL): SiteHostDecision {
   const target = new URL(HELP_CANONICAL_ORIGIN);
   target.pathname = requested.pathname;
   target.search = requested.search;
-  return { kind: "redirect", location: target.toString(), status: 308 };
+  return { kind: "redirect", location: target.toString(), status: 308, noStore: true };
+}
+
+/** The help apex and its `www`, with a port or a trailing dot still counted as the help host. */
+function requestNamesHelpHost(requestUrl: string) {
+  let hostname: string;
+  try {
+    hostname = new URL(requestUrl).hostname.toLowerCase().replace(/\.$/, "");
+  } catch {
+    return false;
+  }
+  return hostname === HELP_CANONICAL_HOST || hostname === `www.${HELP_CANONICAL_HOST}`;
 }
 
 /**
@@ -146,7 +178,13 @@ export function resolveSiteHost(
   const help = resolveHelpHost(requestUrl, environment, switches);
   if (help) return help;
   const canonical: RuntimeCanonicalHostDecision = resolveRuntimeCanonicalHost(requestUrl, environment);
-  return canonical.kind === "next" ? { kind: "next", site: "main" } : canonical;
+  if (canonical.kind === "next") return { kind: "next", site: "main" };
+  // RFC-030's own redirects are unchanged. The one addition is that a redirect whose request
+  // named the help host may not be cached, whichever way it points.
+  if (canonical.kind === "redirect" && requestNamesHelpHost(requestUrl)) {
+    return { ...canonical, noStore: true };
+  }
+  return canonical;
 }
 
 export function siteClassFromHeaderValue(value: string | null | undefined): SiteClass {

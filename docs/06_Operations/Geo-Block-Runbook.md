@@ -84,6 +84,31 @@ Firewall → Configure → New Rule:
 `tests/geo-block.test.ts` checks that this pattern covers exactly the paths the
 middleware matcher skips. If the matcher changes, the rule must change with it.
 
+## Vercel Firewall rule (help host, RFC-057 §4.2) — PROPOSED, phase 2
+
+Not created yet. It is added **before** `HELP_SITE_SERVING` is turned on, because
+the middleware matcher skips raster images, fonts and the image optimizer, so the
+help gate never sees them: without this rule `pauseplan.help/brand/b4gamble-logo-512.png`,
+`/casino-brands/*.png` and `/favicon.ico` would answer 200 on the help site.
+
+The request body comes from `helpHostFirewallRule()` in
+`lib/security/help-host-firewall-rule.ts`. It is a **default deny over everything
+middleware cannot see**, not a list of today's `public/` folders, so a new folder,
+app icon or metadata image is denied without anyone remembering to add it:
+
+- Environment equals `production`.
+- Host equals `pauseplan.help`.
+- Path matches the regex `^/_next/|\.(?:png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)$`.
+- Path does **not** match `^/_next/static/` — hashed build files, fonts included, are
+  served on both hosts (Founder decision, 25 September 2026).
+- Action: Deny. Then Review → Publish.
+
+`/data/*.csv` (the regulator tables `/pause-statistics` links) is not matched at
+all: `.csv` is not an excluded file ending, so middleware sees it and the route
+manifest decides it. `tests/help-site-host.test.ts` checks the two patterns against
+the matcher; **confirm the `host` condition and the negated-regex operator against
+the Firewall API when the rule is created**, as the field names are UNKNOWN until then.
+
 ## Cloudflare WAF rule (`media.b4gamble.com`)
 
 Cloudflare → `b4gamble.com` zone → Security → Security rules (WAF) → Custom

@@ -4,6 +4,7 @@ import { PRODUCTION_CANONICAL_ORIGIN } from "@/lib/auth/runtime-canonical-host";
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { createCspNonce } from "@/lib/security/content-security-policy";
 import { geoBlockPageHtml } from "@/lib/security/geo-block-page";
+import type { SiteClass } from "@/lib/site/host-gate";
 
 // Country geo-block with a personal owner bypass (Founder, 28 Sep 2026). Middleware calls
 // geoBlockGate() before any content: a visitor from BLOCKED_COUNTRIES gets HTTP 451 unless
@@ -175,9 +176,9 @@ function ownerLogoutResponse(request: NextRequest) {
   return response;
 }
 
-export function geoBlockedResponse() {
+export function geoBlockedResponse(site: SiteClass = "main") {
   const nonce = createCspNonce();
-  return new NextResponse(geoBlockPageHtml(nonce), {
+  return new NextResponse(geoBlockPageHtml(nonce, site), {
     status: 451,
     headers: {
       "Cache-Control": "private, no-store, max-age=0",
@@ -212,6 +213,8 @@ export async function geoBlockGate(
   request: NextRequest,
   config: GeoBlockConfig = geoBlockConfigFromProcessEnv(),
   nowMs = Date.now(),
+  /** Only the 451 page's wordmark depends on it; the block decision itself does not. */
+  site: SiteClass = "main",
 ): Promise<NextResponse | null> {
   const pathname = request.nextUrl.pathname.length > 1
     ? request.nextUrl.pathname.replace(/\/+$/, "")
@@ -239,5 +242,5 @@ export async function geoBlockGate(
   if (await verifyOwnerBypassToken(request.cookies.get(OWNER_BYPASS_COOKIE)?.value, config.ownerKey, nowMs)) {
     return null;
   }
-  return geoBlockedResponse();
+  return geoBlockedResponse(site);
 }

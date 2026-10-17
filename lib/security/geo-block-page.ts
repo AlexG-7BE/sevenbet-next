@@ -1,6 +1,15 @@
 // The 451 page is self-contained: inline style under the response nonce, the text wordmark
 // and a data: icon. It requests nothing else, so the geo-block and the Firewall rule may
 // refuse every other resource. No links, offers, forms, scripts or trackers.
+//
+// The wordmark is the one part that depends on the host. The country block runs before the
+// help gate (RFC-057 §7.1 step 2), so from phase 2 a blocked visitor of the help host would
+// otherwise be shown the B4GAMBLE mark on a site that carries no B4GAMBLE mark anywhere
+// (Q2, 17 October 2026) — and the Founder's own machine sits behind a blocked IP.
+
+import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
+
+export const MAIN_SITE_WORDMARK = "B4GAMBLE";
 
 // Public site palette as rendered (28 Sep 2026): near-black ground, warm white, lime accent.
 const BACKGROUND = "#100F0F";
@@ -17,8 +26,9 @@ export const GEO_BLOCK_MESSAGES = {
   kk: "Бұл сайт сіздің аймағыңызда қолжетімсіз",
 } as const;
 
-export function geoBlockPageHtml(nonce: string) {
+export function geoBlockPageHtml(nonce: string, site: SiteClass = "main") {
   if (!/^[A-Za-z0-9-]+$/.test(nonce)) throw new Error("Invalid CSP nonce");
+  const wordmark = site === "help" ? HELP_SITE_NAME : MAIN_SITE_WORDMARK;
   return `<!doctype html>
 <html lang="ru">
 <head>
@@ -27,7 +37,7 @@ export function geoBlockPageHtml(nonce: string) {
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark">
-<title>451 · B4GAMBLE</title>
+<title>451 · ${wordmark}</title>
 <link rel="icon" href="data:,">
 <style nonce="${nonce}">
 *{box-sizing:border-box}
@@ -43,7 +53,7 @@ h1,.panel p{margin:0;font-size:20px;line-height:1.4;font-weight:700}
 </head>
 <body>
 <main>
-<p class="brand" translate="no">B4GAMBLE</p>
+<p class="brand" translate="no">${wordmark}</p>
 <section class="panel">
 <h1 lang="ru">${GEO_BLOCK_MESSAGES.ru}</h1>
 <p lang="en">${GEO_BLOCK_MESSAGES.en}</p>

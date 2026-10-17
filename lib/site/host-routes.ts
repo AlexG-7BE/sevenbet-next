@@ -39,6 +39,24 @@ export type SiteRouteManifestEntry = Readonly<{
 /** The classes the help host serves. Everything else, and everything unknown, answers 404 there. */
 export const HELP_HOST_SERVED_CLASSES: readonly SiteRouteClass[] = ["HELP", "SHARED"];
 
+/**
+ * The interlock between the route classes and the pages behind them (RFC-057 §18, phase 1).
+ *
+ * A class says which host *may* serve a route; it does not say that the help site's own page
+ * exists yet. While this is `false` the help site has no shell, no home and no metadata of its
+ * own, so every route it would serve would answer with the commercial shell, the full casino
+ * menu and `b4gamble.com` addresses — the one thing the second domain exists to prevent.
+ *
+ * `HELP_SITE_SERVING` is an environment variable that phase 2 turns on in the Vercel
+ * dashboard; this is a source constant, so no dashboard change and no order of operations can
+ * publish the commercial site on the help host. While it is `false` the help host answers the
+ * gate's 404 for every path, which is a correct dark state.
+ *
+ * **Flip it to `true` in the same commit as the pull request that lands the help shell, the
+ * help home and the host-aware root metadata, and nowhere else.**
+ */
+export const HELP_SHELL_READY = false;
+
 export const SITE_ROUTE_MANIFEST = [
   // ---------------------------------------------------------------- SHARED
   // The help home is the pause plan (Founder, Q5 (b), 17 October 2026); the main home is unchanged.
@@ -96,7 +114,9 @@ export const SITE_ROUTE_MANIFEST = [
   // Legacy addresses that redirect into /responsible-gambling.
   { path: "/responsible-gaming", match: "EXACT", siteClass: "HELP" },
   { path: "/self-check", match: "EXACT", siteClass: "HELP" },
-  { path: "/tools", match: "SUBTREE", siteClass: "HELP" },
+  // §4.1 names this one path, not the folder: a future /tools/<anything> must be classified
+  // deliberately rather than inherit the help host from its parent.
+  { path: "/tools/budget-calculator", match: "EXACT", siteClass: "HELP" },
   // The protected help guides: the one Learn category that carries no offer bridge
   // (lib/articles/article-bridges.ts) and whose related reading stays inside the category.
   { path: "/learn/responsible-gambling", match: "SUBTREE", siteClass: "HELP" },
@@ -131,7 +151,12 @@ export const SITE_ROUTE_MANIFEST = [
   { path: "/for-creators", match: "SUBTREE", siteClass: "COMMERCIAL" },
   { path: "/llms-full.txt", match: "EXACT", siteClass: "COMMERCIAL" },
   // Its text reads "Reviews, bonus terms side by side…"; the help host has its own image (§8).
-  { path: "/opengraph-image", match: "EXACT", siteClass: "COMMERCIAL" },
+  // SUBTREE, not EXACT: Next registers a second matcher for a dynamic metadata file,
+  // `/opengraph-image/[__metadata_id__]`, and the generated handler ignores an unknown id.
+  // The sibling path is COMMERCIAL by the same decision as the bare one. A request for
+  // `/opengraph-image/x.png` ends in an excluded file ending and never reaches this gate at
+  // all; the help-host Firewall rule of §4.2 is what refuses that shape.
+  { path: "/opengraph-image", match: "SUBTREE", siteClass: "COMMERCIAL" },
   { path: "/api/public", match: "SUBTREE", siteClass: "COMMERCIAL" },
   { path: "/api/media", match: "SUBTREE", siteClass: "COMMERCIAL" },
   // Q3 is answered G3: the help host carries no Google tag, no cookie banner and no optional
@@ -221,6 +246,32 @@ export function stripSiteRoutePrefixes(pathname: string) {
   return `/${segments.join("/")}`;
 }
 
+/**
+ * A path shape the gate refuses to classify: a dot segment, an encoded dot segment, an encoded
+ * separator or a malformed escape.
+ *
+ * `NextRequest` resolves `.` and `..` through the URL parser before middleware sees a path, and
+ * leaves `%2f` inside one segment, so none of these reaches a route today — measured, not
+ * assumed. But that is another layer's normalisation, and the gate must not depend on it: a
+ * change in how the path is obtained would otherwise let `/program/../casinos` inherit the
+ * help host from `/program`. Anything of this shape is unknown here, and unknown means 404 on
+ * the help host (§4, fail closed).
+ */
+function hasUnsafeSegment(pathname: string) {
+  for (const segment of pathname.split("/")) {
+    if (!segment) continue;
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(segment);
+    } catch {
+      return true;
+    }
+    if (decoded === "." || decoded === "..") return true;
+    if (decoded.includes("/") || decoded.includes("\\")) return true;
+  }
+  return false;
+}
+
 function matches(entry: SiteRouteManifestEntry, pathname: string) {
   if (entry.match === "EXACT") return entry.path === pathname;
   return pathname === entry.path || pathname.startsWith(`${entry.path}/`);
@@ -229,6 +280,7 @@ function matches(entry: SiteRouteManifestEntry, pathname: string) {
 /** The class of an exact application path, with no language or market prefix on it. */
 export function classifyRoutePath(pathname: string): SiteRouteClass | null {
   const clean = cleanPathname(pathname);
+  if (hasUnsafeSegment(clean)) return null;
   const normalized = clean.length > 1 ? clean.replace(/\/+$/, "") || "/" : clean;
   let best: SiteRouteManifestEntry | null = null;
   for (const entry of SITE_ROUTE_MANIFEST) {
@@ -256,6 +308,16 @@ export function classifySitePath(pathname: string): SiteRouteClass | null {
 export function helpHostServes(pathname: string) {
   const siteClass = classifySitePath(pathname);
   return siteClass !== null && HELP_HOST_SERVED_CLASSES.includes(siteClass);
+}
+
+/**
+ * What the help gate in middleware actually asks: the route class *and* the interlock above.
+ * While `HELP_SHELL_READY` is false this is false for every path, so turning
+ * `HELP_SITE_SERVING` on early gives a help host that answers 404 and nothing else — never
+ * the commercial shell.
+ */
+export function helpHostServesRequest(pathname: string, shellReady: boolean = HELP_SHELL_READY) {
+  return shellReady && helpHostServes(pathname);
 }
 
 /** The class of a top-level entry of `public/`. */
