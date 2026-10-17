@@ -58,10 +58,14 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   const footer = source("components/public-shell/PublicFooter.tsx");
   const compliance = source("components/footer-compliance/FooterCompliance.tsx");
   const shellCatalog = source("lib/i18n/public-shell-catalog.ts");
-  assert.match(header, /aria-label=\{messages\.homeLabel\}/);
+  // Since RFC-057 §6.5 the same shell serves two hosts, so the wordmark and the home label are
+  // chosen per site. On the main host they are what they have always been; the help host's
+  // half is asserted in tests/help-site-shell.test.tsx, which also fails on a B4GAMBLE
+  // wordmark reaching that host.
+  assert.match(header, /aria-label=\{help \? help\.homeLabel : messages\.homeLabel\}/);
   assert.match(shellCatalog, /homeLabel: "B4GAMBLE home"/);
-  assert.match(header, />\s*B4GAMBLE\s*</);
-  assert.match(navigation, />B4GAMBLE[\s\S]*?<PublicLinkPendingSignal[^>]*\/>[\s\S]*?<\/Link>/);
+  assert.match(header, /\{help \? HELP_SITE_NAME : "B4GAMBLE"\}/);
+  assert.match(navigation, /\{help \? HELP_SITE_NAME : "B4GAMBLE"\}<PublicLinkPendingSignal/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /\{footer\.description\}[\s\S]*\{footer\.operatorDisclaimer\}/);
   assert.match(footer, /<FooterCompliance footer=\{footer\}/);
@@ -235,9 +239,10 @@ test("home-only canonical and social metadata do not leak into auth, outbound or
   const home = source("app/(public)/page.tsx");
   const productContext = source("lib/market/product-context.ts");
   assert.doesNotMatch(root, /alternates:\s*\{\s*canonical/);
-  // One sitewide Organization and WebSite whose URL is the bare origin in every language.
-  assert.match(root, /<JsonLd data=\{organizationSchema\(\)\} \/>/);
-  assert.match(root, /<JsonLd data=\{websiteSchema\(\)\} \/>/);
+  // One sitewide Organization and WebSite per site whose URL is the bare origin of that site,
+  // in every language (RFC-057 §8). On `b4gamble.com` both are exactly what they were.
+  assert.match(root, /<JsonLd data=\{organizationSchema\(site\)\} \/>/);
+  assert.match(root, /<JsonLd data=\{websiteSchema\(site\)\} \/>/);
   assert.match(source("lib/seo/structured-data.ts"), /"@type": "Organization",[\s\S]*url: siteUrl,/);
   assert.match(home, /productMetadata\(\{ presentation, pathname: "\/", title, description/);
   assert.match(productContext, /const canonical = absoluteUrl\(productCanonicalPath\(input\.presentation, input\.pathname\)\)/);

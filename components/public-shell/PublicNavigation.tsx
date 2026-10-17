@@ -3,10 +3,13 @@ import { Fragment, type ReactNode } from "react";
 
 import {
   GUIDE_NAVIGATION,
+  HELP_NAVIGATION,
   PUBLIC_NAVIGATION,
   publicNavigationForCommercialState,
   type PublicAccountNavigation,
 } from "@/lib/public-shell";
+import { HELP_OWNER_PATH, helpShellCopy } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import { ProgrammeLanguageSelector } from "@/components/programme/ProgrammeLanguageSelector";
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -29,6 +32,14 @@ const editorialNavigationHrefs = new Set(
 const deferredCommercialNavigation = PUBLIC_NAVIGATION.filter(
   (item) => !editorialNavigationHrefs.has(item.href),
 );
+
+function helpNavigationLabel(help: ReturnType<typeof helpShellCopy>, href: string) {
+  if (href === "/10-steps") return help.navigation.tenSteps;
+  if (href === "/pause-plan") return help.navigation.pausePlan;
+  if (href === "/learn") return help.navigation.guides;
+  if (href === "/help") return help.navigation.help;
+  return href;
+}
 
 function navigationLabel(messages: PublicShellMessages, href: string) {
   if (href === "/best-offers") return messages.bestOffers;
@@ -70,6 +81,7 @@ export function PublicNavigation({
   commercialMobileBonusesNavigation,
   deferCommercialNavigation = false,
   researchNavigation = true,
+  site = "main",
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -89,7 +101,10 @@ export function PublicNavigation({
    * (Founder, 17 October 2026).
    */
   researchNavigation?: boolean;
+  /** `help` builds the help host's own four links and nothing else (RFC-057 §6, rule 3). */
+  site?: SiteClass;
 }) {
+  const help = site === "help" ? helpShellCopy(presentation.locale) : null;
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
     ? publicMarketPath(editorialProfile, presentation.locale)
@@ -126,14 +141,32 @@ export function PublicNavigation({
         : navigationLabel(messages, item.href)}
     </PublicNavigationRouteLink>
   );
-  const leadingGuideNavigation = GUIDE_NAVIGATION.filter((item) => !("safety" in item));
-  const trailingGuideNavigation = GUIDE_NAVIGATION.filter((item) => "safety" in item);
+  const helpLink = (item: (typeof HELP_NAVIGATION)[number], variant: "desktop" | "mobile") => (
+    <PublicNavigationRouteLink
+      baseHref={item.href}
+      className={variant === "desktop" && "safety" in item ? styles.helpLink : undefined}
+      key={item.href}
+      label={helpNavigationLabel(help!, item.href)}
+      presentation={presentation}
+      programme={programme}
+    >
+      {variant === "mobile"
+        ? <><span>{helpNavigationLabel(help!, item.href)}</span><small>{messages.view}</small></>
+        : helpNavigationLabel(help!, item.href)}
+    </PublicNavigationRouteLink>
+  );
+  const navigationSource = help ? HELP_NAVIGATION : GUIDE_NAVIGATION;
+  const routeLink = help
+    ? (item: (typeof HELP_NAVIGATION)[number] | (typeof GUIDE_NAVIGATION)[number], variant: "desktop" | "mobile") => helpLink(item as (typeof HELP_NAVIGATION)[number], variant)
+    : (item: (typeof HELP_NAVIGATION)[number] | (typeof GUIDE_NAVIGATION)[number], variant: "desktop" | "mobile") => guideLink(item as (typeof GUIDE_NAVIGATION)[number], variant);
+  const leadingGuideNavigation = navigationSource.filter((item) => !("safety" in item));
+  const trailingGuideNavigation = navigationSource.filter((item) => "safety" in item);
   return (
     <>
       <div className={styles.desktopNavigation}>
         <nav className={styles.primaryNavigation} aria-label={messages.primaryNavigation}>
-          {leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}
-          {PUBLIC_NAVIGATION.map((item) => {
+          {leadingGuideNavigation.map((item) => routeLink(item, "desktop"))}
+          {(help ? [] : PUBLIC_NAVIGATION).map((item) => {
             if (!researchNavigation && "commercial" in item) return null;
             const commercialNavigation = deferredDesktopNavigation[item.href as keyof typeof deferredDesktopNavigation];
             if (deferCommercialNavigation && commercialNavigation !== undefined) {
@@ -152,7 +185,7 @@ export function PublicNavigation({
               </PublicNavigationRouteLink>
             );
           })}
-          {trailingGuideNavigation.map((item) => guideLink(item, "desktop"))}
+          {trailingGuideNavigation.map((item) => routeLink(item, "desktop"))}
         </nav>
         <div className={styles.accountNavigation}>
           {programme ? (
@@ -196,12 +229,12 @@ export function PublicNavigation({
           >
             <PublicMobileNavigationEnhancement />
             <div className={styles.dialogTopbar}>
-              <Link className={styles.dialogBrand} href={homeHref} prefetch={false} translate="no">B4GAMBLE<PublicLinkPendingSignal label={messages.homeLabel} /></Link>
+              <Link className={styles.dialogBrand} href={homeHref} prefetch={false} translate="no">{help ? HELP_SITE_NAME : "B4GAMBLE"}<PublicLinkPendingSignal label={help ? help.homeLabel : messages.homeLabel} /></Link>
               <span aria-hidden="true" className={styles.dialogCloseSpace} />
             </div>
             <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
-              {leadingGuideNavigation.map((item) => guideLink(item, "mobile"))}
-              {PUBLIC_NAVIGATION.map((item) => {
+              {leadingGuideNavigation.map((item) => routeLink(item, "mobile"))}
+              {(help ? [] : PUBLIC_NAVIGATION).map((item) => {
                 if (!researchNavigation && "commercial" in item) return null;
                 const commercialNavigation = deferredMobileNavigation[item.href as keyof typeof deferredMobileNavigation];
                 if (deferCommercialNavigation && commercialNavigation !== undefined) {
@@ -236,9 +269,16 @@ export function PublicNavigation({
                 programmeHref={account.primaryHref}
               />
             </div>
+            {/* On the help host /help is already the last route in the list above, so the
+                drawer's closing block names the owner page instead — the one thing a visitor
+                of a help site most often wants to check (RFC-057 §17). */}
             <div className={styles.mobileHelp}>
-              <span>{messages.controlAndSupport}</span>
-              <PublicNavigationRouteLink baseHref="/help" label={messages.openHelp} presentation={presentation} programme={programme}>{messages.openHelp}</PublicNavigationRouteLink>
+              <span>{help ? help.footer.aboutThisSite : messages.controlAndSupport}</span>
+              {help ? (
+                <PublicNavigationRouteLink baseHref={HELP_OWNER_PATH} label={help.footer.owner} presentation={presentation} programme={programme}>{help.footer.owner}</PublicNavigationRouteLink>
+              ) : (
+                <PublicNavigationRouteLink baseHref="/help" label={messages.openHelp} presentation={presentation} programme={programme}>{messages.openHelp}</PublicNavigationRouteLink>
+              )}
             </div>
             {programme ? (
               <ProgrammeLanguageSelector locale={programme.locale} messages={messages} region={presentation.marketDisplayName} variant="mobile" />
@@ -251,7 +291,7 @@ export function PublicNavigation({
                 variant="mobile"
               />
             )}
-            <p className={styles.dialogLegal}>{messages.adultServiceNotice}</p>
+            <p className={styles.dialogLegal}>{help ? help.footer.noTracking : messages.adultServiceNotice}</p>
           </div>
         </details>
       </div>

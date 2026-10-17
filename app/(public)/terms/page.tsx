@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { HandoffLegalPage } from "@/app/(public)/_legal/HandoffLegalPage";
+import { HELP_OWNER_PATH } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME } from "@/lib/site/host-gate";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -35,14 +38,28 @@ const sections = [
   { id: "changes-law", title: "Changes, termination and law", content: <><p>We may update these Terms for legal, security or service changes. The updated date will appear above, and we will provide additional notice where required. Changes do not remove rights already accrued.</p><p>We may end the service or your access on reasonable notice where practical, or immediately for security, illegality or serious breach. Provisions intended to survive will continue.</p><p>These Terms are governed by the laws of the State of New York, without depriving UK consumers of mandatory protections or the right to bring proceedings in a court available under applicable consumer law. Contact us first if you have a dispute so we can try to resolve it.</p></> },
 ] as const;
 
-export default function TermsPage() {
+/** RFC-057 §6.5: "Commercial relationships" describes the other site, not this one. */
+const helpSections = sections.flatMap((section) => (section.id === "affiliate"
+  ? [{
+    id: "affiliate",
+    title: "Commercial relationships",
+    content: <><p>This site carries no affiliate link, no casino page and no advertising, and nothing on it is paid for. The company behind it also runs a casino-comparison site at a different address; <Link href={HELP_OWNER_PATH}>Who runs this site</Link> explains how that works and what it means for you.</p><p>Programme, Help, pause, self-check and vulnerability information is never used to select, rank or personalise commercial content.</p></>,
+  }]
+  : [section]));
+
+export default async function TermsPage() {
+  const site = await resolveServerSite();
   return <HandoffLegalPage
-    boundary={<p>We may earn commission from clearly labelled affiliate links. Affiliate compensation does not determine Editor Score or natural editorial ranking.</p>}
+    boundary={site === "help"
+      ? <p>This site earns nothing. The company behind it also runs a casino-comparison site, at a different address and with no connection to what you write here.</p>
+      : <p>We may earn commission from clearly labelled affiliate links. Affiliate compensation does not determine Editor Score or natural editorial ranking.</p>}
     effective="19 August 2026"
     kind="terms"
-    lead="These rules describe the B4GAMBLE service, its limits and the responsibilities that apply when you use it."
+    lead={site === "help"
+      ? `These rules describe the ${HELP_SITE_NAME} service, its limits and the responsibilities that apply when you use it.`
+      : "These rules describe the B4GAMBLE service, its limits and the responsibilities that apply when you use it."}
     legalContact={operator}
-    sections={sections}
+    sections={site === "help" ? helpSections : sections}
     updated="11 October 2026"
   />;
 }

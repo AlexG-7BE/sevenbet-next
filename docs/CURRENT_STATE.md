@@ -52,14 +52,14 @@ classes, and nothing a visitor can reach:
   That is the only observable change this pull request makes on the main host. Its
   `Cache-Control` is set in middleware (a metadata route cannot send one of its own) and is
   `public, max-age=0, must-revalidate` — today's value — until `HELP_SITE_SERVING` is on.
-- **The interlock (added by the review follow-up of PR #535).** `HELP_SHELL_READY` in
-  `lib/site/host-routes.ts` is a **source constant**, not an environment variable, and it is
-  `false`. While it is false the help host answers the gate's 404 for **every** path, not only
-  the commercial ones, because the help site's own shell, home and metadata do not exist yet
-  and the route classes alone would hand `/`, `/learn`, `/privacy` and `/login` over with the
-  commercial shell and the full casino menu. Turning `HELP_SITE_SERVING` on early therefore
-  cannot publish the catalogue on `pauseplan.help` — it is a 404-only host until the pull
-  request that lands the help shell flips the constant in the same commit.
+- **The interlock (added by the review follow-up of PR #535, and opened by the shell pull
+  request below).** `HELP_SHELL_READY` in `lib/site/host-routes.ts` is a **source constant**,
+  not an environment variable. It was `false` from PR #535 until the shell landed, and while it
+  was false the help host answered the gate's 404 for **every** path, because the route classes
+  alone would have handed `/`, `/learn`, `/privacy` and `/login` over with the commercial shell
+  and the full casino menu. It is now `true`: the help site's shell, home and root metadata
+  exist. `HELP_SITE_SERVING` is still unset in every Vercel environment, so the help host is
+  still redirected away before it reaches the gate.
 - **The help host's `robots.txt` refuses every crawler and names no sitemap** while
   `HELP_SITE_REDIRECTS` is off, which is all of phase 2: the pages it serves are the pages the
   main host still serves, and an allow-all file naming a sitemap on the help domain would
@@ -78,17 +78,95 @@ classes, and nothing a visitor can reach:
   host only (§13); the main site's policy is byte-for-byte unchanged. The CSP is a backstop,
   not the guarantee: keeping the Google tag off the help host is the layout's job, and the
   layout is a later phase-1 pull request.
-- **Not in this pull request, and still to come in phase 1:** the help shell and the host-aware
-  root not-found, the help home, host-aware root metadata and the help share image, per-site
-  origins (`helpUrl`) and site-keyed caches, the Better Auth two-host configuration, per-host
-  search files and the second IndexNow key, e-mail origins, the Learn origin by category, the
-  first-party help images, the help-host copy, the owner page and data statement, the link guard
-  and the two-host browser specs. Three named items of that list are what `HELP_SHELL_READY`
-  waits for: the help shell, the help home and the host-aware root metadata. The same pull
-  request replaces the gate's own 404 body (`lib/site/help-not-found-page.ts`, today a
-  self-contained page in Swedish, Danish and English with no link of any kind) with the help
-  site's own not-found page, and gives the help host its own icon in place of the B4GAMBLE
-  mark at `/icon.svg` and `/favicon.ico`.
+### Phase 1, the help shell and the help-host copy (branch `feat/help-site-shell`)
+
+**DETECTED in the repository, still dark:** `HELP_SITE_SERVING` is unset in every Vercel
+environment and `pauseplan.help` is not attached to the project, so none of the following is
+reachable by anyone. On `b4gamble.com` every surface below renders exactly as it did before —
+each change is inside a `site === "help"` branch, and the tests assert the main-host output is
+unchanged.
+
+- **The help shell is the same `PublicHeader` and `PublicFooter`, given a `site` prop** (§6.5),
+  so the Programme keeps one shell on both hosts and `app/program/layout.tsx` still passes
+  `researchNavigation={false}` twice, as the PR #530 guard requires. On the help host the
+  wordmark is **"Pause Plan"** (Q2) and never B4GAMBLE, the menu is 10 Steps · Pause plan ·
+  Guides · Help, and the commercial destinations are **not built at all** — not hidden, not
+  deferred — so their addresses are absent from the HTML and from the inline page data alike.
+  The footer loses the Explore and Trust columns, the brand's social profiles, the commission
+  disclosure, the operator disclaimer and the cookie-choices button, and gains the owner page,
+  the data statement and the legal links.
+- **The help home is the pause plan** (Q5 (b)). `app/(public)/page.tsx` renders `PausePlanView`
+  on the help host; the handoff home is never rendered there, because its capture carries
+  `/best-offers`, `/casinos` and `/bonuses` in the raw HTML. The main home is untouched, and
+  the desktop home page is not changed.
+- **The root not-found reads the site** and is built from the help shell and the help site's
+  own words on the help host — the boundary Next writes into every document's inline data.
+- **Host-aware root metadata** (`generateMetadata` in `app/layout.tsx`): on the help host
+  `metadataBase` is the help origin, the title and description are the help site's own, with
+  no "casino comparison" in them, `siteName` is "Pause Plan", and the default social image is
+  the new `/help-share-image` (class `HELP`), which prints no review, bonus or casino word and
+  no B4GAMBLE mark. `/opengraph-image` stays `COMMERCIAL` and answers 404 there.
+- **No Google tag and no cookie banner on the help host** (Q3, G3): one expression in the root
+  layout (`site !== "help" && isProductAnalyticsEnabled()`) turns off the tag, the page-view
+  beacon and the banner together, and `/api/consent/analytics` and `/api/analytics/events` are
+  `COMMERCIAL` and answer 404 there. `b4gamble.com` keeps its 4 October 2026 decision exactly.
+- **Per-site origins:** `absoluteUrl(path, site)` and `originForSite(site)` in `lib/site.ts`,
+  defaulting to the main origin so every existing call site is unchanged. The help host's
+  JSON-LD is its own `Organization` and `WebSite` ("Pause Plan", legal name 7BE Inc., help
+  origin), **with no `logo` field and no `sameAs`** — the logo path is the B4GAMBLE mark and
+  the profiles are the other brand's.
+- **The owner page `/who-runs-this` and the data statement `/for-organisations`** (§17, §16.3),
+  in English, Swedish and Danish. The owner page names `b4gamble.com` and 7BE Inc. in **plain
+  text and never as a link** (§6, rule 2), says the Programme has no partner links, and states
+  plainly that partner presses recorded before 17 October 2026 are still stored against the
+  account until the separate data job clears them. The data statement answers every row of
+  §16.2 and **lists what cannot be answered yet** — the database's exact region, per-processor
+  transfer safeguards, a signed DPIA, ICO registration, and which internal screens can display
+  Programme answers — which is the §16.3 gate for phase 4.
+- **The help-host copy of §17.1:** the commission line on `/beside`, `/innan`, `/pause-plan`,
+  `/pause-statistics` and the control pages is replaced by one that is true here (the site is
+  free and earns nothing; the company behind it also runs a casino-comparison site) with a link
+  to the owner page; the control FAQ's "What is B4GAMBLE?" becomes "What is Pause Plan?"; the
+  Learn hub's description drops casino bonuses, banking, games and reviews and its commercial
+  topic chips are not rendered; the Privacy "Affiliate links" and cookie sections and the Terms
+  "Commercial relationships" section are rewritten for a site with neither; and `/about`,
+  `/can-you-trust-b4gamble` and `/affiliate-disclosure` become `/who-runs-this` wherever a help
+  page linked them, while `/methodology` and `/faq` are not linked at all.
+- **First-party help images** (§13): `/api/help-media/[...key]`, class `HELP`, serves only the
+  content-addressed `content/learn/<sha256>.<ext>` keys of RFC-052 §5, validated syntactically
+  before anything is fetched. A guide image the help host cannot serve first-party is left out
+  rather than loaded from `media.b4gamble.com`, in the page and in its JSON-LD alike.
+- **The main host's one quiet "need help" line** (§6.6) is written and **behind the phase-3
+  switch**: `PublicFooter` renders it only when `helpSiteLinked` is true, and the public layout
+  passes `helpSiteSwitchesFromProcessEnv().redirects`. It is option B, the explicit wording,
+  translated into Swedish, Danish and German, `rel="nofollow"`, one link and no banner. With
+  `HELP_SITE_REDIRECTS` off the main footer is byte-for-byte what it is today, which a test
+  asserts.
+- **The link guard** is `tests/help-site-shell.test.tsx` (23 tests, in `ci:quality` as
+  `help-site-shell:test`). It checks three layers: the rendered HTML of every help shell and
+  help page in all three languages; **the element tree, walked prop by prop**, which is what
+  Next serialises into `self.__next_f` and into the `?_rsc=` responses a client navigation
+  fetches — a link that is built and then hidden never appears in the HTML and still travels
+  there; and the source of every help-only module. It fails on any commercial or internal
+  address, any `b4gamble.com` URL and any B4GAMBLE wordmark on the help host.
+
+- **Still to come in phase 1:** the Better Auth two-host configuration, per-host search files
+  and the second IndexNow key, e-mail origins, the Learn origin by category and the
+  stored-canonical rule, site-keyed `unstable_cache` entries, the help host's own icon in place
+  of the B4GAMBLE mark at `/icon.svg` and `/favicon.ico`, a help-site not-found page that
+  replaces the gate's own self-contained 404 body (`lib/site/help-not-found-page.ts`), and the
+  two-host Playwright specs of §20.2.
+- **Not verified, and the next pull request has to solve it:** a local two-host run still does
+  not work. `HELP_SITE_DEV_HOST` was set at build time, at run time and in `.env.local` against
+  a local production server and the edge middleware sandbox did not see it, although middleware
+  itself was running. The help half is therefore proved by unit tests that call `middleware()`
+  directly and by component renders, not by an HTTP round trip. §20.2's two-host browser specs
+  need a working mechanism first.
+- **Named follow-up, copy:** §17.1's table is applied, but the brand name "B4GAMBLE" still
+  appears **inside the body copy** of the ten steps, the control pages and several help guides
+  (for example `BRAND_STATEMENT` and the control-page FAQ answers). That is a copy rewrite the
+  Founder sees before phase 2, not a code change; the shell, the metadata, the structured data,
+  the share image and the footer carry no wordmark today, which is what Q2 asks of the mark.
 
 - **Two sites, one Vercel project.** `b4gamble.com` stays the commercial site; `pauseplan.help`
   becomes the help site, carrying the Programme, the 10 steps, the pause plans (sv/da/en), the

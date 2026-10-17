@@ -143,9 +143,12 @@ test("Public Shell keeps its approved architecture while exposing the current br
   const compliance = readFileSync("components/footer-compliance/FooterCompliance.tsx", "utf8");
   const shellCatalog = readFileSync("lib/i18n/public-shell-catalog.ts", "utf8");
   const shellStyles = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
-  assert.match(header, /aria-label=\{messages\.homeLabel\}/);
-  assert.match(header, />\s*B4GAMBLE\s*</);
-  assert.match(navigation, />B4GAMBLE[\s\S]*?<PublicLinkPendingSignal[^>]*\/>[\s\S]*?<\/Link>/);
+  // Since RFC-057 §6.5 the wordmark and the home label are chosen per host; on `b4gamble.com`
+  // they are exactly what they were, and the help host's half is asserted in
+  // tests/help-site-shell.test.tsx.
+  assert.match(header, /aria-label=\{help \? help\.homeLabel : messages\.homeLabel\}/);
+  assert.match(header, /\{help \? HELP_SITE_NAME : "B4GAMBLE"\}/);
+  assert.match(navigation, /\{help \? HELP_SITE_NAME : "B4GAMBLE"\}<PublicLinkPendingSignal/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /\{footer\.description\}/);
   assert.match(footer, /\{footer\.operatorDisclaimer\}/);

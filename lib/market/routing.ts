@@ -67,6 +67,11 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   { root: "control-without-quitting", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "gambling-control-tools", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "can-you-trust-b4gamble", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
+  // The help site's owner disclosure and data statement (RFC-057 §17, §16.3). They are
+  // written in English, Swedish and Danish, so they carry a language prefix like the other
+  // help pages; the sitemap leaves them out while they are noindex.
+  { root: "who-runs-this", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
+  { root: "for-organisations", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "reset-password", match: "EXACT", policy: "UNPREFIXED_ONLY" },
   { root: "responsible-gambling", match: "EXACT", policy: "FIRST_WAVE_SAFETY" },
   { root: "responsible-gambling", match: "SUBTREE", policy: "UNPREFIXED_ONLY" },

@@ -4,6 +4,9 @@ import Link from "next/link";
 import { HandoffLegalPage } from "@/app/(public)/_legal/HandoffLegalPage";
 import { currentArticle27Representation } from "@/lib/legal/article-27-representation";
 import { absoluteUrl } from "@/lib/site";
+import { HELP_OWNER_PATH } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME } from "@/lib/site/host-gate";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 import styles from "./PrivacyRepresentatives.module.css";
 
@@ -153,14 +156,46 @@ const sections = [
   },
 ] as const;
 
-export default function PrivacyPage() {
+/**
+ * RFC-057 §6.5 and §17.1. The "Affiliate links" section and the cookie paragraph about Google
+ * Analytics describe the commercial site. On the help host there are no affiliate links and no
+ * Google tag at all (Q3), so both are replaced rather than carried over: a legal notice that
+ * describes tracking a visitor is not subjected to is not a smaller problem than one that
+ * omits it.
+ *
+ * The consent-control words `tests/fe-gap-01-structural.test.ts` forbids in this file stay out
+ * of it: a legal notice must never read as if it gated itself behind one. The sentence below
+ * says the same thing in plainer words, which is what the reader wants anyway.
+ */
+const helpSections = sections.flatMap((section) => {
+  if (section.id === "affiliate") {
+    return [{
+      id: "affiliate",
+      title: "No affiliate links on this site",
+      content: <><p>This site carries no casino, bonus or partner link, and no link on it is paid for. The company behind it also runs a casino-comparison site at a different address, which is how it earns; that is explained in full on <Link href={HELP_OWNER_PATH}>Who runs this site</Link>.</p></>,
+    }];
+  }
+  if (section.id === "cookies") {
+    return [{
+      id: "cookies",
+      title: "Cookies and similar technology",
+      content: <><p>This site uses only the storage a page you asked for needs: authentication, security, your language preference and keeping your place in the Programme. There is no Google tag, no advertising pixel and no analytics cookie, so nothing pops up asking you to accept or decline anything.</p><p>No Programme step sets a cookie that changes the menu or any page. Browser controls can remove stored data, but disabling necessary storage may prevent requested language, account or Programme features from working.</p></>,
+    }];
+  }
+  return [section];
+});
+
+export default async function PrivacyPage() {
+  const site = await resolveServerSite();
   return <HandoffLegalPage
     boundary={<p>Your Programme and protected Help activity is not used to target offers, set rankings or personalise commercial content. The Programme links to no casino, bonus or offer page.</p>}
     effective="19 August 2026"
     kind="privacy"
-    lead="This notice explains what B4GAMBLE processes, why, who receives it, how long it is kept and the choices available to you."
+    lead={site === "help"
+      ? `This notice explains what ${HELP_SITE_NAME} processes, why, who receives it, how long it is kept and the choices available to you.`
+      : "This notice explains what B4GAMBLE processes, why, who receives it, how long it is kept and the choices available to you."}
     legalContact={controller}
-    sections={sections}
+    sections={site === "help" ? helpSections : sections}
     updated="16 October 2026"
   />;
 }

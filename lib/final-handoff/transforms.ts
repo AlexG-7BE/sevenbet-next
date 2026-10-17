@@ -6,6 +6,7 @@ import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "@/lib/i18n/static-pa
 import type { MethodologyMessages } from "@/lib/i18n/static-pages/methodology";
 import type { PublicErrorMessages } from "@/lib/i18n/public-errors";
 import { DEFAULT_MARKET_PROFILE, languageRouteByLocale, publicMarketPath, type SupportedLocale } from "@/lib/market/registry";
+import type { SiteClass } from "@/lib/site/host-gate";
 
 function escapePattern(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -356,6 +357,12 @@ export function transformLearnHandoff(
    * own page, carries its `lang` and says which language it is in.
    */
   foreignArticles?: { articleHrefFor: (href: string) => string; articleLanguage: { lang: string; label: string } },
+  /**
+   * RFC-057 §4.1 and §17.1. On the help host the hub lists one category, so the topic chips
+   * (Bonuses, Banking, Casinos, Games, Industry) are not rendered and the hub's own copy says
+   * what the list is. The chips are links into commercial topics in all but name.
+   */
+  site: SiteClass = "main",
 ) {
   const messages = learningMessages(locale);
   const categories = localizedLearningCategories(locale);
@@ -465,10 +472,14 @@ export function transformLearnHandoff(
   output = output.replace(/<h2([^>]*)>All guides<\/h2>/, '<h2$1 data-learn-all-guides="">All guides</h2>');
   const topicIds = ["all topics", "bonuses", "banking", "casinos", "games", "responsible play", "industry"];
   const topicLabels = ["All topics", "Bonuses", "Banking", "Casinos", "Games", "Responsible play", "Industry"];
+  // One category, so no chips: every chip but "All topics" names a commercial topic.
+  const helpHiddenTopics = site === "help" ? new Set(["bonuses", "banking", "casinos", "games", "industry"]) : new Set<string>();
   output = output.replace(/<button([^>]*)>([\s\S]*?)<\/button>/g, (button, attributes: string, content: string) => {
     const label = content.replace(/<[^>]+>/g, "").trim();
     const topicIndex = topicLabels.indexOf(label);
-    return topicIndex < 0 ? button : `<button${attributes} data-learn-topic="${topicIds[topicIndex]}">${content}</button>`;
+    if (topicIndex < 0) return button;
+    if (helpHiddenTopics.has(topicIds[topicIndex])) return "";
+    return `<button${attributes} data-learn-topic="${topicIds[topicIndex]}">${content}</button>`;
   });
   output = translateHtmlTextNodes(output, messages.hubCopy);
   const i18nData = `<span hidden data-learn-i18n data-learn-one="${escapeHtml(messages.ui.oneShown)}" data-learn-many="${escapeHtml(messages.ui.manyShown)}" data-learn-none="${escapeHtml(messages.ui.noneShown)}"></span>`;

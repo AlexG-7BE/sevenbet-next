@@ -1,3 +1,5 @@
+import { HELP_CANONICAL_ORIGIN } from "@/lib/site/host-gate";
+
 type SiteEnvironment = {
   [key: string]: string | undefined;
   NEXT_PUBLIC_SITE_URL?: string;
@@ -49,8 +51,18 @@ export const coreRoutes = [
   "/can-you-trust-b4gamble",
 ];
 
-export function absoluteUrl(path: string) {
-  return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
+/**
+ * RFC-057 §8: every absolute-URL producer that can run on the help host takes the site. The
+ * default is the main origin, so every existing call site is unchanged; a server component on
+ * the help host passes `await resolveServerSite()`. The help origin is a source constant in
+ * `lib/site/host-gate.ts` — this module never reads an environment value for it.
+ */
+export function originForSite(site: "help" | "main" = "main") {
+  return site === "help" ? HELP_CANONICAL_ORIGIN : siteUrl;
+}
+
+export function absoluteUrl(path: string, site: "help" | "main" = "main") {
+  return `${originForSite(site)}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export function casinoOfficialUrl(domain: string) {

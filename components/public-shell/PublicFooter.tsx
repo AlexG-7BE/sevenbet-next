@@ -13,6 +13,14 @@ import type { CommercialProductState } from "@/lib/market/commercial-product-sta
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { commercialDestinationsNavigable, publicCommercialDestinationVisible } from "@/lib/public-shell";
 import { FooterCompliance } from "@/components/footer-compliance/FooterCompliance";
+import {
+  HELP_ORGANISATIONS_PATH,
+  HELP_OWNER_PATH,
+  helpOriginPathForLocale,
+  helpShellCopy,
+  needHelpLine,
+} from "@/lib/site/help-copy";
+import { HELP_CANONICAL_ORIGIN, HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import { BrandSocialLinks } from "./BrandSocialLinks";
 import styles from "./PublicShell.module.css";
 
@@ -25,6 +33,8 @@ export function PublicFooter({
   commercialBonusesNavigation,
   deferCommercialNavigation = false,
   researchNavigation = true,
+  site = "main",
+  helpSiteLinked = false,
 }: {
   /** The session cookie the document was rendered with, as in the header: it only picks the Programme link's label. */
   authenticated?: boolean;
@@ -40,10 +50,78 @@ export function PublicFooter({
    * path. Renamed to `commercialNavigation` in the RFC-057 phase.
    */
   researchNavigation?: boolean;
+  /** Which host is answering (RFC-057 §7.2). `help` renders the help site's own footer. */
+  site?: SiteClass;
+  /**
+   * The main host's one quiet "need help" line (§6.6), which only exists once the help routes
+   * have actually moved. It is driven by `HELP_SITE_REDIRECTS`, the phase-3 switch, so until
+   * that deployment the line is not rendered and the main site's footer is unchanged. Ignored
+   * on the help host, which never links to itself from its own footer.
+   */
+  helpSiteLinked?: boolean;
 }) {
   const shell = publicShellMessages(presentation.locale);
   const footer = publicFooterMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
+  if (site === "help") {
+    const help = helpShellCopy(presentation.locale);
+    const helpHref = (href: string) => (presentation.source === "EXPLICIT_ROUTE"
+      && isLocalizedPublicDestination(href, editorialProfile)
+      ? localizePublicPath(editorialProfile, presentation.locale, href)
+      : finalPublicHref(href, presentation.neutralRouteLocale));
+    // Four site links, three about-this-site links, three legal links, and nothing else: no
+    // Explore column, no Trust column, no social profiles, no commission line, no operator
+    // disclaimer, no cookie choices button (there are no optional cookies here, Q3). The
+    // commercial links are not built, so they are absent from the inline page data too.
+    const helpGroups = [
+      {
+        title: help.footer.siteLinks,
+        links: [
+          [help.navigation.tenSteps, "/10-steps"],
+          [help.navigation.pausePlan, "/pause-plan"],
+          [help.navigation.guides, "/learn"],
+          [help.navigation.help, "/help"],
+        ],
+      },
+      {
+        title: help.footer.aboutThisSite,
+        links: [
+          [help.footer.owner, HELP_OWNER_PATH],
+          [help.footer.organisations, HELP_ORGANISATIONS_PATH],
+          [footer.contact, "/contact"],
+        ],
+      },
+      {
+        title: help.footer.legal,
+        links: [[footer.privacy, "/privacy"], [footer.terms, "/terms"]],
+      },
+    ] as const;
+    return (
+      <footer aria-label={help.footer.label} className={styles.footer} data-public-shell="footer" data-public-footer-site="help">
+        <div className={styles.footerInner}>
+          <div className={styles.footerColumns}>
+            <div className={styles.footerLead}>
+              <Link className={styles.footerBrand} href={helpHref("/")} prefetch={false} translate="no">{HELP_SITE_NAME}</Link>
+              <p>{help.footer.description}</p>
+            </div>
+            {helpGroups.map((group) => (
+              <div className={styles.footerGroup} key={group.title}>
+                <h2>{group.title}</h2>
+                {group.links.map(([label, href]) => (
+                  <Link data-footer-navigation-href={href} href={helpHref(href)} key={href} prefetch={false}>{label}</Link>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className={styles.footerBaseline}>
+            <div><Link href={helpHref("/terms")} prefetch={false}>{footer.terms}</Link><Link href={helpHref("/privacy")} prefetch={false}>{footer.privacy}</Link><Link href={helpHref("/contact")} prefetch={false}>{footer.contact}</Link></div>
+            <p className={styles.footerCommission}>{help.footer.noTracking}</p>
+          </div>
+          <span aria-hidden="true" className={styles.footerEnd} data-public-footer-bottom />
+        </div>
+      </footer>
+    );
+  }
   const showCommercialProducts = deferCommercialNavigation
     ? false
     : commercialDestinationsNavigable(commercialProductsAvailable(commercialProductState), presentation.marketCountryCode);
@@ -98,6 +176,15 @@ export function PublicFooter({
           <div><Link href="/terms" prefetch={false}>{footer.terms}</Link><Link href="/privacy" prefetch={false}>{footer.privacy}</Link>{isProductAnalyticsEnabled() ? <PrivacyChoicesButton className={styles.footerChoice} label={analyticsConsentMessages(presentation.locale).trigger} /> : null}<Link href={localizedHref("/contact")} prefetch={false}>{footer.contact}</Link></div>
           <p className={styles.footerCommission}>{footer.commissionDisclosure}</p>
         </div>
+        {/* RFC-057 §6.6: exactly one link from the commercial site to the help site, in the
+            page's own language, nofollow, no logo and no banner. It appears only once the
+            help routes have moved (HELP_SITE_REDIRECTS), because before that deployment the
+            help host answers 404 for them. */}
+        {helpSiteLinked ? (
+          <p className={styles.footerCommission} data-footer-help-site="">
+            <a href={`${HELP_CANONICAL_ORIGIN}${helpOriginPathForLocale(presentation.locale)}`} rel="nofollow">{needHelpLine(presentation.locale)}</a>
+          </p>
+        ) : null}
         <span aria-hidden="true" className={styles.footerEnd} data-public-footer-bottom />
       </div>
     </footer>

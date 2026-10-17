@@ -1,5 +1,7 @@
 import { BRAND_STATEMENT } from "@/lib/i18n/static-pages/gambling-control";
-import { absoluteUrl, siteUrl } from "@/lib/site";
+import { absoluteUrl, originForSite, siteUrl } from "@/lib/site";
+import { helpShellCopy } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import { BRAND_SOCIAL_PROFILES } from "@/lib/social/brand-profiles";
 
 /**
@@ -9,6 +11,21 @@ import { BRAND_SOCIAL_PROFILES } from "@/lib/social/brand-profiles";
  */
 export const ORGANIZATION_ID = `${siteUrl}/#organization`;
 export const WEBSITE_ID = `${siteUrl}/#website`;
+
+/**
+ * RFC-057 §8. The help host prints its own identity, never B4GAMBLE's: a `b4gamble.com` URL
+ * in JSON-LD would break the one-way link rule (§6.1), the logo path is the B4GAMBLE mark the
+ * help site carries nowhere (Q2), and the "Before Gamble" aliases are the other site's brand.
+ * The help Organization has no `logo` field at all until a "Pause Plan" mark exists, and no
+ * `sameAs`: the social profiles belong to the main brand.
+ */
+export function organizationIdForSite(site: SiteClass = "main") {
+  return `${originForSite(site)}/#organization`;
+}
+
+export function websiteIdForSite(site: SiteClass = "main") {
+  return `${originForSite(site)}/#website`;
+}
 export const ORGANIZATION_LOGO_PATH = "/brand/b4gamble-logo-512.png";
 export const EDITORIAL_AUTHOR_NAME = "B4GAMBLE Editorial";
 
@@ -33,7 +50,18 @@ export const ORGANIZATION_PROFILES = [
   "https://www.trustpilot.com/review/b4gamble.com",
 ] as const;
 
-export function organizationSchema() {
+export function organizationSchema(site: SiteClass = "main") {
+  if (site === "help") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": organizationIdForSite("help"),
+      name: HELP_SITE_NAME,
+      legalName: "7BE Inc.",
+      description: helpShellCopy("en-GB").statement,
+      url: originForSite("help"),
+    };
+  }
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -54,7 +82,17 @@ export function organizationSchema() {
   };
 }
 
-export function websiteSchema() {
+export function websiteSchema(site: SiteClass = "main") {
+  if (site === "help") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": websiteIdForSite("help"),
+      name: HELP_SITE_NAME,
+      url: originForSite("help"),
+      publisher: { "@id": organizationIdForSite("help") },
+    };
+  }
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -67,13 +105,17 @@ export function websiteSchema() {
 }
 
 /** A reference to the sitewide Organization, for `publisher` fields. */
-export function organizationReference() {
-  return { "@type": "Organization", "@id": ORGANIZATION_ID, name: "B4GAMBLE", url: siteUrl };
+export function organizationReference(site: SiteClass = "main") {
+  return site === "help"
+    ? { "@type": "Organization", "@id": organizationIdForSite("help"), name: HELP_SITE_NAME, url: originForSite("help") }
+    : { "@type": "Organization", "@id": ORGANIZATION_ID, name: "B4GAMBLE", url: siteUrl };
 }
 
 /** The editorial team as an organisation author; it is not a person. */
-export function editorialAuthor() {
-  return { "@type": "Organization", name: EDITORIAL_AUTHOR_NAME, url: siteUrl, parentOrganization: { "@id": ORGANIZATION_ID } };
+export function editorialAuthor(site: SiteClass = "main") {
+  return site === "help"
+    ? { "@type": "Organization", name: `${HELP_SITE_NAME} Editorial`, url: originForSite("help"), parentOrganization: { "@id": organizationIdForSite("help") } }
+    : { "@type": "Organization", name: EDITORIAL_AUTHOR_NAME, url: siteUrl, parentOrganization: { "@id": ORGANIZATION_ID } };
 }
 
 /**

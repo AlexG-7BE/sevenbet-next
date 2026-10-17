@@ -6,6 +6,8 @@ import { resolvePresentationContext, type PresentationResolution } from "@/lib/m
 import { DEFAULT_MARKET_PROFILE, PUBLISHED_LANGUAGE_ROUTE_PROFILES, marketProfileByLocale, publicMarketPath } from "@/lib/market/registry";
 import { finalPublicHref } from "@/lib/market/routing";
 import { commercialDestinationsNavigable, type PublicAccountNavigation } from "@/lib/public-shell";
+import { helpShellCopy } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import type { CommercialProductState } from "@/lib/market/commercial-product-state";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
@@ -27,6 +29,7 @@ export function PublicHeader({
   commercialMobileBonusesNavigation,
   deferCommercialNavigation = false,
   researchNavigation = true,
+  site = "main",
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -46,8 +49,16 @@ export function PublicHeader({
    * so the Programme's shell stays byte-identical to PR #530.
    */
   researchNavigation?: boolean;
+  /**
+   * Which of the two Production hosts is answering (RFC-057 §7.2). On `help` the same header
+   * renders the help site's own name and its own four links; the commercial destinations and
+   * the deferred commercial slots are not built at all. `main` is every other caller and is
+   * byte-identical to what it renders today.
+   */
+  site?: SiteClass;
 }) {
   const messages = publicShellMessages(presentation.locale);
+  const help = site === "help" ? helpShellCopy(presentation.locale) : null;
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
     ? publicMarketPath(editorialProfile, presentation.locale)
@@ -55,9 +66,9 @@ export function PublicHeader({
   return (
     <header className={styles.header} data-public-shell="header" data-shell-theme="dark">
       <div className={styles.headerInner}>
-        <Link className={styles.brand} href={homeHref} aria-label={messages.homeLabel} prefetch={false} translate="no">
-          B4GAMBLE
-          <PublicLinkPendingSignal label={messages.homeLabel} />
+        <Link className={styles.brand} href={homeHref} aria-label={help ? help.homeLabel : messages.homeLabel} prefetch={false} translate="no">
+          {help ? HELP_SITE_NAME : "B4GAMBLE"}
+          <PublicLinkPendingSignal label={help ? help.homeLabel : messages.homeLabel} />
         </Link>
         <PublicNavigation
           account={account}
@@ -73,6 +84,7 @@ export function PublicHeader({
           programme={programme}
           researchNavigation={researchNavigation}
           selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES}
+          site={site}
         />
       </div>
       <PublicHeaderThemeController />
