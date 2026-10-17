@@ -31,7 +31,9 @@ import {
   announceChangedUrls,
   casinoReviewUrls,
   indexNowEnabled,
+  HELP_INDEXNOW_KEY,
   indexNowPayload,
+  indexNowPayloadsByHost,
   INDEXNOW_KEY,
   learnArticleUrls,
   submitIndexNow,
@@ -43,6 +45,7 @@ import { programmeSearchMetadata } from "../lib/seo/programme-metadata";
 import { DEFAULT_OPEN_GRAPH_IMAGES } from "../lib/seo/social-image";
 import { modifiedNotBeforePublished, organizationSchema, ORGANIZATION_LOGO_PATH, websiteSchema } from "../lib/seo/structured-data";
 import { absoluteUrl, siteUrl } from "../lib/site";
+import { classifyRoutePath } from "../lib/site/host-routes";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
@@ -123,13 +126,14 @@ test("one sitewide Organization and WebSite with a stable URL and a real logo", 
   };
   assert.equal(organization["@type"], "Organization");
   assert.equal(organization.url, siteUrl);
-  assert.equal(organization.logo.url, absoluteUrl(ORGANIZATION_LOGO_PATH));
+  assert.equal(organization.logo?.url, absoluteUrl(ORGANIZATION_LOGO_PATH));
   assert.ok(existsSync(`public${ORGANIZATION_LOGO_PATH}`));
   // The brand's own profiles are tied to the site; every entry is an https profile URL.
   assert.equal(organization.legalName, "7BE Inc.");
-  assert.ok(organization.sameAs.length >= 5);
-  for (const profile of organization.sameAs) assert.match(profile, /^https:\/\/(?:www\.)?(?:facebook|x|instagram|threads|youtube|tiktok|pinterest|medium|producthunt|crunchbase|trustpilot)\.com\//, profile);
-  assert.equal(new Set(organization.sameAs).size, organization.sameAs.length);
+  const sameAs = organization.sameAs ?? [];
+  assert.ok(sameAs.length >= 5);
+  for (const profile of sameAs) assert.match(profile, /^https:\/\/(?:www\.)?(?:facebook|x|instagram|threads|youtube|tiktok|pinterest|medium|producthunt|crunchbase|trustpilot)\.com\//, profile);
+  assert.equal(new Set(sameAs).size, sameAs.length);
   const website = websiteSchema();
   assert.equal(website["@type"], "WebSite");
   assert.equal(website.name, "B4GAMBLE");
@@ -271,7 +275,10 @@ test("a Learn guide declares only the language it exists in", () => {
     "x-default": absoluteUrl("/en/learn/casino-bonuses/wagering-requirements"),
   });
   assert.deepEqual(Object.keys(articleLanguageAlternates({ ...article, locale: "de-DE" })), ["de"]);
-  assert.match(read("app/(public)/learn/[category]/[slug]/page.tsx"), /languageAlternates: articleLanguageAlternates\(article\)/);
+  // RFC-057 §12: a guide's language versions are on the host that serves it.
+  assert.match(read("app/(public)/learn/[category]/[slug]/page.tsx"), /languageAlternates: articleLanguageAlternates\(article, site\)/);
+  assert.deepEqual(Object.keys(articleLanguageAlternates(article, "help")), ["en", "x-default"]);
+  for (const url of Object.values(articleLanguageAlternates(article, "help"))) assert.match(url, /^https:\/\/pauseplan\.help\//);
 });
 
 test("a guide's category crumb links the filtered hub itself, not the 308 category path", () => {
@@ -567,9 +574,15 @@ test("the sitemap and llms.txt list the same published reviews", () => {
 });
 
 test("IndexNow: a public key file, Production-only announcements and review URLs in every indexed language", async () => {
-  const keyRoutes = readdirSync("app").filter((name) => /^[0-9a-f]{32}\.txt$/.test(name));
-  assert.deepEqual(keyRoutes, [`${INDEXNOW_KEY}.txt`]);
+  // RFC-057 §12: one key file per host, each served only on its own host, so neither domain
+  // can be joined to the other through a shared key.
+  const keyRoutes = readdirSync("app").filter((name) => /^[0-9a-f]{32}\.txt$/.test(name)).sort();
+  assert.deepEqual(keyRoutes, [`${HELP_INDEXNOW_KEY}.txt`, `${INDEXNOW_KEY}.txt`].sort());
   assert.match(read(`app/${INDEXNOW_KEY}.txt/route.ts`), /return new Response\(INDEXNOW_KEY/);
+  assert.match(read(`app/${HELP_INDEXNOW_KEY}.txt/route.ts`), /return new Response\(HELP_INDEXNOW_KEY/);
+  assert.notEqual(HELP_INDEXNOW_KEY, INDEXNOW_KEY);
+  assert.equal(classifyRoutePath(`/${INDEXNOW_KEY}.txt`), "COMMERCIAL");
+  assert.equal(classifyRoutePath(`/${HELP_INDEXNOW_KEY}.txt`), "HELP");
 
   assert.equal(indexNowEnabled({ VERCEL_ENV: "production" }), true);
   assert.equal(indexNowEnabled({ VERCEL_ENV: "preview" }), false);
@@ -590,6 +603,15 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
   assert.equal(payload.keyLocation, absoluteUrl(`/${INDEXNOW_KEY}.txt`));
   assert.equal(payload.urlList.length, 4, "same host only, no duplicates");
 
+  // Announcements are grouped by host, one POST per host with that host's own key (§12).
+  const helpUrls = ["https://pauseplan.help/sv/pause-plan", "https://pauseplan.help/sv/learn"];
+  const grouped = indexNowPayloadsByHost([...casinoReviewUrls("turbonino"), ...helpUrls, "https://elsewhere.example/page"]);
+  assert.deepEqual(grouped.map((group) => group.host), [new URL(siteUrl).host, "pauseplan.help"]);
+  assert.deepEqual(grouped.map((group) => group.key), [INDEXNOW_KEY, HELP_INDEXNOW_KEY]);
+  assert.deepEqual(grouped[1].urlList, helpUrls);
+  assert.equal(grouped[1].keyLocation, `https://pauseplan.help/${HELP_INDEXNOW_KEY}.txt`);
+  assert.deepEqual(indexNowPayloadsByHost(["https://elsewhere.example/page"]), []);
+
   const sent: string[] = [];
   const fetchImpl = (async (url: string, init?: RequestInit) => {
     sent.push(`${url} ${init?.body}`);
@@ -599,6 +621,13 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
   assert.equal(sent.length, 0);
   assert.deepEqual(await submitIndexNow(casinoReviewUrls("turbonino"), { environment: { VERCEL_ENV: "production" }, fetchImpl }), { submitted: 4, status: 202 });
   assert.match(sent[0], /^https:\/\/api\.indexnow\.org\/indexnow /);
+  sent.length = 0;
+  assert.deepEqual(
+    await submitIndexNow([...casinoReviewUrls("turbonino"), ...helpUrls], { environment: { VERCEL_ENV: "production" }, fetchImpl }),
+    { submitted: 6, status: 202 },
+  );
+  assert.equal(sent.length, 2, "one POST per host");
+  assert.match(sent[1], new RegExp(`"key":"${HELP_INDEXNOW_KEY}"`));
 
   // Publishing hooks announce what changed.
   assert.match(read("lib/public-casino/cache.ts"), /announceChangedUrls\(casinoSlug \? casinoReviewUrls\(casinoSlug\) : productDirectoryUrls\(\)\)/);
@@ -682,7 +711,8 @@ test("the sitemap keeps the last good market list when the database stalls", asy
   assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, broken, async () => complete), completeMarketProductPaths(complete));
   assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, broken, async () => { throw new Error("boom"); }), { routes: [], casinoRoutes: [] });
   const sitemap = read("app/sitemap.ts");
-  assert.match(sitemap, /\["sitemap-market-products-v1", market\.countryCode\], \{ revalidate: 600 \}/);
+  // RFC-057 §7.4: a cache entry that holds absolute URLs has the site in its key.
+  assert.match(sitemap, /\["sitemap-market-products-v1", site, market\.countryCode\], \{ revalidate: 600 \}/);
   assert.match(sitemap, /const baseProducts = await lastGoodMarketProductPaths\(DEFAULT_MARKET_PROFILE, crawlerBonuses\);/);
 });
 

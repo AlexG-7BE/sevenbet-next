@@ -27,7 +27,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
     };
   }
   // A category filter (`?category=…`) canonicalises to the hub and carries no hreflang of its own.
-  return productMetadata({ presentation, pathname: "/learn", title: ui.metadataTitle, description: ui.metadataDescription, queryVariant: Object.keys(query).length > 0 });
+  return productMetadata({ presentation, pathname: "/learn", title: ui.metadataTitle, description: ui.metadataDescription, queryVariant: Object.keys(query).length > 0, site });
 }
 
 export default async function LearnPage() {

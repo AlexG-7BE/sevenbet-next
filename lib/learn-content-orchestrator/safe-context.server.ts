@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { publicLearnArticlePath } from "@/lib/learn-apply/public-verification";
 import { learningCategories } from "@/lib/learning-center";
 import { PUBLISHED_LANGUAGE_ROUTE_PROFILES } from "@/lib/market/registry";
-import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
+import { learnArticleOrigin } from "@/lib/site/core-routes";
 
 export const LEARN_CONTENT_MAX_ARTICLE_INVENTORY = 500;
 
@@ -86,7 +86,7 @@ export async function collectLearnContentSafeContext(
       locale: article.locale,
       publishedAt: article.publishedAt?.toISOString() ?? article.updatedAt.toISOString(),
       updatedAt: article.updatedAt.toISOString(),
-      url: `${PUBLIC_CANONICAL_ORIGIN}${publicLearnArticlePath(article.locale, article.category, article.slug)}`,
+      url: `${learnArticleOrigin(article.category)}${publicLearnArticlePath(article.locale, article.category, article.slug)}`,
     })),
     categories: learningCategories.map(({ slug, title, description }) => ({ slug, title, description })),
     locales: PUBLISHED_LANGUAGE_ROUTE_PROFILES

@@ -1,10 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/site";
-import {
-  HELP_CANONICAL_ORIGIN,
-  helpSiteSwitchesFromProcessEnv,
-  type SiteClass,
-} from "@/lib/site/host-gate";
+import { helpSiteSwitchesFromProcessEnv, type SiteClass } from "@/lib/site/host-gate";
 import { resolveServerSite } from "@/lib/site/server-site";
 
 // RFC-057 §7.4: robots has no dynamic API of its own, so Next would render one body at build
@@ -61,7 +57,7 @@ export function robotsForSite(site: SiteClass, helpIndexable: boolean): Metadata
     ],
     // Each host names its own sitemap, never the other's. The help host serves no `/r/` or
     // `/go/` route at all, so the click-redirect rules are harmless there.
-    sitemap: site === "help" ? `${HELP_CANONICAL_ORIGIN}/sitemap.xml` : absoluteUrl("/sitemap.xml"),
+    sitemap: absoluteUrl("/sitemap.xml", site),
   };
 }
 

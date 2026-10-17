@@ -121,7 +121,7 @@ test("layout, sitemap, robots metadata, and canonicalization use the centralized
   const robotsSource = readFileSync("app/robots.ts", "utf8");
   assert.match(
     robotsSource,
-    /sitemap: site === "help" \? `\$\{HELP_CANONICAL_ORIGIN\}\/sitemap\.xml` : absoluteUrl\("\/sitemap\.xml"\)/,
+    /sitemap: absoluteUrl\("\/sitemap\.xml", site\)/,
   );
   assert.match(robotsSource, /resolveServerSite\(\)/);
 });

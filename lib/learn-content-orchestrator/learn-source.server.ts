@@ -6,7 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { publicLearnArticlePath } from "@/lib/learn-apply/public-verification";
 import { rfc3339UtcTimestampSchema } from "@/lib/learn-apply/contract";
-import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
+import { learnArticleOrigin, publicLearnOrigins } from "@/lib/site/core-routes";
 
 /**
  * Read-only source text for localization (Founder, 1 Oct 2026,
@@ -36,7 +36,12 @@ export const learnSourceResultSchema = z.object({
   bodyBlocks: z.array(z.record(z.string(), z.unknown())).max(300),
   publishedAt: rfc3339UtcTimestampSchema,
   updatedAt: rfc3339UtcTimestampSchema,
-  url: z.string().max(2_000).refine((value) => value.startsWith(`${PUBLIC_CANONICAL_ORIGIN}/`), "Expected a canonical public B4GAMBLE URL."),
+  // RFC-057 §14: a guide's public origin follows its category, so either site's origin is a
+  // valid public URL here; which one a given guide must use is `learnArticleSite`.
+  url: z.string().max(2_000).refine(
+    (value) => publicLearnOrigins().some((origin) => value.startsWith(`${origin}/`)),
+    "Expected a canonical public guide URL on one of the two site origins.",
+  ),
 }).strict();
 
 export const LEARN_SOURCE_ERROR_CODES = ["INVALID_INPUT", "ARTICLE_NOT_FOUND", "SOURCE_TOO_LARGE", "SOURCE_UNAVAILABLE"] as const;
@@ -138,6 +143,6 @@ export async function readLearnSource(input: unknown, database: PublishedArticle
     bodyBlocks: Array.isArray(article.bodyBlocks) ? article.bodyBlocks : [],
     publishedAt: (article.publishedAt ?? article.updatedAt).toISOString(),
     updatedAt: article.updatedAt.toISOString(),
-    url: `${PUBLIC_CANONICAL_ORIGIN}${publicLearnArticlePath(article.locale, article.category, article.slug)}`,
+    url: `${learnArticleOrigin(article.category)}${publicLearnArticlePath(article.locale, article.category, article.slug)}`,
   });
 }

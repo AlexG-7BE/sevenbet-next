@@ -52,7 +52,8 @@ before(async () => {
     import("../app/start/layout"),
     import("../app/start/page"),
   ]);
-  metadata = page.metadata;
+  // RFC-057 §8: /start builds its canonical per request, so the metadata is generated.
+  metadata = await page.generateMetadata();
   renderStart = () => renderToStaticMarkup(React.createElement(StartLayout, null, React.createElement(page.default)));
 });
 

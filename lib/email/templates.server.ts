@@ -4,6 +4,7 @@ import sanitizeHtml from "sanitize-html";
 import type { EmailTemplateKey, EmailTemplateType } from "@prisma/client";
 
 import prisma from "@/lib/db/prisma";
+import { HELP_CANONICAL_ORIGIN } from "@/lib/site/host-gate";
 
 const templateKeys = [
   "EMAIL_VERIFICATION", "PASSWORD_RESET", "ACCOUNT_SECURITY",
@@ -72,11 +73,19 @@ function leadsToCasinoPages(path: string) {
   return RESEARCH_SECTION_PATH.test(path) || PARTNER_ROUTE_PATH.test(path);
 }
 
+/**
+ * RFC-057 §11: a letter may link either site and nothing else. The help origin is here from
+ * phase 1 so that a letter about the Programme can point at the host that serves it; the
+ * casino and partner refusal above applies to both origins, unchanged, and phase 3 is what
+ * decides that customer letters link only the help site.
+ */
+const APPROVED_EMAIL_ORIGINS = ["https://b4gamble.com", HELP_CANONICAL_ORIGIN];
+
 function approvedStaticEmailUrl(value: string) {
   try {
     const url = new URL(value);
     const decodedPath = decodedLinkPath(value);
-    return url.origin === "https://b4gamble.com"
+    return APPROVED_EMAIL_ORIGINS.includes(url.origin)
       && !url.username
       && !url.password
       && decodedPath !== null

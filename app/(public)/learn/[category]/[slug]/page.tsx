@@ -5,7 +5,7 @@ import { cache, Suspense } from "react";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { offerBridgeKind } from "@/lib/articles/article-bridges";
 import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
-import { articleLanguageAlternates } from "@/lib/articles/article-seo";
+import { articleLanguageAlternates, storedCanonicalUrl } from "@/lib/articles/article-seo";
 import { retiredArticleSuccessor } from "@/lib/articles/retired-articles";
 import { relatedReadingListInput, relatedReadingSelection } from "@/lib/articles/related-reading";
 import { learnBridgeMessages } from "@/lib/i18n/learn-bridges-catalog";
@@ -20,7 +20,7 @@ import { programmePathForPresentationLocale } from "@/lib/programme/presentation
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { articleService } from "@/lib/services";
 import { editorialAuthor, modifiedNotBeforePublished, organizationReference } from "@/lib/seo/structured-data";
-import { absoluteUrl, siteUrl } from "@/lib/site";
+import { absoluteUrl } from "@/lib/site";
 
 import { LearningArticleRelated, LearningArticleView, type LearnOfferBridge } from "./LearningArticleView";
 import { helpMediaUrl } from "@/lib/site/help-media";
@@ -47,14 +47,15 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
   const article = await loadArticle(category, slug, presentation.locale);
   const messages = learningMessages(presentation.locale);
-  if (!article) return productMetadata({ presentation, pathname: `/learn/${category}/${slug}`, title: messages.ui.learningGuide, description: messages.ui.metadataDescription, robots: { index: false, follow: false } });
+  if (!article) return productMetadata({ presentation, pathname: `/learn/${category}/${slug}`, title: messages.ui.learningGuide, description: messages.ui.metadataDescription, robots: { index: false, follow: false }, site });
   const metadata = productMetadata({
     presentation,
     pathname: articlePath(article),
     title: article.seoTitle || `${article.title} | B4GAMBLE`,
     description: article.seoDescription || article.excerpt,
     openGraphType: "article",
-    languageAlternates: articleLanguageAlternates(article),
+    languageAlternates: articleLanguageAlternates(article, site),
+    site,
     // On the help host the social image is the first-party one or none at all: a
     // media.b4gamble.com URL in a help page's metadata is a commercial address (§13).
     ...(() => {
@@ -63,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
     })(),
   });
   if (!article.canonicalUrl) return metadata;
-  const canonical = new URL(article.canonicalUrl, siteUrl).href;
+  const canonical = storedCanonicalUrl(article.canonicalUrl, site);
   return { ...metadata, alternates: { ...metadata.alternates, canonical }, openGraph: metadata.openGraph ? { ...metadata.openGraph, url: canonical } : metadata.openGraph };
 }
 

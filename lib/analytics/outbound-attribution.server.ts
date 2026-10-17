@@ -221,7 +221,12 @@ export async function recordOutboundAttribution(
     occurredAt: input.attemptedAt,
     anonymousId,
     analyticsSessionId,
-    userId,
+    // The two events below are the same partner press as the click row, by another name, so
+    // Q7 reaches them too: a press is no longer stored with the account anywhere new. The
+    // Founder's answer names `OutboundClick.userId`, which is what the RFC's evidence read;
+    // leaving the account on these two rows would make the owner page's sentence false while
+    // the row next to it was cleaned.
+    userId: null,
     pagePath: referrer.sourcePage,
     locale: consented ? input.locale : null,
     countryCode: input.countryCode,
@@ -251,7 +256,13 @@ export async function recordOutboundAttribution(
           resolvedAt,
           anonymousId,
           analyticsSessionId,
-          userId,
+          // RFC-057 Q7 (a), Founder, 17 October 2026: a new partner press is not stored with
+          // the account. The two sides of the business must not meet in one row — it is the
+          // sentence `/who-runs-this` has to be able to make, and the objection the support
+          // organisations raised. The column stays (no schema change, no migration) and
+          // simply receives nothing new; rows written before this change keep their link
+          // until the separate data job clears them, which phase 1 does not do.
+          userId: null,
           sourcePage: referrer.sourcePage,
           locale: consented ? input.locale : null,
           countryCode: input.countryCode,

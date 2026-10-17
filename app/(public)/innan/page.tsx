@@ -13,8 +13,9 @@ import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = innanMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: "/innan", title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: "/innan", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 /**

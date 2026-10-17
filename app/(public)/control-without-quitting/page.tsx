@@ -18,8 +18,9 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = withoutQuittingMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: CONTROL_PATHS.withoutQuitting, title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: CONTROL_PATHS.withoutQuitting, title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 /**
@@ -44,7 +45,7 @@ export default async function ControlWithoutQuittingPage() {
     faq: messages.faq,
     breadcrumbs: [
       { name: shared.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/"), site) },
-      { name: shared.hubLabel, item: absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub)) },
+      { name: shared.hubLabel, item: absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.hub), site) },
       { name: messages.breadcrumbLabel, item: url },
     ],
   });

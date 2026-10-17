@@ -132,7 +132,10 @@ export async function observeSuccessfulAuthentication({
     ...(consented && anonymousId ? [
       prisma.analyticsSession.updateMany({ where: { anonymousId, userId: null }, data: { userId: user.id } }),
       prisma.analyticsEvent.updateMany({ where: { anonymousId, userId: null }, data: { userId: user.id } }),
-      prisma.outboundClick.updateMany({ where: { anonymousId, userId: null }, data: { userId: user.id } }),
+      // RFC-057 Q7 (a), 17 October 2026: partner presses are no longer joined to the account,
+      // not when they are written (lib/analytics/outbound-attribution.server.ts) and not here
+      // at the next sign-in either — a back-fill would keep creating exactly the tie the
+      // answer removes, for presses made before this change.
       prisma.consentEvent.updateMany({ where: { anonymousId, userId: null }, data: { userId: user.id } }),
     ] : []),
   ]);

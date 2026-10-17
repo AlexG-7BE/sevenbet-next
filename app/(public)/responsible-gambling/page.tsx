@@ -5,12 +5,14 @@ import { transformResponsibleGamblingHandoff } from "@/lib/final-handoff/transfo
 import { firstWaveSafetyProfile } from "@/lib/market/first-wave-evidence";
 import { firstWaveSafetyLanguageAlternates, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerSite } from "@/lib/site/server-site";
 
 const title = "Responsible Gambling | B4GAMBLE";
 const description = "Practical control information and protected support routes.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const profile = firstWaveSafetyProfile(presentation);
   return productMetadata({
     presentation,
@@ -18,7 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
     title: profile ? `${profile.copy.responsibleTitle} | B4GAMBLE` : title,
     description: profile?.copy.responsibleLead ?? description,
     robots: { index: true, follow: true },
-    languageAlternates: firstWaveSafetyLanguageAlternates("/responsible-gambling"),
+    languageAlternates: firstWaveSafetyLanguageAlternates("/responsible-gambling", site),
+    site,
   });
 }
 

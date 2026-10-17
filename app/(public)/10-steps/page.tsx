@@ -13,8 +13,9 @@ import { TenStepsPage as TenStepsPresentation } from "./TenStepsPage";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = tenStepsTranslation(presentation.locale);
-  return productMetadata({ presentation, pathname: "/10-steps", title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: "/10-steps", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 export default async function TenStepsPage() {

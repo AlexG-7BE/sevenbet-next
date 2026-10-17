@@ -15,6 +15,7 @@ import {
 import { pauseLetterLanguage, pauseLetterPlanUrl, pauseLettersEnabled } from "@/lib/email/pause-letters/schedule";
 import { resolveLifecycleEmailRuntimeConfig } from "@/lib/email/runtime-config.server";
 import { activeEmailTemplate, renderEmailTemplate } from "@/lib/email/templates.server";
+import { HELP_CANONICAL_ORIGIN } from "@/lib/site/host-gate";
 
 const EMAIL_TOKEN_DOMAIN = "b4gamble:email-unsubscribe:v1";
 const EMAIL_AUTH_KEY_DOMAIN = "b4gamble:email-auth-action:v1";
@@ -67,15 +68,48 @@ function isAuthEmailPurpose(purpose: EmailPurpose) {
   return AUTH_EMAIL_PURPOSES.includes(purpose as typeof AUTH_EMAIL_PURPOSES[number]);
 }
 
+/**
+ * RFC-057 §9.2 and §11. Better Auth builds a verification or reset link from the base URL of
+ * the request it was asked on, and from phase 2 that is one of two hosts. This accepted only
+ * `siteUrl`, so every letter for an account created on the help host would be refused with
+ * `invalid-action-url` and never sent.
+ *
+ * The allowlist is the two **source constants** — the configured main origin and
+ * `HELP_CANONICAL_ORIGIN` — and nothing else: no request value, no environment value and no
+ * stored value can widen it. Allowing the help origin before the help host is served costs
+ * nothing, because the only producer of these URLs is Better Auth, whose own allowed hosts
+ * are the same two, and the help host does not reach the application at all while
+ * `HELP_SITE_SERVING` is off.
+ */
+function allowedAuthActionOrigins(siteUrl: string | null) {
+  return siteUrl ? [siteUrl, HELP_CANONICAL_ORIGIN] : [];
+}
+
 function validAuthActionUrl(value: string | undefined, siteUrl: string | null) {
   if (!value || !siteUrl) return null;
   try {
     const candidate = new URL(value);
-    return candidate.origin === siteUrl && !candidate.username && !candidate.password
+    return allowedAuthActionOrigins(siteUrl).includes(candidate.origin) && !candidate.username && !candidate.password
       ? candidate.toString()
       : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * The origin a letter's own links are built on (§11). An auth letter follows its action URL:
+ * a person who signed up on the help host is sent back to the help host, never across the
+ * split. Every other letter keeps the configured main origin until phase 3 moves the customer
+ * letters, which is a decision of its own.
+ */
+function letterLinkOrigin(actionUrl: string | null, siteUrl: string) {
+  if (!actionUrl) return siteUrl;
+  try {
+    const origin = new URL(actionUrl).origin;
+    return allowedAuthActionOrigins(siteUrl).includes(origin) ? origin : siteUrl;
+  } catch {
+    return siteUrl;
   }
 }
 
@@ -476,14 +510,17 @@ export async function processQueuedEmailMessage(
     }
   }
   const currentRecipientEmail = finalEligibility.user.email.trim().toLowerCase();
+  // The unsubscribe token lives in the one shared database, so an unsubscribe link works on
+  // either host (§11).
+  const linkOrigin = letterLinkOrigin(actionUrl, siteUrl);
   let rendered: ReturnType<typeof renderEmailTemplate>;
   try {
     rendered = renderEmailTemplate(message.template, {
       name: finalEligibility.user.name,
       action_url: actionUrl ?? "",
-      programme_url: `${siteUrl}/program`,
-      plan_url: pauseLetterPlanUrl(siteUrl, message.template.locale),
-      unsubscribe_url: token ? `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}` : `${siteUrl}/unsubscribe?test=1`,
+      programme_url: `${linkOrigin}/program`,
+      plan_url: pauseLetterPlanUrl(linkOrigin, message.template.locale),
+      unsubscribe_url: token ? `${linkOrigin}/unsubscribe?token=${encodeURIComponent(token)}` : `${linkOrigin}/unsubscribe?test=1`,
     });
   } catch {
     if (!await settleClaim(message.id, now, {

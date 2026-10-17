@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     };
   }
   const { title, description } = homeMetadata(presentation.locale);
-  return productMetadata({ presentation, pathname: "/", title, description, robots: { index: true, follow: true } });
+  return productMetadata({ presentation, pathname: "/", title, description, robots: { index: true, follow: true }, site });
 }
 
 async function HomeContent() {

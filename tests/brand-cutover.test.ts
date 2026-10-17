@@ -6,6 +6,7 @@ import test from "node:test";
 
 import robots from "../app/robots";
 import sitemap from "../app/sitemap";
+import { organizationSchema, websiteSchema } from "../lib/seo/structured-data";
 import { absoluteUrl, resolveSiteUrl, siteUrl } from "../lib/site";
 import { publicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { publicComparisonService } from "../lib/services/public-comparison.service";
@@ -106,7 +107,9 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   const icon = source("app/icon.svg");
   assert.match(layout, /default: "B4GAMBLE \(Before Gamble\) \| Know your limits before you play"/);
   assert.match(layout, /siteName: "B4GAMBLE"/);
-  assert.match(source("lib/seo/structured-data.ts"), /name: "B4GAMBLE"/);
+  // RFC-057 §8: the identity takes the site, and the main site's is unchanged.
+  assert.equal(organizationSchema().name, "B4GAMBLE");
+  assert.equal(websiteSchema().name, "B4GAMBLE");
   assert.match(layout, /Educational tools, private self-checks and transparent casino comparison/);
   assert.match(home, /homeMetadata\(presentation\.locale\)/);
   // AEO-CONTROL-PAGES-2026-10-15: the home description leads with the one phrase's meaning.
@@ -142,7 +145,7 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   assert.doesNotMatch(publicAuthority, /VERCEL_BRANCH_URL|VERCEL_URL/);
   assert.match(source("lib/auth/runtime-config.ts"), /VERCEL_BRANCH_URL/);
   const contact = source("app/(public)/contact/page.tsx");
-  assert.match(contact, /absoluteUrl\(productCanonicalPath\(presentation, "\/contact"\)\)/);
+  assert.match(contact, /absoluteUrl\(productCanonicalPath\(presentation, "\/contact"\), site\)/);
   assert.doesNotMatch(contact, /https:\/\/b4gamble\.com\/contact/);
   // SEO-CRAWLER-READY-2026-09-27: click redirects are closed to every agent and the non-standard Host line is gone.
   // RFC-057 §7.4: robots now reads the site per request. Outside a request there is no
@@ -243,9 +246,11 @@ test("home-only canonical and social metadata do not leak into auth, outbound or
   // in every language (RFC-057 §8). On `b4gamble.com` both are exactly what they were.
   assert.match(root, /<JsonLd data=\{organizationSchema\(site\)\} \/>/);
   assert.match(root, /<JsonLd data=\{websiteSchema\(site\)\} \/>/);
-  assert.match(source("lib/seo/structured-data.ts"), /"@type": "Organization",[\s\S]*url: siteUrl,/);
+  assert.equal(organizationSchema().url, siteUrl);
+  assert.equal(websiteSchema().url, siteUrl);
+  assert.equal(organizationSchema()["@id"], `${siteUrl}/#organization`);
   assert.match(home, /productMetadata\(\{ presentation, pathname: "\/", title, description/);
-  assert.match(productContext, /const canonical = absoluteUrl\(productCanonicalPath\(input\.presentation, input\.pathname\)\)/);
+  assert.match(productContext, /const canonical = absoluteUrl\(productCanonicalPath\(input\.presentation, input\.pathname\), site\)/);
   assert.match(productContext, /alternates: \{[\s\S]*canonical,[\s\S]*languages:/);
   assert.match(productContext, /openGraph: \{[\s\S]*url: canonical/);
 });

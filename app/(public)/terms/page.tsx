@@ -7,12 +7,15 @@ import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 import { resolveServerSite } from "@/lib/site/server-site";
 import { absoluteUrl } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Terms of Use | B4GAMBLE",
-  description: "Terms for using the B4GAMBLE information, comparison and educational service.",
-  alternates: { canonical: absoluteUrl("/terms") },
-  robots: { index: false, follow: true },
-};
+// RFC-057 §8: the canonical is on the host that answered, so it is built per request.
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Terms of Use | B4GAMBLE",
+    description: "Terms for using the B4GAMBLE information, comparison and educational service.",
+    alternates: { canonical: absoluteUrl("/terms", await resolveServerSite()) },
+    robots: { index: false, follow: true },
+  };
+}
 
 const operator = <address>
   7BE Inc., trading as B4GAMBLE<br />

@@ -125,14 +125,15 @@ export const socialTrafficTool = {
 
 /**
  * The weekly funnel count for the Founder (plan of 13 Oct 2026,
- * PROGRAMME-FUNNEL-MCP-2026-10-14): accounts created, Programme starts, third-step
- * completions and partner-button presses by sign-up country and sign-up source.
- * Read-only aggregates with small cells withheld; no per-person data.
+ * PROGRAMME-FUNNEL-MCP-2026-10-14): accounts created, Programme starts and third-step
+ * completions by sign-up country and sign-up source. Read-only aggregates with small cells
+ * withheld; no per-person data. The partner-press stages were removed on 17 October 2026
+ * (RFC-057 Q7 (a)): a press is no longer stored with an account at all.
  */
 export const programmeFunnelTool = {
   name: "programme_funnel",
   title: "Read the Programme funnel by sign-up country and source",
-  description: "Read-only aggregates. For a UTC date range (default the last 7 days, at most 92) returns how many accounts were created, how many Programmes were started (enrolments), how many people completed the third step, Mission 08, the lesson Know who to turn to (Research responsibly before 16 October 2026) (stepThreeCompletions), how many partner buttons signed-in people pressed (outboundClicks) and how many of those reached the partner (partnerClicks). Each stage is counted by its own date and shown twice: by the country the account was created from (byCountry) and by its sign-up source (bySource: the sign-up UTM source, else the acquisition source). Counts only: no account, user, session, email, IP, answer or pause data. A cell that would describe one or two people is withheld (null), staff accounts are excluded, and nothing is written.",
+  description: "Read-only aggregates. For a UTC date range (default the last 7 days, at most 92) returns how many accounts were created, how many Programmes were started (enrolments) and how many people completed the third step, Mission 08, the lesson Know who to turn to (Research responsibly before 16 October 2026) (stepThreeCompletions). Partner-button presses are not part of this count: a press is not stored with an account (Founder, 17 October 2026). Each stage is counted by its own date and shown twice: by the country the account was created from (byCountry) and by its sign-up source (bySource: the sign-up UTM source, else the acquisition source). Counts only: no account, user, session, email, IP, answer or pause data. A cell that would describe one or two people is withheld (null), staff accounts are excluded, and nothing is written.",
   inputSchema: z.toJSONSchema(programmeFunnelInputSchema) as Record<string, unknown>,
   outputSchema: {
     $schema: "https://json-schema.org/draft/2020-12/schema",

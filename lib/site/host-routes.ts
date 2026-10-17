@@ -135,6 +135,10 @@ export const SITE_ROUTE_MANIFEST = [
   // The protected help guides: the one Learn category that carries no offer bridge
   // (lib/articles/article-bridges.ts) and whose related reading stays inside the category.
   { path: "/learn/responsible-gambling", match: "SUBTREE", siteClass: "HELP" },
+  // The help host's own IndexNow key file (§12). The main host answers 404 for it, as the
+  // help host does for the main key file below: a key file shared by two domains is a public
+  // marker joining them.
+  { path: "/fd78a34615b74c4e9db7fd7eb03f7659.txt", match: "EXACT", siteClass: "HELP" },
   // public/data: the regulator tables /pause-statistics links for download
   // (lib/i18n/static-pages/pause-statistics.ts). A .csv is not an excluded file ending, so
   // middleware does see it and it needs a class of its own; §4.2 allows the folder.

@@ -1,6 +1,7 @@
 import { publicLearnArticlePath } from "@/lib/learn-apply/public-verification";
 import { LANGUAGE_ROUTE_PROFILES, languageRouteByLocale, type SupportedLocale } from "@/lib/market/registry";
 import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
+import { publicLearnOrigins } from "@/lib/site/core-routes";
 
 import { LEARN_CONTENT_ROLE_NAMES, type LearnContentPublishResult, type LearnContentResult } from "./contracts";
 import type { LearnContentSessionTrace } from "./openai-managed-session.server";
@@ -100,10 +101,17 @@ function validArticleLink(value: string, evidenceUrls: ReadonlySet<string>, offe
   }
 }
 
+/**
+ * RFC-057 §14, the stored-canonical rule. Only the **path** of a stored canonical is used
+ * when the page is rendered, resolved against the origin the guide's category lives on, so a
+ * stored value is valid when its path is the guide's own — written relative, or absolute on
+ * either of the two site origins. An absolute URL on any other origin is still refused.
+ */
 function validCanonicalUrl(value: string, expectedPath: string) {
   try {
     const url = new URL(value, PUBLIC_CANONICAL_ORIGIN);
-    return url.href === `${PUBLIC_CANONICAL_ORIGIN}${expectedPath}`;
+    return publicLearnOrigins().includes(url.origin)
+      && `${url.pathname}${url.search}${url.hash}` === expectedPath;
   } catch {
     return false;
   }

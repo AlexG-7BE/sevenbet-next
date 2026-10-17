@@ -23,8 +23,9 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
+  const site = await resolveServerSite();
   const messages = pausePlanMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: "/pause-plan", title: messages.metadataTitle, description: messages.metadataDescription });
+  return productMetadata({ presentation, pathname: "/pause-plan", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
 /**

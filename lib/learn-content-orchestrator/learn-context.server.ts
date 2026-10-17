@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { rfc3339UtcTimestampSchema } from "@/lib/learn-apply/contract";
 import { PUBLISHED_LANGUAGE_ROUTE_PROFILES } from "@/lib/market/registry";
-import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
+import { publicLearnOrigins } from "@/lib/site/core-routes";
 
 import {
   LEARN_CONTENT_SOURCE_LOCALE,
@@ -34,7 +34,11 @@ const localeEntrySchema = z.object({
   publicPathPrefix: z.string().regex(/^\/[a-z]{2}$/),
 }).strict();
 
-const publicUrlSchema = z.string().max(2_000).refine((value) => value.startsWith(`${PUBLIC_CANONICAL_ORIGIN}/`), "Expected a canonical public B4GAMBLE URL.");
+// RFC-057 §14: a help guide's public URL is on the help origin once the move is on.
+const publicUrlSchema = z.string().max(2_000).refine(
+  (value) => publicLearnOrigins().some((origin) => value.startsWith(`${origin}/`)),
+  "Expected a canonical public guide URL on one of the two site origins.",
+);
 
 export const learnContextResultSchema = z.object({
   generatedAt: rfc3339UtcTimestampSchema,

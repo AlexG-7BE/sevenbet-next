@@ -1,7 +1,10 @@
 import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
 import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
-import { absoluteUrl, coreRoutes } from "@/lib/site";
+import { absoluteUrl } from "@/lib/site";
+import { coreRoutesForSite, learnCategoryBelongsToSite } from "@/lib/site/core-routes";
+import { helpSiteSwitchesFromProcessEnv, type SiteClass } from "@/lib/site/host-gate";
+import { resolveServerSite } from "@/lib/site/server-site";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { parsePublicOfferQuery } from "@/lib/public-offer/query";
@@ -152,15 +155,16 @@ export async function lastGoodMarketProductPaths(
   crawlerBonuses: Awaited<ReturnType<typeof loadCrawlerBonusDirectory>>,
   cache: typeof unstable_cache = unstable_cache,
   load: typeof loadMarketSitemapSnapshot = loadMarketSitemapSnapshot,
+  site: SiteClass = "main",
 ) {
   const read = async () => completeMarketProductPaths(await load(market, crawlerBonuses));
   const partialOf = (cause: unknown) => cause instanceof SitemapCatalogueUnavailable ? cause.partial : null;
   let attempted: ReturnType<typeof indexableMarketProductPaths> | null = null;
   try {
-    // RFC-057 §7.4: the cached value holds absolute URLs built by absoluteUrl(), and the key
-    // "sitemap-market-products-v1" has no site in it. Every route in it is COMMERCIAL, and
-    // absoluteUrl() still resolves against the one main origin, so one entry cannot yet hold
-    // the wrong host. The PR that gives the help site its own origin adds the site to the key.
+    // RFC-057 §7.4: the cached value holds absolute URLs built by absoluteUrl(), so the site
+    // is part of the key. Every route in it is COMMERCIAL and the help host never asks for
+    // one, but the rule is the rule: a cache entry that holds an absolute URL is keyed by the
+    // site, or it stores paths and builds the URLs after the read.
     return await cache(async () => {
       try {
         return await read();
@@ -168,7 +172,7 @@ export async function lastGoodMarketProductPaths(
         attempted = partialOf(cause);
         throw cause;
       }
-    }, ["sitemap-market-products-v1", market.countryCode], { revalidate: 600 })();
+    }, ["sitemap-market-products-v1", site, market.countryCode], { revalidate: 600 })();
   } catch (cause) {
     const partial = partialOf(cause) ?? attempted;
     if (partial) return partial;
@@ -224,7 +228,67 @@ export function localizedIndexableMarketProfiles(markets: readonly MarketProfile
   return markets.filter((market) => market.countryCode !== DEFAULT_MARKET_PROFILE.countryCode && marketIndexingApproved(market));
 }
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+/**
+ * RFC-057 §12. The help site's sitemap lists what the help site serves and never a
+ * `b4gamble.com` URL: its core routes by class, the Programme's language routes and the help
+ * guides. It loads no catalogue, no offers and no reviews — the help host serves none of them.
+ */
+export async function helpSitemap(): Promise<MetadataRoute.Sitemap> {
+  const routes = coreRoutesForSite("help", helpSiteSwitchesFromProcessEnv().redirects);
+  const learningSnapshots = await Promise.all(INDEXABLE_LANGUAGE_ROUTE_PROFILES.map(async (language) => ({
+    language,
+    articles: await lastGoodPublishedArticles(language.defaultLocale),
+  })));
+  const guideRoutes = learningSnapshots.flatMap(({ articles, language }) => {
+    const market = marketProfileByLocale(language.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
+    return articles
+      .filter((article) => learnCategoryBelongsToSite(article.category, "help", true))
+      .map((article) => ({
+        url: absoluteUrl(publicMarketPath(market, language.defaultLocale, articlePath(article)), "help"),
+        lastModified: article.updatedAt,
+        changeFrequency: "monthly" as const,
+        priority: 0.7,
+      }));
+  });
+  const localizedRoutes = localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
+    .flatMap((market) => routes
+      .map((route) => route || "/")
+      .filter((pathname) => isLocalizedPublicDestination(pathname, market))
+      .map((pathname) => ({
+        url: absoluteUrl(publicMarketPath(market, market.defaultLocale, pathname), "help"),
+        changeFrequency: "monthly" as const,
+        priority: pathname === "/" ? 1 : 0.7,
+      })));
+  const programmeRoutes = PROGRAMME_ROUTES
+    .filter((route) => localizedProductIndexingApproved(route.locale))
+    .map((route) => ({
+      url: absoluteUrl(route.path, "help"),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }));
+  return [
+    ...routes.map((route) => {
+      const pathname = route || "/";
+      const canonicalPath = isLocalizedPublicDestination(pathname, DEFAULT_MARKET_PROFILE)
+        ? publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, pathname)
+        : pathname;
+      return {
+        url: absoluteUrl(canonicalPath, "help"),
+        changeFrequency: "weekly" as const,
+        priority: route === "" ? 1 : 0.8,
+      };
+    }),
+    ...guideRoutes,
+    ...localizedRoutes,
+    ...programmeRoutes,
+  ];
+}
+
+export async function mainSitemap(): Promise<MetadataRoute.Sitemap> {
+  // From the deployment that turns HELP_SITE_REDIRECTS on, every HELP route of the main host
+  // answers 301 and leaves this file in the same breath, so no page is listed by two hosts.
+  const redirectsOn = helpSiteSwitchesFromProcessEnv().redirects;
+  const coreRoutes = coreRoutesForSite("main", redirectsOn);
   const crawlerBonuses = await loadCrawlerBonusDirectory();
   const baseProducts = await lastGoodMarketProductPaths(DEFAULT_MARKET_PROFILE, crawlerBonuses);
   const localizedProducts = await Promise.all(localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
@@ -235,12 +299,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   })));
   const learningArticleRoutes = learningSnapshots.flatMap(({ articles, language }) => {
     const market = marketProfileByLocale(language.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
-    return articles.map((article) => ({
-      url: absoluteUrl(publicMarketPath(market, language.defaultLocale, articlePath(article))),
-      lastModified: article.updatedAt,
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
-    }));
+    return articles
+      .filter((article) => learnCategoryBelongsToSite(article.category, "main", redirectsOn))
+      .map((article) => ({
+        url: absoluteUrl(publicMarketPath(market, language.defaultLocale, articlePath(article))),
+        lastModified: article.updatedAt,
+        changeFrequency: "monthly" as const,
+        priority: 0.7,
+      }));
   });
   // An indexable market lists the same core pages as the English sitemap,
   // wherever that page has a localized route in the market.
@@ -255,7 +321,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })));
   // The Programme has its own language routes (`/de/program`) outside the public route manifest.
   // Every one it marks indexable, with hreflang, is listed too (lib/seo/programme-metadata.ts).
-  const localizedProgrammeRoutes = PROGRAMME_ROUTES
+  const localizedProgrammeRoutes = redirectsOn ? [] : PROGRAMME_ROUTES
     .filter((route) => localizedProductIndexingApproved(route.locale))
     .map((route) => ({
       url: absoluteUrl(route.path),
@@ -286,4 +352,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...baseProducts.casinoRoutes,
     ...localizedProducts.flatMap((entry) => entry.casinoRoutes),
   ];
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return await resolveServerSite() === "help" ? helpSitemap() : mainSitemap();
 }
