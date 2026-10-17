@@ -126,11 +126,40 @@ test("layout, sitemap, robots metadata, and canonicalization use the centralized
   assert.match(robotsSource, /resolveServerSite\(\)/);
 });
 
+/**
+ * RFC-057 §4.1: a `SHARED` route answers on both hosts, and on the help host it may be
+ * `noindex` while the main host's copy is the one in this sitemap — `/` is the pause plan
+ * there, and the help host stays out of the index until phase 3. The guard below is about the
+ * sitemap, which is the main host's, so it reads the page with its help branches removed. A
+ * `index: false` anywhere else in the file still fails, which is the bug this test exists for.
+ */
+function withoutHelpBranches(source: string) {
+  let output = "";
+  let index = 0;
+  for (;;) {
+    const start = source.indexOf('if (site === "help")', index);
+    if (start < 0) return output + source.slice(index);
+    const brace = source.indexOf("{", start);
+    if (brace < 0) return output + source.slice(index);
+    let depth = 0;
+    let cursor = brace;
+    for (; cursor < source.length; cursor += 1) {
+      if (source[cursor] === "{") depth += 1;
+      else if (source[cursor] === "}" && (depth -= 1) === 0) break;
+    }
+    output += source.slice(index, start);
+    index = cursor + 1;
+  }
+}
+
 test("the sitemap lists no page that asks search engines not to index it", () => {
   for (const route of coreRoutes) {
     const page = [`app/(public)${route}/page.tsx`, `app${route}/page.tsx`].find((file) => existsSync(file));
-    if (page) assert.doesNotMatch(readFileSync(page, "utf8"), /index:\s*false/, `${route} is noindex but listed in the sitemap`);
+    if (page) assert.doesNotMatch(withoutHelpBranches(readFileSync(page, "utf8")), /index:\s*false/, `${route} is noindex but listed in the sitemap`);
   }
+  // The helper must remove only the help branch, and only when there is one.
+  assert.match(withoutHelpBranches('a if (site === "help") { x { y } z } b'), /^a\s+b$/);
+  assert.equal(withoutHelpBranches("const robots = { index: false };"), "const robots = { index: false };");
   for (const route of ["/privacy", "/terms"]) {
     assert.match(readFileSync(`app/(public)${route}/page.tsx`, "utf8"), /index:\s*false/);
     assert.equal((coreRoutes as readonly string[]).includes(route), false);
