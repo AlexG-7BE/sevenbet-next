@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionButton } from "@/components/design-system/Action";
 import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAuthenticatedHeader";
 import { useSiteClass, useSiteName, useSiteNameIn } from "@/components/site/SiteNameProvider";
-import { withSiteNameDeep } from "@/lib/site/help-copy";
+import { siteFileSlug, withSiteNameDeep } from "@/lib/site/help-copy";
 import {
   AiCandidatePicker,
   ChoiceCards,
@@ -362,7 +362,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     setImageState("busy");
     try {
       const image = await keepsakeImage({ ...keepsake, brand: siteOwnName }, keepsakeFonts(document.body));
-      await deliverKeepsakeImage(image, `pause-step-${mission.step}.png`);
+      await deliverKeepsakeImage(image, `${siteFileSlug(site)}-step-${mission.step}.png`);
       setImageState("idle");
     } catch { setImageState("failed"); }
   }

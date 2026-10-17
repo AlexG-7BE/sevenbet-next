@@ -43,6 +43,7 @@ import {
   MAIN_SITE_NAME,
   helpOwnerLinkLabel,
   helpRoutePath,
+  siteFileSlug,
   siteName,
   withSiteName,
   withSiteNameDeep,
@@ -516,7 +517,11 @@ test("a file saved from the help site names the help site", () => {
   const tool = readFileSync("app/(public)/pause-plan/PausePlanTool.tsx", "utf8");
   assert.match(tool, /PRODID:-\/\/\$\{brand\}\/\/pause-plan\/\/EN/, "the calendar file carries the serving site's name");
   assert.match(tool, /UID:\$\{day\}-pause-plan@\$\{host\}/, "and its own host");
-  assert.doesNotMatch(tool, /download = `b4gamble-/, "the saved file is not named after the other brand");
+  assert.match(tool, /link\.download = `\$\{siteFileSlug\(site\)\}-/, "the saved file is named after the site that produced it");
+  assert.equal(siteFileSlug("help"), "pause-plan");
+  assert.equal(siteFileSlug("main"), "b4gamble", "and on b4gamble.com the name it has always had");
+  const mission = readFileSync("components/programme/ProgramAiMissionExperience.tsx", "utf8");
+  assert.match(mission, /`\$\{siteFileSlug\(site\)\}-step-\$\{mission\.step\}\.png`/, "the keepsake image too");
   const keepsake = readFileSync("lib/programme/program-ai/keepsake-image.ts", "utf8");
   assert.match(keepsake, /model\.brand \?\? DEFAULT_KEEPSAKE_BRAND/, "the keepsake card draws the name it is given");
 });

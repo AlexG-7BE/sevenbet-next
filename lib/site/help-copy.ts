@@ -53,6 +53,15 @@ export function siteName(site: SiteClass = DEFAULT_SITE_CLASS) {
  * `b4gamble.com` is deliberately left alone: an address is not a name, and `withHelpOrigin`
  * is what moves the two sentences that print one.
  */
+/**
+ * The serving site's name as a file name: `b4gamble-step-2.png`, `pause-plan-2026-11-01.ics`.
+ * A file the person saves outlives the visit, so it is named after the site it came from — and
+ * on `b4gamble.com` after the name it has always used, so nothing a visitor there saves changes.
+ */
+export function siteFileSlug(site: SiteClass = DEFAULT_SITE_CLASS) {
+  return site === "help" ? "pause-plan" : "b4gamble";
+}
+
 export function withSiteName(text: string, site: SiteClass = DEFAULT_SITE_CLASS) {
   return site === "help" ? text.replace(/B4GAMBLE(?!\.com)/g, HELP_SITE_NAME) : text;
 }

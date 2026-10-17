@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useSiteClass } from "@/components/site/SiteNameProvider";
-import { HELP_HOST, siteName } from "@/lib/site/help-copy";
+import { HELP_HOST, siteFileSlug, siteName } from "@/lib/site/help-copy";
 import { PausePlanLetters } from "./PausePlanLetters";
 import styles from "./PausePlan.module.css";
 import type { PausePlanDay, PausePlanMessages, PausePlanRegisterMessages, PausePlanToolMessages } from "@/lib/i18n/static-pages/pause-plan";
@@ -103,7 +103,7 @@ export function PausePlanTool({ days, ics, letters = false, locale, messages, re
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `pause-plan-${toIsoDate(result.after)}.ics`;
+    link.download = `${siteFileSlug(site)}-${toIsoDate(result.after)}.ics`;
     document.body.append(link);
     link.click();
     link.remove();
