@@ -24,6 +24,7 @@ import { absoluteUrl } from "@/lib/site";
 
 import { LearningArticleRelated, LearningArticleView, type LearnOfferBridge } from "./LearningArticleView";
 import { helpMediaUrl } from "@/lib/site/help-media";
+import { siteName, withSiteName, withSiteNameDeep } from "@/lib/site/help-copy";
 import type { SiteClass } from "@/lib/site/host-gate";
 import { resolveServerSite } from "@/lib/site/server-site";
 
@@ -45,13 +46,18 @@ const loadArticle = cache(async function loadArticle(category: string, slug: str
 export async function generateMetadata({ params }: { params: Promise<{ category: string; slug: string }> }): Promise<Metadata> {
   const { category, slug } = await params;
   const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
-  const article = await loadArticle(category, slug, presentation.locale);
+  // A guide's title, excerpt and SEO fields are database text and a protected guide names
+  // B4GAMBLE in them. The metadata of this host says Pause Plan (Founder, 17 October 2026);
+  // on the main host the article comes back unchanged, by reference.
+  const article = withSiteNameDeep(await loadArticle(category, slug, presentation.locale), site);
   const messages = learningMessages(presentation.locale);
-  if (!article) return productMetadata({ presentation, pathname: `/learn/${category}/${slug}`, title: messages.ui.learningGuide, description: messages.ui.metadataDescription, robots: { index: false, follow: false }, site });
+  if (!article) return productMetadata({ presentation, pathname: `/learn/${category}/${slug}`, title: withSiteName(messages.ui.learningGuide, site), description: messages.ui.metadataDescription, robots: { index: false, follow: false }, site });
   const metadata = productMetadata({
     presentation,
     pathname: articlePath(article),
-    title: article.seoTitle || `${article.title} | B4GAMBLE`,
+    // A guide's own SEO title comes from the database; the fallback names the site that is
+    // answering (Founder, 17 October 2026).
+    title: article.seoTitle || `${article.title} | ${siteName(site)}`,
     description: article.seoDescription || article.excerpt,
     openGraphType: "article",
     languageAlternates: articleLanguageAlternates(article, site),
@@ -109,7 +115,9 @@ function articleSchema(article: PublicArticle, presentation: PresentationResolut
 export default async function LearningArticlePage({ params }: { params: Promise<{ category: string; slug: string }> }) {
   const { category, slug } = await params;
   const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
-  const article = await loadArticle(category, slug, presentation.locale);
+  // The same rewrite as the metadata above: the JSON-LD headline and the breadcrumb carry
+  // the guide's own title, which is database text (Founder, 17 October 2026).
+  const article = withSiteNameDeep(await loadArticle(category, slug, presentation.locale), site);
   if (!article) {
     // A guide not published in this language opens in English, where it exists. A neutral
     // `/learn/...` link (an English page, a social post) resolves to the visitor's language
@@ -138,7 +146,7 @@ export default async function LearningArticlePage({ params }: { params: Promise<
       messages={messages}
       offerBridge={offerBridgeFor(article, presentation)}
       programmePath={programmePathForPresentationLocale(presentation.locale)}
-      relatedArticlesSlot={<Suspense fallback={null}><RelatedLearningArticles article={article} presentation={presentation} /></Suspense>}
+      relatedArticlesSlot={<Suspense fallback={null}><RelatedLearningArticles article={article} presentation={presentation} site={site} /></Suspense>}
       site={site}
     />
   </>;
@@ -169,9 +177,10 @@ function offerBridgeFor(article: PublicArticle, presentation: PresentationResolu
   };
 }
 
-async function RelatedLearningArticles({ article, presentation }: {
+async function RelatedLearningArticles({ article, presentation, site }: {
   article: PublicArticle;
   presentation: PresentationResolution;
+  site: SiteClass;
 }) {
   const candidates = await articleService
     .listPublished(article.locale, relatedReadingListInput(article))
@@ -181,5 +190,6 @@ async function RelatedLearningArticles({ article, presentation }: {
     hrefFor={(href) => productHref(presentation, href)}
     messages={learningMessages(presentation.locale)}
     relatedArticles={relatedArticles}
+    site={site}
   />;
 }

@@ -54,7 +54,12 @@ before(async () => {
   ]);
   // RFC-057 §8: /start builds its canonical per request, so the metadata is generated.
   metadata = await page.generateMetadata();
-  renderStart = () => renderToStaticMarkup(React.createElement(StartLayout, null, React.createElement(page.default)));
+  // Both the page and its layout read the serving site (§7.2, Founder Q2 of 17 October 2026):
+  // the page to pick the hashed photograph the help host's Firewall rule allows, the layout to
+  // name the site in its wordmark. They are async server components, so they are resolved here
+  // and the resolved tree is what each test renders.
+  const tree = await StartLayout({ children: await page.default() });
+  renderStart = () => renderToStaticMarkup(tree);
 });
 
 after(() => {
@@ -106,7 +111,9 @@ test("/start keeps the 18+ notice, the Programme disclaimer, legal links and UK 
 
   assert.match(html, /<span[^>]*>B4GAMBLE<\/span>/, "the wordmark is not a link");
   assert.match(text, /18\+/);
-  assert.match(text, /The B4GAMBLE Programme does not diagnose or treat gambling addiction\. Completion does not mean gambling is safe or suitable\./);
+  // "The Programme", not "The B4GAMBLE Programme": the sentence is true and reads naturally on
+  // both hosts, and this landing is served on both (Founder, 17 October 2026).
+  assert.match(text, /The Programme does not diagnose or treat gambling addiction\. Completion does not mean gambling is safe or suitable\./);
   assert.match(html, /<a href="\/privacy">Privacy<\/a>/);
   assert.match(html, /<a href="\/terms">Terms<\/a>/);
   for (const name of ["GamCare", "GAMSTOP Online"]) assert.ok(text.includes(name), name);
@@ -150,7 +157,7 @@ test("/start stays out of the sitemap and llms.txt", () => {
 
 test("/start is the same page for everyone and adds no tracking", () => {
   const layout = startSources.find((source) => source.name === "layout.tsx")?.text ?? "";
-  assert.match(layout, /<StartHeader \/>[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<StartFooter \/>/);
+  assert.match(layout, /<StartHeader site=\{site\} \/>[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<StartFooter \/>/);
   for (const { name, text } of startSources) {
     assert.doesNotMatch(text, /PublicHeader|PublicNavigation|PublicFooter|components\/commercial|components\/public-shell/, name);
     assert.doesNotMatch(text, /next\/headers|headers\(\)|cookies\(\)|userAgent|user-agent|\breferer\b|document\.referrer|navigator\.|x-vercel-ip-country|requestCountry|resolveServerPresentationContext|searchParams/i, name);

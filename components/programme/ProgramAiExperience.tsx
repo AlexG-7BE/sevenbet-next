@@ -682,7 +682,7 @@ export function ProgramAiExperience({
       if (!googleLinkRecovery && !ready.accountFirst) await ensureClaim(subject, ready, PENDING_CLAIM_FRESH_FOR_EMAIL_MS);
       const entry = await continueWithEmail({ email: input.email, password: input.password, expect: googleLinkRecovery ? "existing-only" : "new" }, {
         // The confirmation link in the sign-up email lands back on this Programme page.
-        signUp: (credentials) => authClient.signUp.email({ ...credentials, name: credentials.email.split("@")[0] || "B4GAMBLE member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } }),
+        signUp: (credentials) => authClient.signUp.email({ ...credentials, name: credentials.email.split("@")[0] || "New member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } }),
         signIn: (credentials) => authClient.signIn.email(credentials),
       });
       if (entry.kind === "wrong-password") {

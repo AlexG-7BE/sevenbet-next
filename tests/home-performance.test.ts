@@ -224,7 +224,10 @@ test("Learn and 10 Steps open on the responsive photo set, never a multi-megabyt
     assert.match(html, /<img alt="Editorial desk" loading="eager" decoding="async" height="4000" sizes="[^"]+" width="6000" src="\/home\/chapter-apply\.jpg"[^>]*><\/picture>/);
   }
   const tenSteps = readFileSync("app/(public)/10-steps/TenStepsPage.tsx", "utf8");
-  assert.match(tenSteps, /<picture><source sizes=\{ART_SIZES\} srcSet=\{artCandidates\("avif"\)\} type="image\/avif" \/><source sizes=\{ART_SIZES\} srcSet=\{artCandidates\("webp"\)\} type="image\/webp" \/><img [^>]*src="\/home\/hero-plan\.jpg"/);
+  // 17 Oct 2026: the same responsive set, with an `art` prop the help host passes. There the
+  // photograph is the hashed copy under /_next/static/, because the help-host Firewall rule
+  // denies /home/ (RFC-057 §4.2); unset, which is every request to b4gamble.com, nothing moves.
+  assert.match(tenSteps, /<picture><source sizes=\{ART_SIZES\} srcSet=\{art \? art\.avifSrcSet : artCandidates\("avif"\)\} type="image\/avif" \/><source sizes=\{ART_SIZES\} srcSet=\{art \? art\.webpSrcSet : artCandidates\("webp"\)\} type="image\/webp" \/><img [^>]*src=\{art \? art\.fallbackSrc : "\/home\/hero-plan\.jpg"\}/);
   assert.match(tenSteps, /`\/home\/responsive\/hero-plan-\$\{width\}\.\$\{format\} \$\{width\}w`/);
   assert.match(readFileSync("app/(public)/10-steps/TenStepsPage.module.css", "utf8"), /\.artMotion picture \{ display: block; width: 100%; height: 100%; \}/);
 });

@@ -16,6 +16,7 @@ import {
   type PasswordResetView,
 } from "@/lib/auth/password-reset";
 import { programmeText } from "@/lib/i18n/programme-catalog";
+import { useSiteName, useSiteNameIn } from "@/components/site/SiteNameProvider";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./LoginExperience.module.css";
@@ -44,7 +45,9 @@ const resetFailureMessage = {
 
 export function PasswordResetExperience({ locale, returnTo, view }: PasswordResetExperienceProps) {
   const shell = publicShellMessages(locale);
-  const t = (key: MessageKey) => programmeText(locale, key);
+  const name = useSiteName();
+  const inSite = useSiteNameIn();
+  const t = (key: MessageKey) => inSite(programmeText(locale, key));
   const token = view.kind === "reset" ? view.token : null;
   const [stage, setStage] = useState<Stage>(view.kind);
   const [email, setEmail] = useState("");
@@ -128,7 +131,7 @@ export function PasswordResetExperience({ locale, returnTo, view }: PasswordRese
 
   return (
     <div className={styles.page} data-login-page data-password-reset-page={stage}>
-      <header className={styles.nav}><Link href={programmePublicHref(locale, "/")}>B4GAMBLE</Link><Link href={programmePublicHref(locale, "/")}>← {t("Back to site")}</Link></header>
+      <header className={styles.nav}><Link href={programmePublicHref(locale, "/")}>{name}</Link><Link href={programmePublicHref(locale, "/")}>← {t("Back to site")}</Link></header>
       <main className={styles.main}>
         <div aria-hidden="true" className={styles.glow} />
         <section aria-labelledby="password-reset-title" className={styles.panel}>

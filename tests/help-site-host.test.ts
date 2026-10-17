@@ -366,10 +366,14 @@ test("every metadata route and every top-level entry of public/ has a route clas
     assert.ok(statSync(join(repositoryRoot, file)).isFile(), `${file} exists`);
     assert.notEqual(classifyRoutePath(path), null, path);
   }
-  const metadataFiles = readdirSync(join(repositoryRoot, "app"))
-    .filter((entry) => /^(favicon\.|icon\.|apple-icon\.|opengraph-image\.|twitter-image\.|manifest\.|robots\.|sitemap\.)/.test(entry));
+  // `/favicon.ico` and `/icon.svg` are route handlers since 17 October 2026 (§12, Founder Q2),
+  // so a metadata address in app/ is either a file convention or a directory holding a
+  // `route.ts`. Either way it needs an entry, because either way it answers on both hosts.
+  const metadataAddresses = readdirSync(join(repositoryRoot, "app"))
+    .filter((entry) => /^(favicon\.|icon\.|apple-icon\.|opengraph-image\.|twitter-image\.|manifest\.|robots\.|sitemap\.)/.test(entry))
+    .map((entry) => (statSync(join(repositoryRoot, "app", entry)).isDirectory() ? `app/${entry}/route.ts` : `app/${entry}`));
   assert.deepEqual(
-    metadataFiles.map((entry) => `app/${entry}`).sort(),
+    metadataAddresses.sort(),
     Object.keys(METADATA_ROUTE_MANIFEST).sort(),
     "a new metadata route needs an entry in METADATA_ROUTE_MANIFEST",
   );

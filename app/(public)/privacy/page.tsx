@@ -5,23 +5,30 @@ import { HandoffLegalPage } from "@/app/(public)/_legal/HandoffLegalPage";
 import { currentArticle27Representation } from "@/lib/legal/article-27-representation";
 import { absoluteUrl } from "@/lib/site";
 import { HELP_OWNER_PATH } from "@/lib/site/help-copy";
-import { HELP_SITE_NAME } from "@/lib/site/host-gate";
+import { siteName } from "@/lib/site/help-copy";
+import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import { resolveServerSite } from "@/lib/site/server-site";
 
 import styles from "./PrivacyRepresentatives.module.css";
 
 // RFC-057 §8: the canonical is on the host that answered, so it is built per request.
 export async function generateMetadata(): Promise<Metadata> {
+  const site = await resolveServerSite();
   return {
-    title: "Privacy Policy | B4GAMBLE",
-    description: "How 7BE Inc., trading as B4GAMBLE, uses and protects personal data.",
-    alternates: { canonical: absoluteUrl("/privacy", await resolveServerSite()) },
+    title: `Privacy Policy | ${siteName(site)}`,
+    description: `How 7BE Inc., trading as ${siteName(site)}, uses and protects personal data.`,
+    alternates: { canonical: absoluteUrl("/privacy", site) },
     robots: { index: false, follow: true },
   };
 }
 
-const controller = <address>
-  7BE Inc., trading as B4GAMBLE<br />
+/**
+ * RFC-057 §8 and Q2. The trading name is the one place on this page where the site's own name
+ * belongs, so it is the name of the host that answered: `b4gamble.com` prints exactly what it
+ * printed before, and the help host names itself.
+ */
+const controllerAddress = (site: SiteClass) => <address>
+  7BE Inc., trading as {siteName(site)}<br />
   447 Broadway, 2nd Floor, 1663<br />
   New York, NY 10013<br />
   United States<br />
@@ -58,18 +65,20 @@ const representativeSection = {
   </>,
 };
 
-const sections = [
+const sectionsFor = (site: SiteClass) => [
   {
     id: "controller",
     title: "Who controls your information",
-    content: <><p>7BE Inc., trading as B4GAMBLE, is the controller of personal data described in this notice. B4GAMBLE is an information, comparison and educational service. It is not a gambling operator.</p>{controller}</>,
+    content: <><p>7BE Inc., trading as {siteName(site)}, is the controller of personal data described in this notice. {site === "help"
+      ? "It is an information and educational service. It is not a gambling operator and it sells nothing."
+      : "B4GAMBLE is an information, comparison and educational service. It is not a gambling operator."}</p>{controllerAddress(site)}</>,
   },
   representativeSection,
   {
     id: "data-we-use",
     title: "Information we use",
     content: <><p>Depending on how you use the service, we may process:</p><ul>
-      <li><strong>Account and identity data:</strong> name, email address, profile image, sign-in provider identifiers, account and session records. If you choose Google sign-in, Google supplies identity information for sign-in. It does not provide B4GAMBLE with your date of birth, contacts, mailbox contents or a gambling profile, and it does not verify your age. Google credentials are used transiently by the server to verify the sign-in and are stripped before the application account relationship is stored. Google sign-in, age confirmation, Terms acceptance and Programme participation do not create reminder or marketing permission.</li>
+      <li><strong>Account and identity data:</strong> name, email address, profile image, sign-in provider identifiers, account and session records. If you choose Google sign-in, Google supplies identity information for sign-in. It does not provide us with your date of birth, contacts, mailbox contents or a gambling profile, and it does not verify your age. Google credentials are used transiently by the server to verify the sign-in and are stripped before the application account relationship is stored. Google sign-in, age confirmation, Terms acceptance and Programme participation do not create reminder or marketing permission.</li>
       <li><strong>Programme data:</strong> your access confirmations, progress, XP, saved structured plan fields and the Starting Point that you confirm. What you pick or type may reveal health or other special-category information.</li>
       <li><strong>Transient Programme input:</strong> picked answers, text and clarifications used to create a suggested Starting Point. Draft text remains in the browser session unless and until you choose to save the confirmed output.</li>
       <li><strong>Technical and security data:</strong> session token, expiry, IP address, the coarse country/region derived by our hosting provider for the request, user agent, language preference, request and security records.</li>
@@ -99,7 +108,7 @@ const sections = [
   {
     id: "ai",
     title: "AI",
-    content: <><p>If you opt in, the answers you pick and the text you submit may be sent to OpenAI acting as a service provider so that B4GAMBLE can generate a suggested Starting Point or Programme guidance. The response request uses <code>store: false</code> and does not create an OpenAI conversation. OpenAI states that API data is not used to train its models unless the customer opts in; its current default data controls allow Responses API content in abuse-monitoring logs for up to 30 days. Contracted or account-specific controls may differ. B4GAMBLE records operational metadata such as model, timing, success or error and input size, not the words you supplied.</p><p>AI output can be incomplete or wrong. Review and edit it before saving. B4GAMBLE does not use AI to diagnose you, decide whether gambling is safe, make a solely automated decision producing legal or similarly significant effects, or determine commercial offers or rankings.</p></>,
+    content: <><p>If you opt in, the answers you pick and the text you submit may be sent to OpenAI acting as a service provider so that we can generate a suggested Starting Point or Programme guidance. The response request uses <code>store: false</code> and does not create an OpenAI conversation. OpenAI states that API data is not used to train its models unless the customer opts in; its current default data controls allow Responses API content in abuse-monitoring logs for up to 30 days. Contracted or account-specific controls may differ. We record operational metadata such as model, timing, success or error and input size, not the words you supplied.</p><p>AI output can be incomplete or wrong. Review and edit it before saving. We do not use AI to diagnose you, decide whether gambling is safe, make a solely automated decision producing legal or similarly significant effects, or determine commercial offers or rankings.</p></>,
   },
   {
     id: "consent",
@@ -109,12 +118,12 @@ const sections = [
   {
     id: "sharing",
     title: "Who receives information",
-    content: <><p>We use service providers only for defined operational purposes: Vercel for hosting and application infrastructure; Prisma&apos;s managed Postgres service for application data; Google for identity-only sign-in and Google Analytics; Resend for Contact delivery and, only if separately activated, account and eligible lifecycle email delivery; Google Workspace for the support mailbox; and OpenAI for optional AI after your explicit consent. Authorised B4GAMBLE personnel may access information where needed to operate, secure or support the service.</p><p>Published casino and offer pages use operator logos and B4GAMBLE-owned editorial imagery. They do not load partner-hosted promotional creatives. Historical creative-provider records are retained only as inert audit history and are not sent to your browser.</p><p>A Contact message delivered through Resend does not create marketing permission. Email delivery events are normalized; B4GAMBLE does not retain the provider&apos;s full webhook payload. We do not sell personal data.</p><p>We may disclose information if law requires it, to protect legal rights or safety, or in connection with a corporate transaction subject to appropriate protections.</p></>,
+    content: <><p>We use service providers only for defined operational purposes: Vercel for hosting and application infrastructure; Prisma&apos;s managed Postgres service for application data; Google for identity-only sign-in and Google Analytics; Resend for Contact delivery and, only if separately activated, account and eligible lifecycle email delivery; Google Workspace for the support mailbox; and OpenAI for optional AI after your explicit consent. Authorised 7BE Inc. personnel may access information where needed to operate, secure or support the service.</p><p>Published casino and offer pages use operator logos and our own editorial imagery. They do not load partner-hosted promotional creatives. Historical creative-provider records are retained only as inert audit history and are not sent to your browser.</p><p>A Contact message delivered through Resend does not create marketing permission. Email delivery events are normalized; we do not retain the provider&apos;s full webhook payload. We do not sell personal data.</p><p>We may disclose information if law requires it, to protect legal rights or safety, or in connection with a corporate transaction subject to appropriate protections.</p></>,
   },
   {
     id: "transfers",
     title: "International transfers",
-    content: <><p>B4GAMBLE is operated by a United States company, and some service providers may process information in the United States or other countries outside the United Kingdom. Where UK data-protection law restricts a transfer, we require an applicable legal transfer basis and safeguards. Contact us for information about the destination and safeguard applying to a particular transfer.</p></>,
+    content: <><p>This service is operated by a United States company, and some service providers may process information in the United States or other countries outside the United Kingdom. Where UK data-protection law restricts a transfer, we require an applicable legal transfer basis and safeguards. Contact us for information about the destination and safeguard applying to a particular transfer.</p></>,
   },
   {
     id: "retention",
@@ -125,7 +134,7 @@ const sections = [
       <li>anonymous Programme continuation records: about 24 hours;</li>
       <li>pending account-claim records: about 30 minutes;</li>
       <li>account, saved Programme and progress data: while the account is active, then until deletion can be completed subject to legal, security and backup requirements;</li>
-      <li>Contact messages: under the retention settings of the B4GAMBLE mailbox and email provider;</li>
+      <li>Contact messages: under the retention settings of our support mailbox and email provider;</li>
       <li>consented first-party analytics sessions, events and detailed click attribution: generally up to 395 days, with non-identifying daily commercial aggregates retained separately;</li>
       <li>terminal email delivery history: generally up to 730 days; current unsubscribe or suppression state is retained while needed to honour the choice and prevent an unwanted send;</li>
       <li>security and provider records: for the period reasonably required by the applicable service, security and legal purpose.</li>
@@ -170,7 +179,7 @@ const sections = [
  * of it: a legal notice must never read as if it gated itself behind one. The sentence below
  * says the same thing in plainer words, which is what the reader wants anyway.
  */
-const helpSections = sections.flatMap((section) => {
+const helpSections = sectionsFor("help").flatMap((section) => {
   if (section.id === "affiliate") {
     return [{
       id: "affiliate",
@@ -197,8 +206,8 @@ export default async function PrivacyPage() {
     lead={site === "help"
       ? `This notice explains what ${HELP_SITE_NAME} processes, why, who receives it, how long it is kept and the choices available to you.`
       : "This notice explains what B4GAMBLE processes, why, who receives it, how long it is kept and the choices available to you."}
-    legalContact={controller}
-    sections={site === "help" ? helpSections : sections}
+    legalContact={controllerAddress(site)}
+    sections={site === "help" ? helpSections : sectionsFor("main")}
     updated="16 October 2026"
   />;
 }

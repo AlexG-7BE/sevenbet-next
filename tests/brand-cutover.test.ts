@@ -7,6 +7,7 @@ import test from "node:test";
 import robots from "../app/robots";
 import sitemap from "../app/sitemap";
 import { organizationSchema, websiteSchema } from "../lib/seo/structured-data";
+import { siteName } from "../lib/site/help-copy";
 import { absoluteUrl, resolveSiteUrl, siteUrl } from "../lib/site";
 import { publicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { publicComparisonService } from "../lib/services/public-comparison.service";
@@ -104,7 +105,9 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   const layout = source("app/layout.tsx");
   const home = source("app/(public)/page.tsx");
   const homeCatalog = source("lib/i18n/home-catalog.ts");
-  const icon = source("app/icon.svg");
+  // `/icon.svg` is a route handler since 17 October 2026, so that the help host can answer it
+  // with a mark of its own; the main site's bytes are the constant inside it (RFC-057 §12).
+  const icon = source("app/icon.svg/route.ts");
   assert.match(layout, /default: "B4GAMBLE \(Before Gamble\) \| Know your limits before you play"/);
   assert.match(layout, /siteName: "B4GAMBLE"/);
   // RFC-057 §8: the identity takes the site, and the main site's is unchanged.
@@ -118,9 +121,12 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   assert.match(icon, /fill="#ccff00"/);
   assert.match(icon, /fill="#100f0f"/);
 
+  // The trading name is the name of the site that answered: "B4GAMBLE" on this host, which is
+  // what `siteName("main")` returns, and "Pause Plan" on the help host (Founder, 17 October 2026).
+  assert.equal(siteName("main"), "B4GAMBLE");
   for (const path of ["app/(public)/privacy/page.tsx", "app/(public)/terms/page.tsx"]) {
     const legal = source(path);
-    assert.match(legal, /7BE Inc\., trading as B4GAMBLE/);
+    assert.match(legal, /7BE Inc\., trading as \{siteName\(site\)\}/);
     assert.match(legal, /447 Broadway, 2nd Floor, 1663/);
     assert.match(legal, /New York, NY 10013/);
     assert.doesNotMatch(legal, /Suite 1663/);
@@ -130,7 +136,8 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   assert.match(terms, /info@7be\.io/);
   assert.match(terms, /effective="19 August 2026"/);
   assert.match(terms, /updated="11 October 2026"/);
-  assert.match(terms, /id: "about-b4gamble"/);
+  // The anchor is an address people may have linked, so it is unchanged on this host.
+  assert.match(terms, /id: site === "help" \? "about-this-service" : "about-b4gamble"/);
   assert.doesNotMatch(terms, /id: "about-sevenbet"/);
 });
 

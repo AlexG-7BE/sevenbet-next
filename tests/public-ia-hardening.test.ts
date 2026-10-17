@@ -38,7 +38,9 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   assert.match(hub, /pathname: "\/responsible-gambling"/);
   assert.match(hub, /firstWaveSafetyLanguageAlternates\("\/responsible-gambling", site\)/);
   assert.match(hub, /transformResponsibleGamblingHandoff/);
-  assert.match(hub, /<HandoffPage name="responsibleGambling" transform=\{transformResponsibleGamblingHandoff\} \/>/);
+  // `site` since 17 October 2026: the captured page is a photograph of the main site and its
+  // own words name B4GAMBLE, so HandoffPage says them in the serving site's name (RFC-057 §12).
+  assert.match(hub, /<HandoffPage name="responsibleGambling" site=\{site\} transform=\{transformResponsibleGamblingHandoff\} \/>/);
   for (const path of ["/learn", "/10-steps", "/help"]) {
     assert.match(hubDocument, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }

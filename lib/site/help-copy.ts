@@ -1,5 +1,5 @@
 import type { SupportedLocale } from "@/lib/market/registry";
-import { HELP_CANONICAL_ORIGIN, HELP_SITE_NAME } from "@/lib/site/host-gate";
+import { DEFAULT_SITE_CLASS, HELP_CANONICAL_ORIGIN, HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 
 /**
  * Every word the help site says that the main site does not (RFC-057 §6.5, §6.6, §8, §16.3,
@@ -20,6 +20,75 @@ import { HELP_CANONICAL_ORIGIN, HELP_SITE_NAME } from "@/lib/site/host-gate";
 export type HelpLocale = "en-GB" | "sv-SE" | "da-DK";
 
 export const HELP_LOCALES = ["en-GB", "sv-SE", "da-DK"] as const satisfies readonly HelpLocale[];
+
+// ---------------------------------------------------------------------------
+// The name in words (Founder, 17 October 2026: «убери B4GAMBLE из текстов»)
+// ---------------------------------------------------------------------------
+
+/** The main site's wordmark, spelled the way every translated string spells it. */
+export const MAIN_SITE_NAME = "B4GAMBLE";
+
+/**
+ * What the site that is answering calls itself. A page title, an `aria-label`, a byline or a
+ * sentence that names the site reads this; nothing else decides a name.
+ */
+export function siteName(site: SiteClass = DEFAULT_SITE_CLASS) {
+  return site === "help" ? HELP_SITE_NAME : MAIN_SITE_NAME;
+}
+
+/**
+ * A translated string that names the main site, as the serving site would say it. On the main
+ * host it is returned unchanged — byte for byte, so no main-site page, title or test moves —
+ * and on the help host the wordmark becomes "Pause Plan".
+ *
+ * One replacement over the rendered string rather than a second set of translations: these
+ * sentences exist in thirteen languages, the rest of each sentence is true on both sites, and
+ * two copies of thirteen translations would drift. The grammar that is glued to the wordmark
+ * travels with it, which is what Swedish, Danish and English — the three languages the help
+ * site publishes — need: "B4GAMBLEs 10-stegsprogram" becomes "Pause Plans 10-stegsprogram",
+ * "B4GAMBLE-nyheder" becomes "Pause Plan-nyheder". A language the help site does not publish
+ * can read its case ending oddly (Finnish "B4GAMBLEn" becomes "Pause Plann"); where that
+ * matters the string itself is rewritten without a name instead.
+ *
+ * `b4gamble.com` is deliberately left alone: an address is not a name, and `withHelpOrigin`
+ * is what moves the two sentences that print one.
+ */
+export function withSiteName(text: string, site: SiteClass = DEFAULT_SITE_CLASS) {
+  return site === "help" ? text.replace(/B4GAMBLE(?!\.com)/g, HELP_SITE_NAME) : text;
+}
+
+/**
+ * Keys whose value is a machine identifier rather than a sentence: a route, an anchor, a CSS
+ * hook. They are never rewritten — a renamed `id` would break a stylesheet or a link, and the
+ * identifiers that name the other brand are handled where they are rendered.
+ */
+const IDENTIFIER_KEYS = new Set(["href", "id", "item", "path", "slug", "src", "url"]);
+
+/**
+ * A whole copy object as the serving site would say it: every sentence in it, however deep,
+ * with the wordmark and the address of the other site replaced. The control answer pages carry
+ * the name in a dozen places each — the title, the answer, the table of tools, the questions
+ * people ask — and rewriting them one string at a time is how one gets missed.
+ *
+ * Both rewrites, because a sentence that prints an address is the same leak as one that prints
+ * a name: the pause plan's calendar entry ends with the plan's own link, written out in full,
+ * and that file outlives the visit.
+ *
+ * On the main host the object is returned unchanged, by reference.
+ */
+export function withSiteNameDeep<T>(value: T, site: SiteClass = DEFAULT_SITE_CLASS): T {
+  if (site !== "help") return value;
+  const say = (text: string) => withHelpOrigin(withSiteName(text, site), site);
+  const walk = (node: unknown, key?: string): unknown => {
+    if (typeof node === "string") return key && IDENTIFIER_KEYS.has(key) ? node : say(node);
+    if (Array.isArray(node)) return node.map((item) => walk(item, key));
+    if (node && typeof node === "object") {
+      return Object.fromEntries(Object.entries(node).map(([name, item]) => [name, walk(item, name)]));
+    }
+    return node;
+  };
+  return walk(value) as T;
+}
 
 export function helpLocale(locale: SupportedLocale | string | null | undefined): HelpLocale {
   if (locale === "sv-SE" || locale === "da-DK") return locale;
@@ -170,6 +239,20 @@ const revenueLinkLabels: Readonly<Record<HelpLocale, string>> = {
 
 export function helpRevenueLinkLabel(locale: SupportedLocale | string | null | undefined) {
   return revenueLinkLabels[helpLocale(locale)];
+}
+
+/**
+ * `/10-steps` ends its hero with "Why B4GAMBLE →", which points at `/about`. On this host the
+ * link is the owner page (§6.5), so the label asks the question that page answers.
+ */
+const ownerLinkLabels: Readonly<Record<HelpLocale, string>> = {
+  "en-GB": "Who runs this site →",
+  "sv-SE": "Vem driver sajten →",
+  "da-DK": "Hvem står bag →",
+};
+
+export function helpOwnerLinkLabel(locale: SupportedLocale | string | null | undefined) {
+  return ownerLinkLabels[helpLocale(locale)];
 }
 
 /** The control pages' FAQ opens with "What is B4GAMBLE?" On this host the question is ours. */

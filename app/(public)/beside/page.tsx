@@ -11,7 +11,7 @@ import { resolveServerPresentationContext } from "@/lib/market/server";
 import { absoluteUrl } from "@/lib/site";
 import { CleanRouteRevenueLine } from "@/components/clean-route/CleanRouteRevenueLine";
 import { resolveServerSite } from "@/lib/site/server-site";
-import { HELP_HOST, withHelpOrigin } from "@/lib/site/help-copy";
+import { HELP_HOST, withHelpOrigin, withSiteNameDeep } from "@/lib/site/help-copy";
 import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
@@ -19,7 +19,7 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
   const site = await resolveServerSite();
-  const messages = besideMessages(presentation.locale);
+  const messages = withSiteNameDeep(besideMessages(presentation.locale), site);
   return productMetadata({ presentation, pathname: "/beside", title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function BesidePage() {
   const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
-  const messages = besideMessages(presentation.locale);
+  const messages = withSiteNameDeep(besideMessages(presentation.locale), site);
   const contentLocale = besideLocale(presentation.locale);
   const url = absoluteUrl(productCanonicalPath(presentation, "/beside"), site);
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;

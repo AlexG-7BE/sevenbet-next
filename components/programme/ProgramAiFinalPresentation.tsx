@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { PROGRAMME_MARKETING_OPT_IN_DEFAULT, PROGRAMME_MARKETING_OPT_IN_LABEL } from "@/lib/customers/email-preference-client";
+import { useSiteNameIn } from "@/components/site/SiteNameProvider";
 import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import {
   PROGRAMME_ANSWER_FOCUS,
@@ -27,12 +28,20 @@ function SerifTail({ text, words = 2 }: { text: string; words?: number }) {
   return <>{parts.slice(0, -words).join(" ")} <em>{parts.slice(-words).join(" ")}</em></>;
 }
 
-function translated(locale: ProgrammeLocale) {
-  return (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
+/**
+ * Every Programme string, in the language of the page and in the name of the site that is
+ * serving it (RFC-057 §7.2, Founder Q2). The consent line, the e-mail preference and the
+ * sign-out label all name the site; a client component cannot read the trusted header, so the
+ * root layout hands the class down and this reads it. A hook, so it is one call per component
+ * instead of a prop threaded through five.
+ */
+function useTranslated(locale: ProgrammeLocale) {
+  const inSite = useSiteNameIn();
+  return (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => inSite(programmeText(locale, key, values));
 }
 
 export function ProgrammeLoadingScreen({ locale }: { locale: ProgrammeLocale }) {
-  const t = translated(locale);
+  const t = useTranslated(locale);
   return (
     <div className={styles.canvas} data-programme-presentation="loading">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -47,7 +56,7 @@ export function ProgrammeLoadingScreen({ locale }: { locale: ProgrammeLocale }) 
 }
 
 export function ProgrammeUnavailableScreen({ error, locale }: { error: string; locale: ProgrammeLocale }) {
-  const t = translated(locale);
+  const t = useTranslated(locale);
   return (
     <div className={styles.canvas} data-programme-presentation="unavailable">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -80,7 +89,7 @@ export function ProgrammeStartScreen({ accessLine, error, initialAnswers, onAgre
   onOpenPlan?: () => void;
   locale: ProgrammeLocale;
 }) {
-  const t = translated(locale);
+  const t = useTranslated(locale);
   const [answers, setAnswers] = useState<ProgrammeReadyAnswer[]>(() => [...(initialAnswers ?? [])]);
   const [note, setNote] = useState("");
   const toggle = (answer: ProgrammeReadyAnswer) => setAnswers((current) => current.includes(answer) ? current.filter((item) => item !== answer) : [...current, answer]);
@@ -127,7 +136,7 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
   onConfirm: () => void;
   locale: ProgrammeLocale;
 }) {
-  const t = translated(locale);
+  const t = useTranslated(locale);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -154,7 +163,7 @@ function GoogleIcon() {
 }
 
 export function ProgrammeSupportScreen({ busy, error, onContinue, xpPreview, locale }: { busy: boolean; error: string; onContinue: () => void; xpPreview: number; locale: ProgrammeLocale }) {
-  const t = translated(locale);
+  const t = useTranslated(locale);
   return (
     <div className={styles.canvas} data-programme-presentation="support-first">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -206,7 +215,7 @@ export function StartingPointReadyScreen({
   passwordResetHref?: string | null;
   locale: ProgrammeLocale;
 }) {
-  const t = translated(locale);
+  const t = useTranslated(locale);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [marketingAllowed, setMarketingAllowed] = useState(PROGRAMME_MARKETING_OPT_IN_DEFAULT);

@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ActionButton } from "@/components/design-system/Action";
 import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAuthenticatedHeader";
+import { useSiteClass, useSiteName, useSiteNameIn } from "@/components/site/SiteNameProvider";
+import { withSiteNameDeep } from "@/lib/site/help-copy";
 import {
   AiCandidatePicker,
   ChoiceCards,
@@ -177,7 +179,10 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const current = mission.actions.find((action) => action.id === mission.currentAction);
   const ui = current ? actionUi[current.id] : null;
   const missionCopy = programmeMissionCopy(locale, mission.missionNumber);
-  const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
+  const site = useSiteClass();
+  const inSite = useSiteNameIn();
+  const siteOwnName = useSiteName();
+  const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => inSite(programmeText(locale, key, values));
   const finalPlanStage = mission.missionNumber === 10 && current?.id === "choose_review_cadence";
   useEffect(() => {
     if (ui) setValues(initialValues(ui, mission.artifact));
@@ -293,7 +298,10 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     setBusy(true); setError("");
     try {
       const result = await request<{ guidance: ProgramAiGuidance }>(`/api/program/program-ai/missions/${mission.missionNumber}/guidance`, { method: "POST", body: JSON.stringify({ locale, ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }) });
-      setGuidance(result.guidance);
+      // The guidance text is written on the server, which does not know which host asked;
+      // one of its sentences names B4GAMBLE (lib/programme/program-ai/mission-guidance.ts).
+      // It is rendered raw below, so it is said in the serving site's name here.
+      setGuidance(withSiteNameDeep(result.guidance, site));
       if ((current?.id === "build_support_card" || finalPlanStage) && !localWording.trim() && result.guidance.options[0]) {
         onLocalWording(result.guidance.options[0].text);
       }
@@ -353,8 +361,8 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   async function saveAsImage() {
     setImageState("busy");
     try {
-      const image = await keepsakeImage(keepsake, keepsakeFonts(document.body));
-      await deliverKeepsakeImage(image, `b4gamble-step-${mission.step}.png`);
+      const image = await keepsakeImage({ ...keepsake, brand: siteOwnName }, keepsakeFonts(document.body));
+      await deliverKeepsakeImage(image, `pause-step-${mission.step}.png`);
       setImageState("idle");
     } catch { setImageState("failed"); }
   }

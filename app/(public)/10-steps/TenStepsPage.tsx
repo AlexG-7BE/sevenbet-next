@@ -16,14 +16,28 @@ const artCandidates = (format: "avif" | "webp") => [320, 640, 1280, 1920]
   .map((width) => `/home/responsive/hero-plan-${width}.${format} ${width}w`)
   .join(", ");
 
+/**
+ * RFC-057 §4.2. The photo above is `public/home/`, which the help-host Firewall rule denies:
+ * the middleware matcher never sees a raster path, so the help gate cannot answer 404 for one
+ * and the rule is what keeps the commercial imagery off that host. The help host therefore
+ * passes the same photograph hashed under `/_next/static/`, which the rule allows on both
+ * hosts. Without the prop nothing moves: `b4gamble.com` serves the `public/home` URLs it
+ * serves today.
+ */
+export type TenStepsArt = Readonly<{ fallbackSrc: string; avifSrcSet: string; webpSrcSet: string }>;
+
 function stageLabel(value: string) {
   const split = value.indexOf(" ");
   return split < 0 ? { range: "", label: value } : { range: value.slice(0, split), label: value.slice(split + 1) };
 }
 
-export function TenStepsPage({ aboutHref, control, locale, programmePath }: {
+export function TenStepsPage({ aboutHref, aboutLabel, art, control, locale, programmePath }: {
   /** The /start help-ad landing omits it: About carries the public header's casino navigation. */
   aboutHref?: string;
+  /** "Why B4GAMBLE →" on the main site; the owner page's own question on the help host (§6.5). */
+  aboutLabel?: string;
+  /** Set on the help host only: the hashed photograph the Firewall rule allows there (§4.2). */
+  art?: TenStepsArt;
   /** The gambling control answers (Founder, 15 October 2026), where they exist in the page's language; /start omits it. */
   control?: Readonly<{ href: string; label: string }>;
   locale: SupportedLocale;
@@ -42,7 +56,7 @@ export function TenStepsPage({ aboutHref, control, locale, programmePath }: {
 
   return <div className={styles.page} data-runtime-renderer="ten-steps">
     <section aria-labelledby="ten-steps-title" className={styles.hero} data-nav-theme="dark" data-ten-steps-section="hero">
-      <div className={styles.art}><div className={styles.artMotion}><picture><source sizes={ART_SIZES} srcSet={artCandidates("avif")} type="image/avif" /><source sizes={ART_SIZES} srcSet={artCandidates("webp")} type="image/webp" /><img alt={text[49]} decoding="async" height={2336} loading="eager" src="/home/hero-plan.jpg" width={3500} /></picture></div></div>
+      <div className={styles.art}><div className={styles.artMotion}><picture><source sizes={ART_SIZES} srcSet={art ? art.avifSrcSet : artCandidates("avif")} type="image/avif" /><source sizes={ART_SIZES} srcSet={art ? art.webpSrcSet : artCandidates("webp")} type="image/webp" /><img alt={text[49]} decoding="async" height={2336} loading="eager" src={art ? art.fallbackSrc : "/home/hero-plan.jpg"} width={3500} /></picture></div></div>
       <div aria-hidden="true" className={styles.gradient} />
       <div className={styles.heroBody}>
         <div className={styles.heroCopy}>
@@ -51,7 +65,7 @@ export function TenStepsPage({ aboutHref, control, locale, programmePath }: {
           <p className={styles.lead}>{text[4]}</p>
           <div className={styles.ctas}>
             <Link className={styles.primaryAction} data-ten-steps-hero-action href={startHref} prefetch={false}>{text[5]}</Link>
-            {aboutHref ? <Link className={styles.textLink} href={aboutHref} prefetch={false}>{text[6]}</Link> : null}
+            {aboutHref ? <Link className={styles.textLink} href={aboutHref} prefetch={false}>{aboutLabel ?? text[6]}</Link> : null}
           </div>
         </div>
       </div>

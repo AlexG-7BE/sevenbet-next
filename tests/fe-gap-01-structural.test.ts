@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { siteName } from "../lib/site/help-copy";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -23,9 +24,13 @@ const placeholders = /\[(?:LEGAL ENTITY|CONTROLLER LEGAL NAME|PRIVACY EMAIL|CONT
 
 test("Privacy is the substantive final handoff document and stays noindex/follow", () => {
   assert.doesNotMatch(privacy, /["']use client["']/);
-  assert.match(privacy, /title:\s*"Privacy Policy \| B4GAMBLE"/);
+  assert.match(privacy, /const site = await resolveServerSite\(\);/, "the notice reads the host that answered");
+  assert.equal(siteName("main"), "B4GAMBLE", "and on this host that name is unchanged");
+  // The title names the site that answered: "Privacy Policy | B4GAMBLE" here, "| Pause Plan"
+  // on the help host (Founder, 17 October 2026).
+  assert.match(privacy, /title: `Privacy Policy \| \$\{siteName\(site\)\}`/);
   // RFC-057 §8: the canonical is built per request, on the host that answered.
-  assert.match(privacy, /canonical: absoluteUrl\("\/privacy", await resolveServerSite\(\)\)/);
+  assert.match(privacy, /canonical: absoluteUrl\("\/privacy", site\)/);
   assert.match(privacy, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
   for (const content of ["Information we use", "Why we use it and our legal bases", "Cookies and similar technology", "Your UK data-protection rights", "How long we keep information", "We do not sell personal data", "updated=\"16 October 2026\""]) assert.ok(privacyDocument.includes(content), content);
   assert.match(handoffLegalPage, /Privacy[\s\S]*by default/);
@@ -35,7 +40,7 @@ test("Privacy is the substantive final handoff document and stays noindex/follow
 
 test("Terms is the substantive final handoff document and preserves consumer boundaries", () => {
   assert.doesNotMatch(terms, /["']use client["']/);
-  assert.match(terms, /canonical: absoluteUrl\("\/terms", await resolveServerSite\(\)\)/);
+  assert.match(terms, /canonical: absoluteUrl\("\/terms", site\)/);
   assert.match(terms, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
   assert.match(termsDocument, /We are not a casino/i);
   for (const content of ["What this service is", "Eligibility — 18+", "Your account", "Accuracy & liability", "Content & changes", "Nothing here is financial, legal or medical advice", "we are not liable for losses arising from gambling decisions", "compensation never changes a score"]) assert.ok(termsDocument.includes(content), content);

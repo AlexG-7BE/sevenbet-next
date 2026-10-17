@@ -24,7 +24,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
   const fallback = state.kind === "signed-in-fallback";
   return <div className={`tenStepsPage ${styles.page}`} data-account-state={state.kind === "anonymous" ? "anonymous" : "signed-in"}>
     <section className={styles.hero} aria-labelledby="ten-steps-title" data-ten-steps-section="hero">
-      <p className={styles.srOnly}>The B4GAMBLE Programme does not diagnose or treat gambling addiction. Completion does not mean gambling is safe or suitable.</p>
+      <p className={styles.srOnly}>The Programme does not diagnose or treat gambling addiction. Completion does not mean gambling is safe or suitable.</p>
       {returning || fallback ? <ReturningHero state={state} /> : <AnonymousHero />}
     </section>
 

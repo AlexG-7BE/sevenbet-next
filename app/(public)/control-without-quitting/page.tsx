@@ -12,6 +12,7 @@ import { productCanonicalPath, productHref, productMetadata } from "@/lib/market
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
+import { withSiteNameDeep } from "@/lib/site/help-copy";
 import { resolveServerSite } from "@/lib/site/server-site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
@@ -19,7 +20,7 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
   const site = await resolveServerSite();
-  const messages = withoutQuittingMessages(presentation.locale);
+  const messages = withSiteNameDeep(withoutQuittingMessages(presentation.locale), site);
   return productMetadata({ presentation, pathname: CONTROL_PATHS.withoutQuitting, title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
@@ -30,8 +31,8 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function ControlWithoutQuittingPage() {
   const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
-  const messages = withoutQuittingMessages(presentation.locale);
-  const shared = controlSharedMessages(presentation.locale);
+  const messages = withSiteNameDeep(withoutQuittingMessages(presentation.locale), site);
+  const shared = withSiteNameDeep(controlSharedMessages(presentation.locale), site);
   const contentLocale = controlLocale(presentation.locale);
   const steps = currentProgrammeJourney(contentLocale);
   const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.withoutQuitting), site);

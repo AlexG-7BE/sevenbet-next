@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { useSiteClass } from "@/components/site/SiteNameProvider";
+import { HELP_HOST, siteName } from "@/lib/site/help-copy";
 import { PausePlanLetters } from "./PausePlanLetters";
 import styles from "./PausePlan.module.css";
 import type { PausePlanDay, PausePlanMessages, PausePlanRegisterMessages, PausePlanToolMessages } from "@/lib/i18n/static-pages/pause-plan";
@@ -9,17 +11,23 @@ import { PAUSE_PERIODS, dayAfter, letterRegister, parseIsoDate, pauseEndDate, pa
 
 type Registers = Readonly<Partial<Record<PauseRegister, PausePlanRegisterMessages>>>;
 
-/** A one-day all-day event for the day after, as a file the person keeps; nothing is sent. */
-function calendarFile(date: Date, title: string, description: string) {
+/**
+ * A one-day all-day event for the day after, as a file the person keeps; nothing is sent.
+ *
+ * RFC-057 §8 and Q2: the calendar entry carries the site's own name and host. A file saved from
+ * the help site must not name `b4gamble.com` — it outlives the visit, and a person who opens it
+ * later should see where it came from.
+ */
+function calendarFile(date: Date, title: string, description: string, host: string, brand: string) {
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
   const day = toIsoDate(date).replace(/-/g, "");
   const escape = (value: string) => value.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//B4GAMBLE//pause-plan//EN",
+    `PRODID:-//${brand}//pause-plan//EN`,
     "BEGIN:VEVENT",
-    `UID:${day}-pause-plan@b4gamble.com`,
+    `UID:${day}-pause-plan@${host}`,
     `DTSTAMP:${stamp}`,
     `DTSTART;VALUE=DATE:${day}`,
     `SUMMARY:${escape(title)}`,
@@ -52,6 +60,10 @@ export function PausePlanTool({ days, ics, letters = false, locale, messages, re
   register: PauseRegister | "both";
   registers: Registers;
 }) {
+  // §8 and Q2: the saved calendar entry names the site it came from, never the other one.
+  const site = useSiteClass();
+  const siteOwnName = siteName(site);
+  const calendarHost = site === "help" ? HELP_HOST : "b4gamble.com";
   const available = (Object.keys(registers) as PauseRegister[]).filter((key) => registers[key]);
   const [chosenRegister, setChosenRegister] = useState<PauseRegister>(register === "both" ? available[0] ?? "spelpaus" : register);
   const periods = PAUSE_PERIODS[chosenRegister];
@@ -87,11 +99,11 @@ export function PausePlanTool({ days, ics, letters = false, locale, messages, re
 
   const downloadCalendar = () => {
     if (!result) return;
-    const blob = new Blob([calendarFile(result.after, registerMessages?.icsTitle ?? ics.title, ics.description)], { type: "text/calendar;charset=utf-8" });
+    const blob = new Blob([calendarFile(result.after, registerMessages?.icsTitle ?? ics.title, ics.description, calendarHost, siteOwnName)], { type: "text/calendar;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `b4gamble-${toIsoDate(result.after)}.ics`;
+    link.download = `pause-plan-${toIsoDate(result.after)}.ics`;
     document.body.append(link);
     link.click();
     link.remove();

@@ -12,6 +12,7 @@ import { productCanonicalPath, productHref, productMetadata } from "@/lib/market
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
+import { withSiteNameDeep } from "@/lib/site/help-copy";
 import { resolveServerSite } from "@/lib/site/server-site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
@@ -19,7 +20,7 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
   const site = await resolveServerSite();
-  const messages = controlToolsMessages(presentation.locale);
+  const messages = withSiteNameDeep(controlToolsMessages(presentation.locale), site);
   return productMetadata({ presentation, pathname: CONTROL_PATHS.tools, title: messages.metadataTitle, description: messages.metadataDescription, site });
 }
 
@@ -30,8 +31,8 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function GamblingControlToolsPage() {
   const [presentation, site] = await Promise.all([resolveServerPresentationContext(), resolveServerSite()]);
-  const messages = controlToolsMessages(presentation.locale);
-  const shared = controlSharedMessages(presentation.locale);
+  const messages = withSiteNameDeep(controlToolsMessages(presentation.locale), site);
+  const shared = withSiteNameDeep(controlSharedMessages(presentation.locale), site);
   const contentLocale = controlLocale(presentation.locale);
   const url = absoluteUrl(productCanonicalPath(presentation, CONTROL_PATHS.tools), site);
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
@@ -68,7 +69,12 @@ export default async function GamblingControlToolsPage() {
             </tr>
           </thead>
           <tbody>
-            {messages.rows.map((row) => <tr data-control-tool={row.id} key={row.id}>
+            {/*
+              The row for this site keeps its own highlight. Its id is the main site's
+              wordmark, which the help host does not print anywhere, not even in an attribute
+              (Founder, Q2), so there it is `this-site`; the stylesheet hooks on both.
+            */}
+            {messages.rows.map((row) => <tr data-control-tool={site === "help" && row.id === "b4gamble" ? "this-site" : row.id} key={row.id}>
               <th scope="row">{row.tool}<small>{row.kind}</small></th>
               <td data-label={columns.does}>{row.does}</td>
               <td data-label={columns.cost}>{row.cost}</td>

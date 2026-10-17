@@ -223,8 +223,12 @@ export const PUBLIC_ASSET_MANIFEST = {
 
 /** The file-convention metadata routes and the path each one answers on. */
 export const METADATA_ROUTE_MANIFEST = {
-  "app/favicon.ico": "/favicon.ico",
-  "app/icon.svg": "/icon.svg",
+  // Route handlers, not file conventions, since 17 October 2026: a `favicon.ico` or `icon.svg`
+  // *file* in app/ makes Next write its <link rel="icon"> into every document on both hosts,
+  // and both files are the B4GAMBLE mark. The handlers keep the same two addresses and decide
+  // per host (RFC-057 §12, Founder Q2).
+  "app/favicon.ico/route.ts": "/favicon.ico",
+  "app/icon.svg/route.ts": "/icon.svg",
   "app/opengraph-image.tsx": "/opengraph-image",
   "app/robots.ts": "/robots.txt",
   "app/sitemap.ts": "/sitemap.xml",

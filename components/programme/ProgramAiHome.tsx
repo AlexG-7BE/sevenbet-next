@@ -6,6 +6,7 @@ import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAu
 import type { ProgramAiHome } from "@/components/programme/ProgramAiAuthenticated.types";
 import { programmeReviewStatusCopy } from "@/components/programme/ProgramAiHome.copy";
 import { authClient } from "@/lib/auth/client";
+import { useSiteNameIn } from "@/components/site/SiteNameProvider";
 import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { humanValue } from "@/lib/programme/program-ai/mission-presentation";
@@ -33,7 +34,9 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
 }) {
   const current = home.missions.find((mission) => mission.missionNumber === home.currentMission);
   const currentTitle = programmeMissionCopy(locale, home.currentMission).title;
-  const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
+  // §7.2 and Q2: the Programme's own strings name the site that is serving them.
+  const inSite = useSiteNameIn();
+  const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => inSite(programmeText(locale, key, values));
   // The home (Founder, 13 October 2026). Every number, date and state below is the server's: the
   // weekly goal's day and check-in date, the step, the statuses and the action count are shown as
   // they come. The path only folds: all its rows stay in the page.
