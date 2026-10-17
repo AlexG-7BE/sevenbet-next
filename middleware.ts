@@ -301,13 +301,17 @@ export async function middleware(request: NextRequest) {
     ));
   }
 
-  // Country geo-block (Founder, 28 Sep 2026): a blocked country gets HTTP 451 before any
-  // content, page, API, RSC payload or sitemap, unless it carries a valid owner cookie. The
-  // 451 decision does not depend on the host, so it runs on the help host too; the owner
-  // cookie is host-only there, because its domain is set only on b4gamble.com (§13). The page
-  // itself does depend on the host: it prints a wordmark, and the help site carries no
-  // B4GAMBLE wordmark at all (Q2). The Founder's own machine sits behind a KZ IP, so this is
-  // the first help-host page he would see.
+  // Country geo-block (Founder, 28 Sep 2026): on the main site a blocked country gets HTTP 451
+  // before any content, page, API, RSC payload or sitemap, unless it carries a valid owner
+  // cookie. **The block does not reach the help site** (Founder, 18 October 2026): the help
+  // host carries no casino, bonus, offer or `/r/` link, so the advertising law the block
+  // answers to does not reach it, and `geoBlockGate` returns null for `site === "help"`
+  // whatever BLOCKED_COUNTRIES says. The owner unlock and logout still work on both hosts; the
+  // cookie is host-only on the help host, because its domain is set only on b4gamble.com (§13).
+  //
+  // `site` comes from step 1 above, so every path that reaches this gate knows which site is
+  // answering. The paths that cannot are the ones the matcher skips, which never reach
+  // middleware at all and are the Vercel Firewall's business, not this gate's.
   const geoBlocked = await geoBlockGate(request, undefined, undefined, site);
   if (geoBlocked) return geoBlocked;
 

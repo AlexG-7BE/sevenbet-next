@@ -21,6 +21,7 @@ import {
   HELP_HOST_UNGATED_PATH_PATTERN,
   helpHostFirewallRule,
 } from "../lib/security/help-host-firewall-rule";
+import { OWNER_BYPASS_COOKIE, signOwnerBypassToken } from "../lib/security/geo-block";
 import { geoBlockPageHtml } from "../lib/security/geo-block-page";
 import { hostVaryingCacheControl } from "../lib/site/host-cache";
 import {
@@ -763,9 +764,143 @@ test("until the help host may be indexed its robots.txt refuses every crawler an
 // §13 country block and CSP
 // ---------------------------------------------------------------------------
 
+/**
+ * Founder, 18 October 2026: the country block does not apply to the help site. He opened
+ * `pauseplan.help` from Kazakhstan and was shown the 451 page. The block answers to
+ * gambling-advertising law, and the help host carries no casino, bonus, offer or `/r/` link at
+ * all (RFC-057, pull request #530), so the reason for it does not reach that host.
+ *
+ * These four tests are the guard, in both directions: the help host is let through whatever
+ * BLOCKED_COUNTRIES says, `b4gamble.com` still answers 451 to exactly the same request, and the
+ * owner unlock and logout still work on both hosts.
+ */
+const BLOCKED_ENVIRONMENT = {
+  GEO_BLOCK_ENABLED: "true",
+  BLOCKED_COUNTRIES: "KZ",
+  OWNER_BYPASS_KEY: "0123456789abcdef0123456789abcdef0123456789",
+  OWNER_UNLOCK_PATH: "/unlock-for-the-owner",
+  HELP_SITE_SERVING: "true",
+  HELP_SITE_REDIRECTS: undefined,
+  // The trusted country header counts only on a real Vercel runtime
+  // (`lib/jurisdiction/request-country.ts`), so the block needs both of these to fire at all.
+  VERCEL: "1",
+  VERCEL_ENV: "production",
+} as const;
+
+/** A request that the block would refuse: a blocked country and no owner cookie. */
+function fromBlockedCountry(url: string, cookie?: string) {
+  const headers: Record<string, string> = { "x-vercel-ip-country": "KZ" };
+  if (cookie) headers.cookie = cookie;
+  return new NextRequest(url, { headers });
+}
+
+test("a blocked country is let through on the help host and still refused on the main host", async () => {
+  await withEnvironment(BLOCKED_ENVIRONMENT, async () => {
+    for (const path of ["/en", "/sv/pause-plan", "/en/who-runs-this"]) {
+      const help = await middleware(fromBlockedCountry(`${HELP_CANONICAL_ORIGIN}${path}`));
+      assert.equal(help.status, 200, `the help host serves ${path} from a blocked country`);
+      assert.equal(help.headers.get(`x-middleware-request-${SITE_CLASS_HEADER}`), "help", path);
+      const body = await help.text();
+      assert.equal(body.includes("HTTP 451"), false, `${path} is not the 451 page`);
+    }
+
+    // The same country, the same absence of a cookie, the commercial host: unchanged.
+    for (const path of ["/", "/en", "/sv/casinos", "/api/public/bonuses", "/sitemap.xml"]) {
+      const main = await middleware(fromBlockedCountry(`${PRODUCTION_CANONICAL_ORIGIN}${path}`));
+      assert.equal(main.status, 451, `the main host still refuses ${path}`);
+      assert.match(await main.text(), />B4GAMBLE</, path);
+    }
+  });
+});
+
+test("the help host is let through even for a country the main host blocks by name", async () => {
+  // The help host must not depend on BLOCKED_COUNTRIES, on the trusted country header being
+  // present, or on the owner holding a cookie on a second domain. Every blocked country, and
+  // a request with no country signal at all, continue on the help host.
+  await withEnvironment({ ...BLOCKED_ENVIRONMENT, BLOCKED_COUNTRIES: "KZ,RU,BY" }, async () => {
+    for (const country of ["KZ", "RU", "BY"]) {
+      const help = await middleware(new NextRequest(`${HELP_CANONICAL_ORIGIN}/en`, {
+        headers: { "x-vercel-ip-country": country },
+      }));
+      assert.equal(help.status, 200, `the help host serves ${country}`);
+
+      const main = await middleware(new NextRequest(`${PRODUCTION_CANONICAL_ORIGIN}/en`, {
+        headers: { "x-vercel-ip-country": country },
+      }));
+      assert.equal(main.status, 451, `the main host refuses ${country}`);
+    }
+    // No country header: both hosts continue, as before.
+    const unknown = await middleware(new NextRequest(`${HELP_CANONICAL_ORIGIN}/en`));
+    assert.equal(unknown.status, 200);
+  });
+});
+
+test("the owner unlock and logout still work on both hosts", async () => {
+  await withEnvironment(BLOCKED_ENVIRONMENT, async () => {
+    const unlockPath = BLOCKED_ENVIRONMENT.OWNER_UNLOCK_PATH;
+    const key = BLOCKED_ENVIRONMENT.OWNER_BYPASS_KEY;
+
+    for (const origin of [PRODUCTION_CANONICAL_ORIGIN, HELP_CANONICAL_ORIGIN]) {
+      const unlocked = await middleware(
+        fromBlockedCountry(`${origin}${unlockPath}?key=${encodeURIComponent(key)}`),
+      );
+      assert.equal(unlocked.status, 303, `${origin} unlocks`);
+      assert.equal(unlocked.headers.get("location"), `${origin}/`);
+      const setCookie = unlocked.headers.get("set-cookie") ?? "";
+      assert.match(setCookie, new RegExp(`^${OWNER_BYPASS_COOKIE}=v1\\.\\d{10}\\.`), origin);
+      assert.match(setCookie, /HttpOnly/i, origin);
+      // The cookie is shared across b4gamble.com and host-only everywhere else (§13).
+      assert.equal(
+        /Domain=b4gamble\.com/i.test(setCookie),
+        origin === PRODUCTION_CANONICAL_ORIGIN,
+        `${origin} cookie domain`,
+      );
+
+      const loggedOut = await middleware(
+        fromBlockedCountry(`${origin}${unlockPath}/logout`, `${OWNER_BYPASS_COOKIE}=anything`),
+      );
+      assert.equal(loggedOut.status, 303, `${origin} logs out`);
+      assert.match(loggedOut.headers.get("set-cookie") ?? "", /Max-Age=0/i, origin);
+    }
+  });
+});
+
+test("a valid owner cookie still carries the owner past the block on the main host", async () => {
+  await withEnvironment(BLOCKED_ENVIRONMENT, async () => {
+    const token = await signOwnerBypassToken(BLOCKED_ENVIRONMENT.OWNER_BYPASS_KEY);
+    const main = await middleware(
+      fromBlockedCountry(`${PRODUCTION_CANONICAL_ORIGIN}/en`, `${OWNER_BYPASS_COOKIE}=${token}`),
+    );
+    assert.equal(main.status, 200, "the owner is not refused");
+
+    // And a forged cookie is still refused, so the test above proves the signature and not
+    // merely the presence of a cookie.
+    const forged = await middleware(
+      fromBlockedCountry(`${PRODUCTION_CANONICAL_ORIGIN}/en`, `${OWNER_BYPASS_COOKIE}=v1.1700000000.${"A".repeat(43)}`),
+    );
+    assert.equal(forged.status, 451, "a forged cookie is refused");
+  });
+});
+
+test("the block reads the site class, and lifts on help before it reads anything else", () => {
+  // The help host may not depend on the country signal, the switch or the cookie, so the
+  // decision has to sit above all three — and below the unlock, which works on both hosts.
+  const source = readFileSync(join(repositoryRoot, "lib/security/geo-block.ts"), "utf8");
+  const help = source.indexOf(`if (site === "help") return null;`);
+  assert.ok(help > 0, "geoBlockGate lifts the block for the help site");
+  assert.ok(help > source.indexOf("ownerUnlockResponse(request"), "the unlock stays above it");
+  assert.ok(help > source.indexOf("ownerLogoutResponse(request)"), "the logout stays above it");
+  assert.ok(help < source.indexOf("if (!config.enabled) return null;"), "above the switch");
+  assert.ok(
+    help < source.indexOf("requestCountrySignalFromHeaders(request.headers)"),
+    "above the country read",
+  );
+  assert.ok(help < source.indexOf("verifyOwnerBypassToken(request.cookies"), "above the cookie");
+});
+
 test("the owner bypass cookie is host-only on any host but b4gamble.com", () => {
-  // The 451 decision does not depend on the host, so the block runs on the help host too;
-  // the cookie domain is the one host-dependent part, and it is set only on b4gamble.com.
+  // The cookie domain is set only on b4gamble.com, so the owner who unlocks on the help host
+  // gets a host-only cookie there. That is unchanged by the 18 October decision below.
   const source = readFileSync(join(repositoryRoot, "lib/security/geo-block.ts"), "utf8");
   assert.match(source, /function ownerCookieDomain\(hostname: string\)/);
   assert.match(source, /hostname === CANONICAL_HOSTNAME \|\| hostname\.endsWith\(`\.\$\{CANONICAL_HOSTNAME\}`\)/);

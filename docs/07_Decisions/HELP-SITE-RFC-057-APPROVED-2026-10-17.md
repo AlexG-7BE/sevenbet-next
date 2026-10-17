@@ -181,6 +181,46 @@ was the better answer for both sites (the Programme disclaimer and a handful of 
 protected-Help lines). Nothing else on the commercial site changes, and no visitor to it sees a
 different page.
 
+## Amendment, 18 October 2026: the country block does not apply to the help site
+
+The final internal authority on the point, and the first decision taken after phase 2 went live.
+
+**What happened.** `HELP_SITE_SERVING` was set to `true` in Production on the morning of
+18 October 2026, so `pauseplan.help` began answering as the help site. The Founder opened it from
+Kazakhstan — where his own machine sits — and was shown the HTTP 451 page. He decided to lift the
+block for the help site.
+
+**His reason, which is the rule.** The country block exists because of gambling-advertising law
+(28 September 2026). `pauseplan.help` carries no casino, no bonus, no offer and no `/r/` link at
+all — RFC-057 and pull request #530 guarantee that, and #530 is untouchable — so the reason for
+the block does not reach it. A site that advertises nothing is not refused for advertising.
+**`b4gamble.com` stays blocked exactly as it is**, and nothing about the main site's behaviour
+changes.
+
+**For the build.** `geoBlockGate` takes the site class it was already given and returns null for
+`site === "help"`, so the help host is never blocked whatever `BLOCKED_COUNTRIES` says. The lift
+is decided **above** `config.enabled`, above the trusted country signal and above the owner
+cookie, so the help host depends on none of the three — not on the switch, not on the country
+header being present, and not on the Founder holding a cookie on a second domain. It is decided
+**below** the owner unlock and logout, which therefore keep working on both hosts; on the help
+host the cookie is host-only, as before (§13). The 451 page keeps its "Pause Plan" wordmark
+branch even though the gate no longer reaches it, so the B4GAMBLE mark cannot appear on the help
+domain if that page is ever rendered for the help host again — Q2 stays guaranteed by code rather
+than by memory.
+
+**What this does not fix, and what he has to do by hand.** The Vercel Firewall rule
+`rule_geo_block_static_assets_oCzoN1` denies static assets to Kazakhstan on **every** host of the
+project. It is not in this repository, it reads no environment variable, and no code can change
+it. Until he adds `host is not any of pauseplan.help, www.pauseplan.help` to it, a Kazakh visitor
+to the help site gets the page HTML and `/icon.svg` but 403 for every stylesheet, script, web
+font and photograph under `/_next/` — an unstyled, unhydrated page. **DETECTED from a KZ exit,
+18 October 2026.** The exact condition and the argument that it opens nothing are in
+`docs/06_Operations/Geo-Block-Runbook.md`.
+
+**Way back.** Reverting the pull request restores the 451 on the help host. If the exclusion has
+been added to the Firewall rule by then, it should be removed in the same step, or the help host
+would serve its build files to a blocked country while refusing its pages.
+
 ## Evidence
 
 - RFC-057 §22, where each of these eight questions is written out with the recommendation he
