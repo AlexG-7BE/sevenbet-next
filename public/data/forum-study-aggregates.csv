@@ -1,0 +1,169 @@
+section,key,scope,count,denominator,share,note
+material,collected_posts,lanforum,4211,,,posts fetched into the corpus
+material,own_words_population,lanforum,1695,4211,0.4025,posts that stand on their own words
+material,quote_only_excluded,lanforum,2505,4211,0.5949,"quoted earlier posts, excluded before coding"
+material,coded,lanforum,1695,1695,1.0000,complete census of the population
+material,collected_posts,familjeliv,605,,,posts fetched into the corpus
+material,own_words_population,familjeliv,604,605,0.9983,posts that stand on their own words
+material,quote_only_excluded,familjeliv,0,605,0.0000,"quoted earlier posts, excluded before coding"
+material,coded,familjeliv,604,604,1.0000,complete census of the population
+material,collected_posts,reddit,3295,,,posts fetched into the corpus
+material,own_words_population,reddit,3178,3295,0.9645,posts that stand on their own words
+material,quote_only_excluded,reddit,0,3295,0.0000,"quoted earlier posts, excluded before coding"
+material,coded,reddit,1000,3178,0.3147,"fixed 1,000-post selection, not a representative sample"
+material,coded,all,3299,,,every coded post
+who_writes,player,all,925,3299,0.2804,
+who_writes,relative,all,127,3299,0.0385,
+who_writes,other,all,2210,3299,0.6699,
+who_writes,unknown,all,37,3299,0.0112,
+stage,before_trouble,all,49,3299,0.0149,
+stage,in_debt,all,275,3299,0.0834,
+stage,on_pause,all,70,3299,0.0212,
+stage,after_pause,all,8,3299,0.0024,
+stage,recovery,all,350,3299,0.1061,
+stage,relapse,all,56,3299,0.0170,
+stage,unknown,all,2491,3299,0.7551,
+stage,before_trouble,players,46,925,0.0497,
+stage,in_debt,players,217,925,0.2346,
+stage,on_pause,players,69,925,0.0746,
+stage,after_pause,players,8,925,0.0086,
+stage,recovery,players,327,925,0.3535,
+stage,relapse,players,54,925,0.0584,
+stage,unknown,players,204,925,0.2205,
+figure,registerMentioned,all,174,3299,0.0527,95% interval 0.0451-0.0604
+figure,registerMentioned,lanforum,129,1695,0.0761,95% interval 0.0635-0.0887
+figure,registerMentioned,familjeliv,13,604,0.0215,95% interval 0.0099-0.0331
+figure,registerMentioned,reddit,32,1000,0.0320,95% interval 0.0211-0.0429
+figure,amongRegisterPosts,registered,130,174,0.7471,95% interval 0.6825-0.8117
+figure,amongRegisterPosts,regretted,3,174,0.0172,95% interval 0.0000-0.0366
+figure,amongRegisterPosts,triedToUndo,15,174,0.0862,95% interval 0.0445-0.1279
+figure,amongRegisterPosts,waitedItOut,2,174,0.0115,95% interval 0.0000-0.0273
+figure,amongRegisterPosts,playedElsewhereDuring,36,174,0.2069,95% interval 0.1467-0.2671
+figure,amongRegisterPosts,returnedAfterEnd,23,174,0.1322,95% interval 0.0819-0.1825
+figure,amongRegisterPosts,extended,4,174,0.0230,95% interval 0.0007-0.0453
+figure,amongRegisterPosts,anyWayRound,65,174,0.3736,95% interval 0.3017-0.4454
+figure,wayRoundAmongAll,all,158,3299,0.0479,95% interval 0.0406-0.0552
+figure,wayRoundAmongAll,lanforum,122,1695,0.0720,95% interval 0.0597-0.0843
+figure,wayRoundAmongAll,familjeliv,10,604,0.0166,95% interval 0.0064-0.0267
+figure,wayRoundAmongAll,reddit,26,1000,0.0260,95% interval 0.0161-0.0359
+figure,unlicensedMentioned,all,79,3299,0.0239,95% interval 0.0187-0.0292
+figure,unlicensedMentioned,lanforum,53,1695,0.0313,95% interval 0.0230-0.0396
+figure,unlicensedMentioned,familjeliv,7,604,0.0116,95% interval 0.0031-0.0201
+figure,unlicensedMentioned,reddit,19,1000,0.0190,95% interval 0.0105-0.0275
+figure,payday,all,17,925,0.0184,95% interval 0.0097-0.0270
+figure,payday,lanforum,12,690,0.0174,95% interval 0.0076-0.0271
+figure,payday,familjeliv,1,132,0.0076,95% interval 0.0000-0.0224
+figure,payday,reddit,4,103,0.0388,95% interval 0.0015-0.0761
+figure,night,all,8,925,0.0086,95% interval 0.0027-0.0146
+figure,night,lanforum,5,690,0.0072,95% interval 0.0009-0.0136
+figure,night,familjeliv,0,132,0.0000,95% interval 0.0000-0.0000
+figure,night,reddit,3,103,0.0291,95% interval 0.0000-0.0616
+figure,paydayOrNight,all,25,925,0.0270,95% interval 0.0166-0.0375
+figure,paydayOrNight,lanforum,17,690,0.0246,95% interval 0.0131-0.0362
+figure,paydayOrNight,familjeliv,1,132,0.0076,95% interval 0.0000-0.0224
+figure,paydayOrNight,reddit,7,103,0.0680,95% interval 0.0194-0.1166
+figure,chasing,all,21,925,0.0227,95% interval 0.0131-0.0323
+figure,chasing,lanforum,5,690,0.0072,95% interval 0.0009-0.0136
+figure,chasing,familjeliv,12,132,0.0909,95% interval 0.0419-0.1400
+figure,chasing,reddit,4,103,0.0388,95% interval 0.0015-0.0761
+figure,adOrBonus,all,42,925,0.0454,95% interval 0.0320-0.0588
+figure,adOrBonus,lanforum,34,690,0.0493,95% interval 0.0331-0.0654
+figure,adOrBonus,familjeliv,4,132,0.0303,95% interval 0.0011-0.0595
+figure,adOrBonus,reddit,4,103,0.0388,95% interval 0.0015-0.0761
+figure,quickLoans,all,161,925,0.1741,95% interval 0.1496-0.1985
+figure,quickLoans,lanforum,137,690,0.1986,95% interval 0.1688-0.2283
+figure,quickLoans,familjeliv,14,132,0.1061,95% interval 0.0535-0.1586
+figure,quickLoans,reddit,10,103,0.0971,95% interval 0.0399-0.1543
+figure,enforcement,all,62,925,0.0670,95% interval 0.0509-0.0831
+figure,enforcement,lanforum,51,690,0.0739,95% interval 0.0544-0.0934
+figure,enforcement,familjeliv,7,132,0.0530,95% interval 0.0148-0.0913
+figure,enforcement,reddit,4,103,0.0388,95% interval 0.0015-0.0761
+figure,relativeWrites,all,127,3299,0.0385,95% interval 0.0319-0.0451
+figure,relativeWrites,lanforum,5,1695,0.0029,95% interval 0.0004-0.0055
+figure,relativeWrites,familjeliv,96,604,0.1589,95% interval 0.1298-0.1881
+figure,relativeWrites,reddit,26,1000,0.0260,95% interval 0.0161-0.0359
+figure,namedAmount,all,322,925,0.3481,95% interval 0.3174-0.3788
+figure,namedAmount,lanforum,260,690,0.3768,95% interval 0.3407-0.4130
+figure,namedAmount,familjeliv,35,132,0.2652,95% interval 0.1898-0.3405
+figure,namedAmount,reddit,27,103,0.2621,95% interval 0.1772-0.3471
+figure,overHundredThousand,players_or_stated,209,322,0.6491,95% interval 0.5969-0.7012
+figure,toldSomeone,all,55,925,0.0595,95% interval 0.0442-0.0747
+figure,toldSomeone,lanforum,30,690,0.0435,95% interval 0.0283-0.0587
+figure,toldSomeone,familjeliv,16,132,0.1212,95% interval 0.0655-0.1769
+figure,toldSomeone,reddit,9,103,0.0874,95% interval 0.0328-0.1419
+figure,treatment,all,109,925,0.1178,95% interval 0.0971-0.1386
+figure,treatment,lanforum,58,690,0.0841,95% interval 0.0634-0.1048
+figure,treatment,familjeliv,29,132,0.2197,95% interval 0.1491-0.2903
+figure,treatment,reddit,22,103,0.2136,95% interval 0.1344-0.2927
+figure,blocking,all,22,925,0.0238,95% interval 0.0140-0.0336
+figure,blocking,lanforum,11,690,0.0159,95% interval 0.0066-0.0253
+figure,blocking,familjeliv,6,132,0.0455,95% interval 0.0099-0.0810
+figure,blocking,reddit,5,103,0.0485,95% interval 0.0070-0.0900
+figure,exclusionAsHelp,all,69,925,0.0746,95% interval 0.0577-0.0915
+figure,exclusionAsHelp,lanforum,44,690,0.0638,95% interval 0.0455-0.0820
+figure,exclusionAsHelp,familjeliv,9,132,0.0682,95% interval 0.0252-0.1112
+figure,exclusionAsHelp,reddit,16,103,0.1553,95% interval 0.0854-0.2253
+pause_action,registered,posts_naming_a_register,130,174,0.7471,
+pause_action,regretted,posts_naming_a_register,3,174,0.0172,
+pause_action,undo,posts_naming_a_register,15,174,0.0862,
+pause_action,waited,posts_naming_a_register,2,174,0.0115,
+pause_action,elsewhere,posts_naming_a_register,36,174,0.2069,
+pause_action,returned,posts_naming_a_register,23,174,0.1322,
+pause_action,extended,posts_naming_a_register,4,174,0.0230,
+pause_action,registered,posts_about_a_pause,207,302,0.6854,
+pause_action,regretted,posts_about_a_pause,5,302,0.0166,
+pause_action,undo,posts_about_a_pause,31,302,0.1026,
+pause_action,waited,posts_about_a_pause,19,302,0.0629,
+pause_action,elsewhere,posts_about_a_pause,67,302,0.2219,
+pause_action,returned,posts_about_a_pause,48,302,0.1589,
+pause_action,extended,posts_about_a_pause,6,302,0.0199,
+said_to_have_helped,exclusion,players,69,925,0.0746,
+said_to_have_helped,blocking,players,22,925,0.0238,
+said_to_have_helped,told,players,55,925,0.0595,
+said_to_have_helped,treatment,players,109,925,0.1178,
+said_to_have_helped,money_to_other,players,54,925,0.0584,
+said_to_have_helped,debt_plan,players,22,925,0.0238,
+said_to_have_helped,time,players,81,925,0.0876,
+said_to_have_helped,faith,players,14,925,0.0151,
+said_to_have_helped,nothing,players,11,925,0.0119,
+trigger,payday,players,17,925,0.0184,
+trigger,night,players,8,925,0.0086,
+trigger,ad,players,42,925,0.0454,
+trigger,chase,players,21,925,0.0227,
+trigger,win,players,32,925,0.0346,
+trigger,stress,players,49,925,0.0530,
+sum_named,none,players,190,925,0.2054,band agreement 0.709; published only as named / not named
+sum_named,lt10k,players,62,925,0.0670,band agreement 0.709; published only as named / not named
+sum_named,10k_100k,players,51,925,0.0551,band agreement 0.709; published only as named / not named
+sum_named,100k_500k,players,106,925,0.1146,band agreement 0.709; published only as named / not named
+sum_named,gt500k,players,103,925,0.1114,band agreement 0.709; published only as named / not named
+sum_named,vague,players,91,925,0.0984,band agreement 0.709; published only as named / not named
+sum_named,unknown,players,322,925,0.3481,band agreement 0.709; published only as named / not named
+register_named,none,all,19,3299,0.0058,
+register_named,spelpaus,all,111,3299,0.0336,
+register_named,rofus,all,7,3299,0.0021,
+register_named,both,all,1,3299,0.0003,
+register_named,other,all,55,3299,0.0167,
+register_named,unknown,all,3106,3299,0.9415,
+clean_day_counter,posts_with_a_counter,all,102,3299,0.0309,
+clean_day_counter,median_days,posts_with_a_counter,365,102,,"25th percentile 150, 75th 2190"
+clean_day_counter,a_year_or_more,posts_with_a_counter,52,102,0.5098,
+clean_day_counter,under_30_days,posts_with_a_counter,7,102,0.0686,
+coder_agreement,who,re_coded_posts,,165,0.836,
+coder_agreement,stage,re_coded_posts,,165,0.836,
+coder_agreement,reg,re_coded_posts,,165,0.958,
+coder_agreement,unlic,re_coded_posts,,165,0.952,
+coder_agreement,band,re_coded_posts,,165,0.709,
+coder_agreement,loan,re_coded_posts,,165,0.958,
+coder_agreement,kf,re_coded_posts,,165,0.933,
+coder_agreement,trig,re_coded_posts,,165,0.952,
+coder_agreement,pact,re_coded_posts,,165,0.921,
+coder_agreement,help,re_coded_posts,,165,0.909,
+coder_agreement,days,re_coded_posts,,165,0.964,
+coder_agreement,who_player_or_not,re_coded_posts,,165,0.903,"coarse form, the one the page publishes"
+coder_agreement,register_mentioned,re_coded_posts,,165,0.964,"coarse form, the one the page publishes"
+coder_agreement,any_way_round,re_coded_posts,,165,0.939,"coarse form, the one the page publishes"
+coder_agreement,payday_or_night,re_coded_posts,,165,0.988,"coarse form, the one the page publishes"
+coder_agreement,loan_yes,re_coded_posts,,165,0.976,"coarse form, the one the page publishes"
+coder_agreement,kf_yes,re_coded_posts,,165,0.945,"coarse form, the one the page publishes"
+coder_agreement,amount_named,re_coded_posts,,165,0.952,"coarse form, the one the page publishes"

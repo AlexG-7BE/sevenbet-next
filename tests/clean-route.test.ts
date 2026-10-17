@@ -7,6 +7,7 @@ import { trustMessages } from "../lib/i18n/static-pages/can-you-trust-b4gamble";
 import { controlSharedMessages } from "../lib/i18n/static-pages/gambling-control";
 import { innanLocale, innanMessages } from "../lib/i18n/static-pages/innan";
 import { pausePlanMessages } from "../lib/i18n/static-pages/pause-plan";
+import { forumStudyMessages } from "../lib/i18n/static-pages/forum-study";
 import { pauseStatisticsMessages } from "../lib/i18n/static-pages/pause-statistics";
 import { publicRoutePolicy } from "../lib/market/routing";
 import { coreRoutes } from "../lib/site";
@@ -72,6 +73,7 @@ test("no public page claims its route or page links to no casino, which the menu
   for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
     for (const [name, text] of [
       ["pause-statistics", JSON.stringify(pauseStatisticsMessages(locale))],
+      ["forum-study", JSON.stringify(forumStudyMessages(locale))],
       ["gambling-control", JSON.stringify(controlSharedMessages(locale))],
       ["can-you-trust-b4gamble", JSON.stringify(trustMessages(locale))],
     ] as const) {

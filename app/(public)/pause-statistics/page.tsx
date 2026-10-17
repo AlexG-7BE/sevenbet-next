@@ -83,6 +83,7 @@ export default async function PauseStatisticsPage() {
         <p>{messages.corpus.body}</p>
         <Table rows={messages.corpus.rows} />
         <p className={styles.note}>{messages.corpus.method}</p>
+        <p><Link className={styles.study} data-forum-study-link href={productHref(presentation, "/forum-study")}>{messages.corpus.studyLabel}</Link></p>
       </section>
 
       <section className={`${styles.card} ${styles.dayEleven}`} data-nav-theme="dark">

@@ -85,6 +85,7 @@ export const coreRoutes = [
   "/for-creators",
   "/beside",
   "/pause-statistics",
+  "/forum-study",
   "/gambling-control",
   "/control-without-quitting",
   "/gambling-control-tools",

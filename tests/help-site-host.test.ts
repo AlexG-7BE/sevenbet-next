@@ -456,6 +456,7 @@ test("the help host serves the help and shared routes", () => {
     "/innan",
     "/beside",
     "/pause-statistics",
+    "/forum-study",
     "/gambling-control",
     "/control-without-quitting",
     "/gambling-control-tools",

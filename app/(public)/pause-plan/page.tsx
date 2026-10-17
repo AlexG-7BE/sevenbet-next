@@ -111,6 +111,7 @@ export async function PausePlanView({ pathname, site }: { pathname: string; site
       <ul>
         {messages.support.map((line) => <li key={line.href}><a href={line.href} rel="noopener noreferrer" target="_blank">{line.label}</a></li>)}
       </ul>
+      {messages.studyLabel ? <p className={styles.more}><Link data-pause-plan-study-link href={productHref(presentation, "/forum-study")}>{messages.studyLabel}</Link></p> : null}
     </div></section>
   </div>;
 }

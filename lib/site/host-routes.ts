@@ -107,6 +107,8 @@ export const SITE_ROUTE_MANIFEST = [
   { path: "/innan", match: "EXACT", siteClass: "HELP" },
   { path: "/beside", match: "EXACT", siteClass: "HELP" },
   { path: "/pause-statistics", match: "EXACT", siteClass: "HELP" },
+  // The coded forum study behind the corpus rows of /pause-statistics; its CSV lives in /data.
+  { path: "/forum-study", match: "EXACT", siteClass: "HELP" },
   // The control answer pages (en/sv/da).
   { path: "/gambling-control", match: "EXACT", siteClass: "HELP" },
   { path: "/control-without-quitting", match: "EXACT", siteClass: "HELP" },
@@ -139,8 +141,8 @@ export const SITE_ROUTE_MANIFEST = [
   // help host does for the main key file below: a key file shared by two domains is a public
   // marker joining them.
   { path: "/fd78a34615b74c4e9db7fd7eb03f7659.txt", match: "EXACT", siteClass: "HELP" },
-  // public/data: the regulator tables /pause-statistics links for download
-  // (lib/i18n/static-pages/pause-statistics.ts). A .csv is not an excluded file ending, so
+  // public/data: the regulator tables /pause-statistics links for download, and the study
+  // aggregates /forum-study links (lib/i18n/static-pages/*.ts). A .csv is not an excluded file ending, so
   // middleware does see it and it needs a class of its own; §4.2 allows the folder.
   { path: "/data", match: "SUBTREE", siteClass: "HELP" },
 

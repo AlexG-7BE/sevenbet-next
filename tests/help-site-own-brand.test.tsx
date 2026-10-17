@@ -30,6 +30,7 @@ import { controlSharedMessages, gamblingControlHubMessages } from "../lib/i18n/s
 import { innanMessages } from "../lib/i18n/static-pages/innan";
 import { learningMessages } from "../lib/i18n/learning-center";
 import { pausePlanMessages } from "../lib/i18n/static-pages/pause-plan";
+import { forumStudyMessages } from "../lib/i18n/static-pages/forum-study";
 import { pauseStatisticsMessages } from "../lib/i18n/static-pages/pause-statistics";
 import { PROGRAMME_MESSAGE_KEYS, programmeText } from "../lib/i18n/programme-catalog";
 import { tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
@@ -224,6 +225,7 @@ test("the pause plan, the pause pages and the ten steps say nothing of the other
       ["/beside", besideMessages],
       ["/innan", innanMessages],
       ["/pause-statistics", pauseStatisticsMessages],
+      ["/forum-study", forumStudyMessages],
     ] as const) {
       for (const value of copyStrings(withoutRevenueLine(withSiteNameDeep(messages(locale), "help") as Record<string, unknown>))) {
         if (isRewrittenRoute(value)) continue;

@@ -62,6 +62,7 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   { root: "innan", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "beside", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "pause-statistics", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
+  { root: "forum-study", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   // Answer pages for AI assistants and search (Founder, 15 October 2026; docs/07_Decisions/AEO-CONTROL-PAGES-2026-10-15.md).
   { root: "gambling-control", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "control-without-quitting", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
