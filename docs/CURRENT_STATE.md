@@ -1520,6 +1520,30 @@ the staged upgrade in `scripts/ci-migrations.mjs`.
 
 **PROPOSED — NOT YET LIVE.**
 
+## Vercel Cron paths reach their handlers on Production
+
+**DETECTED and fixed, 17 October 2026** (RFC-057 §21.9, branch
+`fix/pause-letters-cron-host`). Vercel invokes a project Cron Job on a
+generated Production deployment hostname, so `lib/auth/runtime-canonical-host.ts`
+has always let the cron paths continue instead of answering the public-host
+308 to `https://b4gamble.com`. That exemption was an explicit list of three
+paths, and `/api/internal/cron/pause-letters` — scheduled hourly at minute 23
+since the pause letters landed — was missing from it, as
+`/api/internal/cron/learn-content` had been before commit `a21958d3`. The
+handler would not have run on Production. **Nothing was lost:**
+`PAUSE_LETTERS_ENABLED` is off, so the run is a no-op today.
+
+- The exemption is now one exported list, `PRODUCTION_CRON_PATHS`, holding all
+  four scheduled paths. The edge matcher cannot read `vercel.json` at runtime,
+  so the list stays a literal.
+- `tests/production-canonical-host.test.ts` (`canonical-host:test`, and inside
+  `brand-cutover:test` in `ci:quality`) now reads `vercel.json`, asserts the
+  scheduled paths and `PRODUCTION_CRON_PATHS` are the same set, and walks every
+  scheduled path through the resolver on two generated hosts. A cron added to
+  the schedule and forgotten in the resolver fails Quality.
+- Only `/api/internal/cron/*` paths may take the exemption; a suffix below a
+  cron path (`…/unexpected`) still redirects.
+
 ## Weekly funnel count (`programme_funnel`) — in review
 
 **Founder plan, 13 October 2026**
