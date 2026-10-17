@@ -1,15 +1,24 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { NextRequest } from "next/server";
 
 import {
   PRODUCTION_CANONICAL_ORIGIN,
   PRODUCTION_CRON_PATH,
+  PRODUCTION_CRON_PATHS,
   PRODUCTION_LEARN_CONTENT_CRON_PATH,
   PRODUCTION_LIFECYCLE_CRON_PATH,
+  PRODUCTION_PAUSE_LETTERS_CRON_PATH,
   resolveRuntimeCanonicalHost,
 } from "../lib/auth/runtime-canonical-host";
 import { middleware } from "../middleware";
+
+const scheduledCronPaths = (
+  JSON.parse(
+    readFileSync(new URL("../vercel.json", import.meta.url), "utf8"),
+  ) as { crons?: { path: string; schedule: string }[] }
+).crons?.map((cron) => cron.path) ?? [];
 
 const productionEnvironment = { VERCEL_ENV: "production" } as const;
 const previewBranchHost =
@@ -102,16 +111,41 @@ test("Production middleware uses a method-preserving permanent redirect before r
   }
 });
 
+test("every path scheduled under crons in vercel.json is an allowed Production cron path", () => {
+  // A cron added to vercel.json but forgotten in the resolver is answered with
+  // a 308 to the public host on the generated Production hostname Vercel calls,
+  // so its handler never runs. Found 17 Oct 2026 for the pause-letters cron,
+  // after the same gap had already been fixed once for learn-content.
+  assert.ok(scheduledCronPaths.length >= 4, "vercel.json still schedules the project crons");
+  assert.deepEqual(
+    scheduledCronPaths.filter((path) => !PRODUCTION_CRON_PATHS.includes(path)),
+    [],
+    "add the new vercel.json cron path to PRODUCTION_CRON_PATHS",
+  );
+  assert.deepEqual(
+    [...PRODUCTION_CRON_PATHS].filter((path) => !scheduledCronPaths.includes(path)),
+    [],
+    "PRODUCTION_CRON_PATHS exempts a path that vercel.json no longer schedules",
+  );
+  assert.ok(scheduledCronPaths.includes(PRODUCTION_PAUSE_LETTERS_CRON_PATH));
+  assert.ok(
+    scheduledCronPaths.every((path) => path.startsWith("/api/internal/cron/")),
+    "only authenticated internal cron handlers may bypass canonicalisation",
+  );
+});
+
 test("the exact authenticated Vercel Cron paths bypass public-host canonicalisation", () => {
+  assert.deepEqual([...PRODUCTION_CRON_PATHS], [
+    PRODUCTION_CRON_PATH,
+    PRODUCTION_LIFECYCLE_CRON_PATH,
+    PRODUCTION_LEARN_CONTENT_CRON_PATH,
+    PRODUCTION_PAUSE_LETTERS_CRON_PATH,
+  ]);
   for (const origin of [
     "https://sevenbet-next.vercel.app",
     "https://sevenbet-next-hvvjqn3nd-alexg-7bes-projects.vercel.app",
   ]) {
-    for (const path of [
-      PRODUCTION_CRON_PATH,
-      PRODUCTION_LIFECYCLE_CRON_PATH,
-      PRODUCTION_LEARN_CONTENT_CRON_PATH,
-    ]) {
+    for (const path of scheduledCronPaths) {
       assert.deepEqual(
         resolveRuntimeCanonicalHost(`${origin}${path}`, productionEnvironment),
         { kind: "next" },
