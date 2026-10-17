@@ -57,8 +57,8 @@ for (const acceptance of cases) {
     await expect(selectorMenu).toHaveCount(0);
     await expect(selector).toBeFocused();
 
-    // FAQ is outside the research section, so the drawer lists the guide routes (Founder, 10 October 2026).
-    await expect(navigation.getByRole("link", { name: regex(shell.casinos) })).toHaveCount(0);
+    // The drawer lists the whole menu on every public page, FAQ included (Founder, 17 October 2026).
+    await expect(navigation.getByRole("link", { name: regex(shell.casinos) }).first()).toHaveAttribute("href", `${acceptance.prefix}/casinos`);
     const learn = navigation.getByRole("link", { name: regex(shell.learn) }).first();
     await expect(learn).toHaveAttribute("href", `${acceptance.prefix}/learn`);
     await learn.click();

@@ -47,7 +47,7 @@ const sv: PauseStatisticsMessages = {
   titleLead: "Spelpaus",
   titleEmphasis: "i siffror.",
   intro: "Det här är inte ett pressmeddelande. Det är de siffror som finns, med källa och nedladdningsbar fil, och de siffror som inte finns än. Sidan uppdateras när Spelinspektionen svarar på våra begäranden om allmänna handlingar.",
-  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. På den här vägen visas inga.",
+  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. Ingenting i de här siffrorna länkar till något av dem; det gör menyn.",
   register: {
     heading: "Så många är avstängda",
     rows: [
@@ -87,7 +87,7 @@ const sv: PauseStatisticsMessages = {
   },
   dayEleven: {
     heading: "Dag 11",
-    body: "Frågan är inte hur många som pausar. Frågan är vad som händer dagen kontona öppnas igen. För den dagen finns en gratis plan utan konto, och på den vägen visas inga casinon.",
+    body: "Frågan är inte hur många som pausar. Frågan är vad som händer dagen kontona öppnas igen. För den dagen finns en gratis plan utan konto, och själva planen innehåller inga casinon.",
     cta: "Planen för dag 11",
   },
   sources: {
@@ -125,7 +125,7 @@ const da: PauseStatisticsMessages = {
   titleLead: "ROFUS",
   titleEmphasis: "i tal.",
   intro: "Det her er ikke en pressemeddelelse. Det er de tal, der findes, med kilde og fil til download, og de tal, der ikke findes endnu. Siden opdateres, når Spillemyndigheden svarer på vores anmodninger om aktindsigt.",
-  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. På denne vej vises ingen.",
+  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. Intet i disse tal linker til nogen af dem; det gør menuen.",
   register: {
     heading: "Så mange er udelukket",
     rows: [
@@ -163,7 +163,7 @@ const da: PauseStatisticsMessages = {
   },
   dayEleven: {
     heading: "Dagen efter",
-    body: "Spørgsmålet er ikke, hvor mange der holder pause. Spørgsmålet er, hvad der sker den dag, man kan logge ind igen. Til den dag findes en gratis plan uden konto, og på den vej vises ingen casinoer.",
+    body: "Spørgsmålet er ikke, hvor mange der holder pause. Spørgsmålet er, hvad der sker den dag, man kan logge ind igen. Til den dag findes en gratis plan uden konto, og selve planen indeholder ingen casinoer.",
     cta: "Planen for dagen efter",
   },
   sources: {
@@ -185,7 +185,7 @@ const en: PauseStatisticsMessages = {
   titleLead: "Self-exclusion",
   titleEmphasis: "in numbers.",
   intro: "This is not a press release. It is the figures that exist, with sources and a downloadable file, and the figures that do not exist yet. The page is updated when the regulators answer our public-records requests.",
-  revenueLine: "B4GAMBLE earns commission from licensed casinos. None are shown on this route.",
+  revenueLine: "B4GAMBLE earns commission from licensed casinos. Nothing in these figures links to one; the site menu does.",
   register: {
     heading: "How many are self-excluded",
     rows: [
@@ -237,7 +237,7 @@ const en: PauseStatisticsMessages = {
   },
   dayEleven: {
     heading: "The day after",
-    body: "The question is not how many pause. The question is what happens the day the accounts open again. For that day there is a free plan without an account, and no casinos are shown on that route.",
+    body: "The question is not how many pause. The question is what happens the day the accounts open again. For that day there is a free plan without an account, and the plan itself contains no casinos.",
     cta: "The plan for the day after",
   },
   sources: {

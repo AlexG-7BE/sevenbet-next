@@ -10,8 +10,11 @@ export const PUBLIC_NAVIGATION = [
 ] as const;
 
 /**
- * What the menu offers a reader who has come through neither research door (see
- * `lib/research-access.ts`): the Programme's own pages take the place of the research links.
+ * The guide links around the commercial destinations above: 10 Steps opens the menu and Help
+ * closes it. Every public page shows both groups to every visitor (Founder, 17 October 2026;
+ * docs/07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md); only the Programme's own shell
+ * is built without the commercial half. In the drawer only 10 Steps joins the route list: Help
+ * has its own block under it.
  */
 export const GUIDE_NAVIGATION = [
   { label: "10 Steps", href: "/10-steps" },

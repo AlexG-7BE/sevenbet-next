@@ -14,6 +14,19 @@ export const PRODUCTION_CANONICAL_ORIGIN = "https://b4gamble.com";
 export const PRODUCTION_CRON_PATH = "/api/internal/cron/programme-expiry-purge";
 export const PRODUCTION_LIFECYCLE_CRON_PATH = "/api/internal/cron/customer-lifecycle";
 export const PRODUCTION_LEARN_CONTENT_CRON_PATH = "/api/internal/cron/learn-content";
+export const PRODUCTION_PAUSE_LETTERS_CRON_PATH = "/api/internal/cron/pause-letters";
+
+// Every path scheduled under `crons` in vercel.json belongs here. The edge
+// matcher cannot read vercel.json at runtime, so the list is a literal and
+// tests/production-canonical-host.test.ts walks vercel.json to prove the two
+// stay in step: a cron added to the schedule but forgotten here is redirected
+// away from its own handler.
+export const PRODUCTION_CRON_PATHS: readonly string[] = [
+  PRODUCTION_CRON_PATH,
+  PRODUCTION_LIFECYCLE_CRON_PATH,
+  PRODUCTION_LEARN_CONTENT_CRON_PATH,
+  PRODUCTION_PAUSE_LETTERS_CRON_PATH,
+];
 
 export type RuntimeCanonicalHostDecision =
   | { kind: "next" }
@@ -41,11 +54,9 @@ function resolveProductionCanonicalHost(
   // Vercel invokes project Cron Jobs on a generated Production deployment
   // hostname. Redirecting that authenticated request to the public canonical
   // host prevents the authenticated handler from running.
-  if (
-    requested.pathname === PRODUCTION_CRON_PATH
-    || requested.pathname === PRODUCTION_LIFECYCLE_CRON_PATH
-    || requested.pathname === PRODUCTION_LEARN_CONTENT_CRON_PATH
-  ) return { kind: "next" };
+  if (PRODUCTION_CRON_PATHS.includes(requested.pathname)) {
+    return { kind: "next" };
+  }
 
   const canonical = new URL(PRODUCTION_CANONICAL_ORIGIN);
   if (

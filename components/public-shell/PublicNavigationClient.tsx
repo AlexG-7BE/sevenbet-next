@@ -12,7 +12,6 @@ import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/regi
 import { createCommercialNavigationRetryRegistry } from "@/lib/market/navigation-stage2-retry";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { isCurrentPublicRoute, leadsToCurrentProgrammePage } from "@/lib/public-shell";
-import { isResearchSectionRoute } from "@/lib/research-access";
 import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 
 type ProgrammePresentation = Readonly<{
@@ -57,23 +56,6 @@ export function PublicCommercialNavigationRetry() {
   }, [pathname, router]);
 
   return <span data-commercial-navigation-timed-out hidden />;
-}
-
-/**
- * Shows research links to a reader inside the research section and the guide links to everyone
- * else (lib/research-access.ts). The layout that renders the menu is not rendered again when the
- * page changes, so the choice is made here, from the current path alone.
- */
-export function PublicNavigationDoor({
-  children,
-  door,
-}: {
-  children: ReactNode;
-  door: "research" | "guide";
-}) {
-  const pathname = usePathname();
-  const research = isResearchSectionRoute(stripPublicMarketPrefix(pathname));
-  return research === (door === "research") ? <>{children}</> : null;
 }
 
 export function PublicNavigationRouteLink({

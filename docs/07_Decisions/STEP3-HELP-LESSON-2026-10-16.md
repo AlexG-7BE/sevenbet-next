@@ -1,8 +1,9 @@
 # Step 3 is a help lesson: "Know who to turn to"
 
-**Status:** PROPOSED — NOT YET LIVE. Founder decision recorded; the text and screens wait for the
-Founder's review before merge (his condition). Branch `feat/step3-help-lesson`, draft PR #532 on
-`main` (PR #530 is merged and live).
+**Status:** ACCEPTED. The Founder saw the Swedish phone screens of every step of the lesson, its
+support card and the completion screen on 17 October 2026 and answered «ок, сливай урок шага 3»,
+so his condition is met and PR #532 ships. Branch `feat/step3-help-lesson` (PR #530 is merged and
+live).
 **Date:** 16 October 2026
 **Decision source:** Founder, question tool, 16 October 2026 (the same session as
 [PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)): the lesson of

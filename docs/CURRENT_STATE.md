@@ -12,12 +12,11 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Step 3 is a help lesson, "Know who to turn to" — in review
+## Step 3 is a help lesson, "Know who to turn to" — live
 
 **Founder decision, 16 October 2026** (question tool;
-[decision](07_Decisions/STEP3-HELP-LESSON-2026-10-16.md)). **PROPOSED — NOT YET LIVE** until the
-Founder approves the text and screens and the branch `feat/step3-help-lesson` (draft PR #532) is
-merged and deployed:
+[decision](07_Decisions/STEP3-HELP-LESSON-2026-10-16.md)), **approved on the screens 17 October
+2026** («ок, сливай урок шага 3») and shipped in PR #532:
 
 - Mission 08 keeps its number, step 3, prerequisite, action ids, reward keys and XP; its lesson
   "Research responsibly" (comparison signals, a bonus-terms card, a research checklist) is replaced
@@ -34,6 +33,79 @@ merged and deployed:
 - The public 10 Steps page (13 languages), the trust page and the control page FAQ (en/sv/da) say
   what step 3 now does. The final plan and the full Review never write a phone number.
 
+## The help site on a second domain is approved — decided, not built
+
+**Founder decision, 17 October 2026** (chat, «ок, начинай первый этап»;
+[decision](07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md),
+[RFC-057](06_RFC/RFC-057-Help-Site-on-a-Second-Domain.md), now `ACTIVE`).
+**APPROVED — NO CODE YET.** Phase 0 is done; phase 1 (code, with every switch off, so the main
+site behaves exactly as before) is the work in hand. Nothing a visitor sees has changed, on
+either site.
+
+- **Two sites, one Vercel project.** `b4gamble.com` stays the commercial site; `pauseplan.help`
+  becomes the help site, carrying the Programme, the 10 steps, the pause plans (sv/da/en), the
+  help guides, `/beside`, `/innan`, the control pages and the helplines. The request host is
+  classified once from source constants; every commercial and internal route answers 404 on the
+  help host, and `b4gamble.com` keeps exactly one quiet "need help" link and no other help
+  content once the move is done.
+- **DETECTED (Vercel, 17 October 2026):** `pauseplan.help` is bought (team `alexg-7bes-projects`,
+  Vercel nameservers, auto-renew on, expires October 2027) and is **not attached to the project**;
+  attaching it is phase 2. Until then the help host is "any other host" and is redirected to
+  `b4gamble.com`, which is today's behaviour.
+- **His answers, recorded in the decision record:** the help site gets its own name "Pause Plan"
+  with no B4GAMBLE wordmark or logo (Q2); no Google tag and no cookie banner on the help host,
+  counts from the server, and `b4gamble.com` keeps its 4 October 2026 GA4 decision unchanged (Q3);
+  no non-profit entity now (Q4); the pause plan is the help home page (Q5); the help mailbox moves
+  to the help domain later and `support@b4gamble.com` is acceptable for phase 2 (Q6); new partner
+  presses stop storing the account and the weekly `programme_funnel` count drops its partner-press
+  stages, with the older rows left to a separate data job (Q7); the current Google client is fine
+  for phase 2 and a second one comes before phase 4 (Q8); the home hero link stays exactly as it
+  is and will point at the help site, and the desktop homepage is not changed (Q9).
+- **Unchanged:** PR #530 — the Programme shows no casino, offer, bonus, comparison or `/r/` link
+  to anyone on either host, and `app/program/layout.tsx` keeps passing `researchNavigation={false}`
+  (**DETECTED** at `077e0233`, `:31` and `:33`). No database schema change, no column, no
+  migration. The desktop home page, commercial authority (RFC-042, RFC-047, RFC-049, RFC-054) and
+  the country-block policy are untouched.
+- **Way back:** nothing is deployed, so there is nothing to roll back; the way back from each
+  phase is RFC-057 §19, and reverting the phase-1 pull requests restores today's behaviour
+  exactly.
+
+## The commercial menu reaches every visitor — in review
+
+**Founder decision, 17 October 2026** (chat, «Полное меню для всех»;
+[decision](07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed (branch `feat/commercial-menu-for-everyone`):
+
+- b4gamble.com is the commercial site for adults who already gamble and are choosing where to
+  play. Best Offers, Casinos and Bonuses show in the header, the mobile drawer and the footer on
+  **every public page, to every visitor**. The desktop menu reads
+  10 Steps · Best Offers · Casinos · Bonuses · Learn · Help; the drawer's route list is the same
+  without Help, which keeps its own block below;
+- nothing gates it any more: no path, lesson, step, account or cookie.
+  `lib/research-access.ts` and `PublicNavigationDoor` are deleted, and the list of commercial
+  roots moves to `lib/commercial-section.ts`, read only by the Programme and letter guards' tests;
+- the market rule is untouched: Best Offers and Bonuses follow it (`commercialDestinationsNavigable`,
+  `commercialMarketOnlyRoutes`), with the same 1.5-second bounded wait in
+  `app/(public)/layout.tsx`, the one timed-out retry, the settled marker and the rejected state. A
+  prohibited market still sees no Best Offers and no Bonuses. The casino directory is editorial
+  and has never been on that list, so **in a prohibited market the Casinos link now appears on
+  every public page** where before it appeared only on a casino page — recorded under Consequences
+  in the decision;
+- the Programme keeps the clean shell of PR #530: `app/program/layout.tsx` still passes
+  `researchNavigation={false}` and `app/not-found.tsx` `researchNavigation={!programmeDocument}`,
+  so no Programme document carries a casino address. A test renders the Programme shell under
+  `/casinos`, `/program` and `/` to prove the prop, not the path, is what keeps them out;
+- the trust page `/can-you-trust-b4gamble` (en/sv/da) says what the code now does;
+- **part B, not built:** the help site on `pauseplan.help` (bought 16 October, not attached to the
+  project), with the Programme, the pause plans, the help guides, `/beside`, `/innan` and the
+  helplines, and one quiet "need help" link to it from b4gamble.com. RFC-057 phase work;
+- this supersedes [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md)
+  in full (amendment 5) and the public half of the 16 October notes in RFC-002, RFC-021 and
+  RFC-025 §13. Way back: tag `archive/research-section-menu-gate-2026-10-17` (`774dd2f7`) and the
+  restore steps in the record;
+- no migration, no new column, no data change. DETECTED: horizontal overflow checked at 901, 960,
+  1024, 1100, 1200, 1280 and 1440 px in en, de, sv, fi, nl, pt and el — one row, no overflow.
+
 ## The Programme shows no casino links, to anyone — live
 
 **Founder decision, 16 October 2026** (question tool, «Без казино для всех»;
@@ -46,9 +118,10 @@ was merged into `main` as `774dd2f7` on 16 October 2026 (19:33 UTC) and its Prod
   Home Research card and the step-10 "Explore when you are ready" links are removed;
 - finishing step 3 "Research responsibly" opens nothing: the lesson flag (cookie
   `b4g_research_access`, event `b4g:research-access`, note `b4g_research_opened_at`, the week-long
-  menu mark) and the home's `researchAccess` / `discoveryLinks` fields are deleted; the menu shows
-  Best Offers, Casinos and Bonuses only on the research pages themselves, everyone else sees
-  10 Steps · Learn · Help;
+  menu mark) and the home's `researchAccess` / `discoveryLinks` fields are deleted. (The clause
+  that followed here — the menu showing Best Offers, Casinos and Bonuses only on the research
+  pages — is superseded by the Founder decision of 17 October 2026 above; everything else in this
+  section stands.)
 - no letter links to a casino page or a partner route, the marketing broadcast included (it goes
   to Programme people): the Admin editor refuses such a link, activating an older version checks it
   again, and a stored row with one cannot be rendered, so it is never sent; the pause letters stay
@@ -958,12 +1031,13 @@ the company line) from everyone for now, without deleting it. Decision record:
   Google's UK gambling certification asks for (the precondition for a YouTube
   link). The Founder confirmed after being told.
 
-## Casino research in the menu: two doors — live 10 October 2026
+## Casino research in the menu: two doors — live 10 October 2026, superseded
 
-> **Superseded in part (PROPOSED, 16 October 2026):** door two (the lesson flag) and "the moment
-> research opens" are withdrawn once [PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)
-> is merged and deployed; door one and the lesson at step 3 stay. The section below describes
-> Production until then.
+> **Superseded in full (PROPOSED, 16 and 17 October 2026):** door two (the lesson flag) and "the
+> moment research opens" are withdrawn by [PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md),
+> and door one by [COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17](07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md),
+> each once merged and deployed. The whole menu then reaches every visitor on every public page.
+> Only the lesson at step 3 outlives the rule. The section below describes Production until then.
 
 **Founder instruction, 10 October 2026:** Best Offers, Casinos and Bonuses in
 the header and footer put off visitors who came for help and blur what the
@@ -1301,7 +1375,10 @@ unchanged: research links appear inside the research section or after the
 lesson at step 3. (Since 16 October 2026, PROPOSED until deployed: research
 links appear only inside the research section; the lesson flag and
 `researchAccessOpen` are deleted. See
-[PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).) Two more landing pages stay: `/innan` (the rule before the
+[PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
+Since 17 October 2026, PROPOSED until deployed: `lib/research-access.ts` itself is deleted and
+the commercial links appear on every public page. See
+[COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17](07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md).) Two more landing pages stay: `/innan` (the rule before the
 app, kept in the browser, no button onwards) and `/beside` (for the person
 beside a player: the real number, one message in her words, day 11, the
 helplines). All three link to no casino themselves and state the revenue model;
@@ -1465,6 +1542,30 @@ Tests: `tests/pause-letters.test.ts` (`pause-letters:test`, in `ci:quality`),
 the staged upgrade in `scripts/ci-migrations.mjs`.
 
 **PROPOSED — NOT YET LIVE.**
+
+## Vercel Cron paths reach their handlers on Production
+
+**DETECTED and fixed, 17 October 2026** (RFC-057 §21.9, branch
+`fix/pause-letters-cron-host`). Vercel invokes a project Cron Job on a
+generated Production deployment hostname, so `lib/auth/runtime-canonical-host.ts`
+has always let the cron paths continue instead of answering the public-host
+308 to `https://b4gamble.com`. That exemption was an explicit list of three
+paths, and `/api/internal/cron/pause-letters` — scheduled hourly at minute 23
+since the pause letters landed — was missing from it, as
+`/api/internal/cron/learn-content` had been before commit `a21958d3`. The
+handler would not have run on Production. **Nothing was lost:**
+`PAUSE_LETTERS_ENABLED` is off, so the run is a no-op today.
+
+- The exemption is now one exported list, `PRODUCTION_CRON_PATHS`, holding all
+  four scheduled paths. The edge matcher cannot read `vercel.json` at runtime,
+  so the list stays a literal.
+- `tests/production-canonical-host.test.ts` (`canonical-host:test`, and inside
+  `brand-cutover:test` in `ci:quality`) now reads `vercel.json`, asserts the
+  scheduled paths and `PRODUCTION_CRON_PATHS` are the same set, and walks every
+  scheduled path through the resolver on two generated hosts. A cron added to
+  the schedule and forgotten in the resolver fails Quality.
+- Only `/api/internal/cron/*` paths may take the exemption; a suffix below a
+  cron path (`…/unexpected`) still redirects.
 
 ## Weekly funnel count (`programme_funnel`) — in review
 

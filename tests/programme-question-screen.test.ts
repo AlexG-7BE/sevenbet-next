@@ -314,7 +314,7 @@ test("the end of a step: a keepsake card, the finish press without XP, the rewar
   assert.match(read("lib/security/content-security-policy.ts"), /"img-src 'self' data: blob: https:",/);
 
   // The completion screen carries no research block (Founder, 16 October 2026).
-  assert.doesNotMatch(missionExperience, /from "@\/lib\/research-access"|researchDoorOpen\(|ResearchOpened|ResearchChecklist/);
+  assert.doesNotMatch(missionExperience, /from "@\/lib\/(?:research-access|commercial-section)"|researchDoorOpen\(|ResearchOpened|ResearchChecklist/);
 
   // Motion: the card rises, the tick and the new dot follow; none for readers who ask for none.
   assert.ok(stylesheet.includes('.stepMain[data-programme-completion="fresh"] .keepsake { animation: programme-keepsake-in 240ms var(--pg-ease) both; }'));

@@ -136,7 +136,7 @@ test("the path folds and removes nothing; the home carries no research card (Fou
   assert.match(stylesheet, /\.homePath > div button \{ min-height: 44px;[^}]*font-size: 14px;/);
 
   // No research card, no discovery link and no lesson state: the dashboard ends in help.
-  assert.doesNotMatch(home, /researchLinksShown|researchFeatured|discoveryLinks|researchAccess|data-programme-research|programmePublicHref|from "@\/lib\/research-access"/);
+  assert.doesNotMatch(home, /researchLinksShown|researchFeatured|discoveryLinks|researchAccess|data-programme-research|programmePublicHref|from "@\/lib\/(?:research-access|commercial-section)"/);
   assert.doesNotMatch(home, /href=\{?["'`]?\/(?:casinos|bonuses|best-offers|compare|bonus-guide)/);
   // The privacy footer keeps its two lines.
   assert.ok(home.includes('<footer className={styles.dashboardFooter}><span>{t("Your data is private. We never use it for offers or rankings.")}</span><span>{t("18+ · Protected Help remains available.")}</span></footer>'));

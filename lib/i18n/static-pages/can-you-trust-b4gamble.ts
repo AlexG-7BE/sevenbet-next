@@ -9,10 +9,10 @@ import { currentProgrammeJourney } from "./ten-steps";
  * - commission: app/(public)/affiliate-disclosure (qualifying action, no charge to the reader,
  *   no effect on the Editor Score) and lib/i18n/product-pages-catalog.ts (casinos and offers we
  *   can link to from the reader's country are listed first, then by Editor Score);
- * - casino pages and the Programme: lib/research-access.ts (the research links show in the menu
- *   only on the public research pages) and docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md
- *   (no Programme screen, card or letter links to a casino, bonus or offer page; no step opens
- *   anything in the menu);
+ * - casino pages and the Programme: docs/07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md
+ *   (the menu links to the casino, bonus and offer pages from every public page) and
+ *   docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md (no Programme screen, card or letter
+ *   links to a casino, bonus or offer page; no step changes the menu);
  * - privacy: app/(public)/privacy/page.tsx and lib/analytics (Google Analytics on every page
  *   except Help, the self-check and Admin, signals and ad personalisation off, no custom events).
  *
@@ -81,8 +81,8 @@ function en(): TrustMessages {
         id: "casino-pages",
         heading: "The Programme shows no casino pages",
         paragraphs: [
-          "The casino, bonus and offer pages are public. Anyone can open them from a search or a link, and while you are on one of them the site menu shows them.",
-          `Everywhere else, the menu shows 10 Steps, Learn and Help, to everyone. The Programme links to no casino, bonus or offer page, and finishing a step changes nothing in the menu. Step 3, “${stepThree}”, helps you choose one person or one help service and plan the first 10 minutes of an urge.`,
+          "The casino, bonus and offer pages are public. The site menu links to them from every page, for everyone: this is a site for adults who already gamble and are choosing where to play.",
+          `Inside the Programme there is none of that. The Programme links to no casino, bonus or offer page, and finishing a step changes nothing in the menu. Step 3, “${stepThree}”, helps you choose one person or one help service and plan the first 10 minutes of an urge.`,
           "Nothing you write or choose in the Programme changes which casinos or offers the site shows, or their order.",
           "Offers appear only where the law allows them, and only from casinos licensed for your country.",
         ],
@@ -157,8 +157,8 @@ function sv(): TrustMessages {
         id: "casino-pages",
         heading: "Programmet visar inga casinosidor",
         paragraphs: [
-          "Sidorna om casinon, bonusar och erbjudanden är öppna för alla. Vem som helst kan nå dem via en sökning eller en länk, och medan du är på en av dem visar menyn dem.",
-          `På resten av sajten visar menyn 10 steg, Lär dig och Hjälp, för alla. Programmet länkar inte till några sidor om casinon, bonusar eller erbjudanden, och när du gör klart ett steg ändras ingenting i menyn. Steg 3, ”${stepThree}”, hjälper dig att välja en person eller ett stöd och planera de första 10 minuterna när suget kommer.`,
+          "Sidorna om casinon, bonusar och erbjudanden är öppna för alla. Menyn länkar till dem från varje sida, för alla: det här är en sajt för vuxna som redan spelar och ska välja var de spelar.",
+          `Inne i programmet finns inget av det. Programmet länkar inte till några sidor om casinon, bonusar eller erbjudanden, och när du gör klart ett steg ändras ingenting i menyn. Steg 3, ”${stepThree}”, hjälper dig att välja en person eller ett stöd och planera de första 10 minuterna när suget kommer.`,
           "Det du skriver eller väljer i programmet påverkar inte vilka casinon eller erbjudanden sajten visar, eller i vilken ordning.",
           "Erbjudanden visas bara där lagen tillåter det, och bara från casinon med licens för ditt land.",
         ],
@@ -233,8 +233,8 @@ function da(): TrustMessages {
         id: "casino-pages",
         heading: "Programmet viser ingen casinosider",
         paragraphs: [
-          "Siderne om casinoer, bonusser og tilbud er åbne for alle. Alle kan finde dem via en søgning eller et link, og mens du er på en af dem, viser menuen dem.",
-          `På resten af siden viser menuen 10 trin, Lær og Hjælp, for alle. Programmet linker ikke til sider om casinoer, bonusser eller tilbud, og når du gennemfører et trin, ændres intet i menuen. Trin 3, ”${stepThree}”, hjælper dig med at vælge én person eller ét hjælpetilbud og planlægge de første 10 minutter, når trangen kommer.`,
+          "Siderne om casinoer, bonusser og tilbud er åbne for alle. Menuen linker til dem fra hver side, for alle: det her er en side for voksne, der allerede spiller og skal vælge, hvor de spiller.",
+          `Inde i programmet er der intet af det. Programmet linker ikke til sider om casinoer, bonusser eller tilbud, og når du gennemfører et trin, ændres intet i menuen. Trin 3, ”${stepThree}”, hjælper dig med at vælge én person eller ét hjælpetilbud og planlægge de første 10 minutter, når trangen kommer.`,
           "Det, du skriver eller vælger i programmet, har ingen betydning for, hvilke casinoer eller tilbud siden viser, eller for rækkefølgen.",
           "Tilbud vises kun, hvor loven tillader det, og kun fra casinoer med licens til dit land.",
         ],

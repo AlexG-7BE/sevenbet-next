@@ -38,7 +38,13 @@ export function PublicHeader({
   commercialMobileBestOffersNavigation?: ReactNode;
   commercialMobileBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
-  /** False in the Programme's shell: its menu is built without Best Offers, Casinos and Bonuses. */
+  /**
+   * False in the Programme's shell: its menu is built without Best Offers, Casinos and Bonuses.
+   * The name is historical — there is no research gate left to look for, and nothing reads the
+   * path. True everywhere else, because every public page shows the commercial links (Founder,
+   * 17 October 2026). It is renamed to `commercialNavigation` in the RFC-057 phase, kept for now
+   * so the Programme's shell stays byte-identical to PR #530.
+   */
   researchNavigation?: boolean;
 }) {
   const messages = publicShellMessages(presentation.locale);
