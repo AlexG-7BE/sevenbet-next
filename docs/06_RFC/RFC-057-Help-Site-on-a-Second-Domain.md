@@ -1,8 +1,12 @@
 # RFC-057: Help-Only Site on a Second Domain from the Same Code
 
-- **Status:** `PROPOSED` — not approved and not current authority. Nothing in
-  this RFC is implemented. It becomes `ACTIVE` only after the Founder answers
-  the questions in §22 and approves the architecture.
+- **Status:** `ACTIVE` — approved by the Founder on 17 October 2026 («ок,
+  начинай первый этап»), with his answers to every question of §22 recorded in
+  [HELP-SITE-RFC-057-APPROVED-2026-10-17](../07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md).
+  It is current authority for the architecture below. **Nothing in it is
+  implemented yet:** phase 0 is done, phase 1 (code, all switches off) is the
+  work that starts now, and `docs/CURRENT_STATE.md` records a phase as live
+  only once it is observed on Production (§18).
 - **Decision authority:** Founder decisions of 16 and 17 October 2026.
 
   16 October, through the question tool in the partner-traffic audit session:
@@ -40,6 +44,14 @@
   This RFC records the architecture for decisions 2 and 5, and the host half of
   decision 4. It does not implement decisions 1, 3 or 4; it depends on all
   three (§18).
+
+  17 October, in chat, after reading this RFC and the eight questions of §22,
+  each put to him with one recommendation:
+  7. **«ок, начинай первый этап»** — the architecture is approved, phase 1
+     starts, and with the same word he accepted every recommendation of §22 as
+     it was written to him. The answers are §22 below and the decision record
+     [HELP-SITE-RFC-057-APPROVED-2026-10-17](../07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md),
+     which is the phase 0 gate.
 - **Scope:** which routes the second domain serves, what `b4gamble.com` does
   with them and what it keeps, the one "need help" link, host routing,
   sign-in, consent and analytics, e-mail links, search files, the country
@@ -50,18 +62,23 @@
   RFC-037, RFC-039, RFC-046, RFC-052, RFC-053,
   PROGRAMME-NO-CASINO-LINKS-2026-10-16 and the menu record of 17 October 2026
   (`COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17`, parallel PR).
-- **Would amend, once approved (`ACTIVE` RFCs):** RFC-021 §5 (Production
-  Better Auth trusts two exact hosts); RFC-046 §16 (Google Analytics on the
-  help host, as the Founder answers Q3) and, if Q7 (a) is chosen, RFC-046 §7
-  (partner presses no longer store the account); RFC-052 §7 and RFC-053's
-  public-URL contract (the public origin of a guide depends on its category).
-- **Host and origin authority, once approved:** RFC-030 (one Production
-  origin) and RFC-019 (`lib/site.ts` as the single absolute-URL authority) are
-  `HISTORICAL` in the registry, so under GOVERNANCE they are not current
-  constraints and this RFC does not amend them. Once `ACTIVE`, this RFC is the
-  authority for Production hosts and origins (two exact origins, one per
-  site); the single-origin statements in RFC-030 and RFC-019 stay as
-  historical records. RFC-030's exact-match principle is kept (§3).
+- **Amends (`ACTIVE` RFCs), from 17 October 2026:** RFC-021 §5 (Production
+  Better Auth trusts two exact hosts); RFC-046 §16, for the help host only —
+  it carries no Google tag and no cookie banner (Q3 answered G3, and
+  `b4gamble.com` keeps the 4 October 2026 decision unchanged); RFC-046 §7 —
+  new partner presses no longer store the account and the weekly
+  `programme_funnel` count loses its partner-press stages (Q7 answered (a);
+  clearing the older rows is a separate data job, not part of phase 1);
+  RFC-052 §7 and RFC-053's public-URL contract (the public origin of a guide
+  depends on its category). Each amendment takes effect when the phase that
+  carries it ships, not on approval.
+- **Host and origin authority:** RFC-030 (one Production origin) and RFC-019
+  (`lib/site.ts` as the single absolute-URL authority) are `HISTORICAL` in the
+  registry, so under GOVERNANCE they are not current constraints and this RFC
+  does not amend them. As an `ACTIVE` RFC it is now the authority for
+  Production hosts and origins (two exact origins, one per site); the
+  single-origin statements in RFC-030 and RFC-019 stay as historical records.
+  RFC-030's exact-match principle is kept (§3).
 - **Does not change:** the database schema (no table, column or migration);
   Mission order, prerequisites, rewards or XP; commercial authority
   (RFC-042, RFC-047, RFC-049, RFC-054); the `b4gamble.com` desktop home page,
@@ -95,6 +112,20 @@ rules disagree).
   (17 October 2026), which includes PR #530 (merged from head `a5953b33`).
   The first draft was written at `800c2eb0`; this revision's line references
   were checked at `774dd2f7`.
+- **Line references move, the facts do not (added on approval, 17 October
+  2026).** The menu change has since landed on `main` as PR #533
+  (`077e0233`), the parallel record's part A, so every `:line` citation below
+  is as of `774dd2f7` and several have shifted by a few lines. Re-checked at
+  `077e0233` and **DETECTED** unchanged in substance: `app/program/layout.tsx`
+  still passes `researchNavigation={false}` twice (`:31`, `:33`); the PR #530
+  guard still asserts exactly that, now at
+  `tests/programme-no-casino-links.test.tsx:273`; `GUIDE_NAVIGATION` is
+  `lib/public-shell.ts:19` with the same two entries; and the footer's
+  "Programme and support" column is `components/public-shell/PublicFooter.tsx:51`
+  with the same eight links. As §4.3 predicted, PR #533 rewrote
+  `tests/public-shell.test.ts`, and `lib/research-access.ts` is gone, replaced
+  by `lib/commercial-section.ts`. Phase 1 re-reads the inventories of §4.1 and
+  §5 against the head it is written on rather than trusting these numbers.
 - Read for this RFC: `docs/GOVERNANCE.md`, the RFC registry, RFC-019, RFC-020,
   RFC-021, RFC-030, RFC-036, RFC-037, RFC-039, RFC-046, RFC-052, RFC-054,
   `middleware.ts`, `next.config.mjs`, `vercel.json`, `lib/site.ts`,
@@ -300,7 +331,7 @@ the menu for every visitor of the main site.
 | `/help`, `/help/*` | protected Help |
 | `/responsible-gambling`, `/responsible-gambling/*`, `/responsible-gaming`, `/self-check`, `/tools/budget-calculator` | the last three are legacy redirects to `/responsible-gambling` |
 | `/learn/responsible-gambling`, `/learn/responsible-gambling/*` | help guides: the protected category, which never carries an offer bridge (**DETECTED** `lib/articles/article-bridges.ts`) and whose related reading stays inside the category (**DETECTED** `lib/articles/related-reading.ts`). Not clean yet (**DETECTED**): every guide, the protected category included, ends with "Editorial methodology →" `/methodology` (`LearningArticleView.tsx:107`), a `COMMERCIAL` route; and the page prints a stored canonical URL resolved against `siteUrl` (§14). On the help host the methodology link is left out and only the path of a stored canonical is used |
-| `/who-runs-this`, `/for-organisations` | new pages, §17 and §16.3 (slugs PROPOSED; they follow the name chosen in Q2) |
+| `/who-runs-this`, `/for-organisations` | new pages, §17 and §16.3 (slugs PROPOSED; they are written under the help site's own name, "Pause Plan", answered Q2) |
 | `/help-share-image` | the help host's default social image (path PROPOSED, §8): no review, bonus or casino words |
 | `/api/help-media/[key]` | the first-party help-guide image route (path PROPOSED, §13): it reads the same content-addressed storage keys as `/api/media/*` and serves only keys referenced by a published `responsible-gambling` guide. `/api/media/*` itself stays `COMMERCIAL` and answers 404 here, so no help page ever loads an image from `media.b4gamble.com` |
 
@@ -308,12 +339,12 @@ the menu for every visitor of the main site.
 
 | Routes | Help-host behaviour |
 | --- | --- |
-| `/` | the help home (Q5); the main home is unchanged |
+| `/` | the help home: the pause plan (answered Q5 (b)); the main home is unchanged |
 | `/learn` | lists only `responsible-gambling` guides; a tag hub (Spelpaus, ROFUS, GAMSTOP) works as today because it already selects inside that category (**DETECTED** `lib/articles/pause-hub-selection.ts`). Help-host copy: today's meta description "Plain-language guides to casino bonuses, banking, games, reviews and responsible play" (`lib/i18n/learning-center.ts:47`, and its translations) is replaced, and the topic chips Bonuses, Banking, Casinos, Games and Industry (`lib/final-handoff/transforms.ts:466-472`) are not rendered |
 | `/privacy`, `/terms`, `/contact` | the same controller and documents, with the sections that do not apply on the help host left out (§10, §17) |
 | `/login`, `/reset-password`, `/unsubscribe` | customer sign-in; after phase 3 the main site's `/login` and `/reset-password` 301 to the help host, because customer accounts exist only for the Programme |
 | `/api/auth/*`, `/api/program/*`, `/api/programme-access/*`, `/api/contact`, `/api/email/unsubscribe`, `/api/customer/email-preference`, `/api/public/pause-reminder`, `/api/presentation` | the APIs help pages call; never redirected |
-| `/api/consent/analytics`, `/api/analytics/events` | only if the help host keeps optional analytics (Q3) |
+| `/api/consent/analytics`, `/api/analytics/events` | **not served** on the help host: Q3 is answered G3, no Google tag, no banner, no optional cookies (§10) |
 | `/ig`, `/fb`, `/x`, `/threads`, `/lana`, `/ig/*`, `/fb/*`, `/x/*`, `/t/*` | short links land on help pages (§15) |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt`, icons, `/_next/*`, first-party static images | per-host content (§12); the static files are limited by §4.2 |
 | the IndexNow key file | each host serves only its own key (§12): `/219017cffaba5177842beab195a2564c.txt` on the main host, a second key on the help host |
@@ -368,11 +399,11 @@ middleware alone.
   | `public/` entry | Help host |
   | --- | --- |
   | `best-offers`, `bonus-directory`, `casino-brands`, `casino-directory`, `demo-casinos`, `partner-preview` | **denied** — commercial imagery |
-  | `brand` (`b4gamble-logo-512.png`) | **denied** — it is the B4GAMBLE mark and an absolute `b4gamble.com` URL in JSON-LD today (§8); whatever logo the help site uses follows Q2 and is served from its own path |
+  | `brand` (`b4gamble-logo-512.png`) | **denied** — it is the B4GAMBLE mark and an absolute `b4gamble.com` URL in JSON-LD today (§8); the help site carries no B4GAMBLE wordmark or logo at all (answered Q2), and its own "Pause Plan" logo is served from its own path |
   | `learn` (`magazine-shelf-…jpg`, `welcome-bonus-feature-cover.png`) | **denied** — both are covers of commercial guides; help-guide images are first-party through the help image route (§13) |
   | `about` (`fresh-interruption.png`) | **denied** — `/about` is `COMMERCIAL` |
   | `data` (`spelpaus-registrations.csv`, `rofus-registrations.csv`) | **allowed** — the pause statistics the help pages print |
-  | `home` (hero and chapter images, tool SVGs) | **allowed only if Q5 (a)** is chosen (the handoff home as the help home); with Q5 (b) the pause plan is the home and the folder is denied |
+  | `home` (hero and chapter images, tool SVGs) | **denied** — the pause plan is the help home (answered Q5 (b)), so the handoff home's images are never requested there |
 
   The rule is reviewed whenever a top-level entry is added; the manifest test
   of §4.1 already fails on an unclassified folder, and the Firewall rule is
@@ -546,11 +577,12 @@ ends it by moving those routes off the main host:
   cross-site Programme target for it. Nothing in the capture is edited. The
   home is therefore listed in §6.6 as a page allowed more than the single
   footer link — **one** extra link, not two.
-  **For the Founder:** the words of that call to action were written for a
-  site that carried the Programme; on a commercial home they can stay, change
-  to the "need help" wording of §6.6, or go altogether, and all three are
-  visible changes to a page he asked not to touch. His call (Q9), before
-  phase 3.
+  **Answered (Q9, 17 October 2026):** the link stays exactly as it is, words
+  and place unchanged, and after phase 3 it points at the help site. The
+  desktop home page is not changed. Even so, the change lives in the home's
+  transform, which is the code the do-not-touch rule protects, so it is
+  written and reviewed as carefully as a visible change and the home is
+  checked on a phone and on the desktop before and after.
 - The main sitemap stops listing help routes; the main `llms.txt` names the
   help site once (§12).
 - Before phase 3 the main site serves help routes exactly as today, inside
@@ -572,13 +604,16 @@ ends it by moving those routes off the main host:
      company's other site, with no link (§17). Honesty about the owner needs
      the name; the rule against links keeps blockers and organisations from
      seeing a path into the catalogue;
-   - the support address, as Q6 decides. **DETECTED:** `/contact` links to
+   - the support address. **DETECTED:** `/contact` links to
      `mailto:support@b4gamble.com` (`app/(public)/contact/page.tsx:40,52`,
      `ContactForm.tsx:188`, constant `SUPPORT_MAILBOX` in
-     `lib/contact/contracts.ts`). With Q6 (a) that one `mailto:` stays and is
-     the only allowed `b4gamble.com` address; with Q6 (b) the help host shows
-     the help-domain mailbox and this exception is removed. The Privacy and
-     Terms addresses are on `7be.io` and are not affected.
+     `lib/contact/contracts.ts`). **Answered (Q6, 17 October 2026):** the help
+     side gets a mailbox on the help domain eventually, and phase 2 may still
+     use `support@b4gamble.com`. So this exception holds — that one `mailto:`
+     is the only allowed `b4gamble.com` address on the help host — and it is
+     removed when the help-domain mailbox exists (DNS and mailbox work, not
+     code). The Privacy and Terms addresses are on `7be.io` and are not
+     affected.
 3. The help shell has its own header, drawer and footer: 10 Steps · Pause
    plan · Guides · Help, and in the footer the owner page, the data statement,
    Privacy, Terms and Contact. It has no research door, no `/for-creators`,
@@ -901,7 +936,7 @@ canonical URLs.
 - The root layout replaces the static `metadata` with a `generateMetadata`
   that reads `resolveServerSite()`: on the help host `metadataBase` is
   `HELP_ORIGIN`, the default title and description are help copy (§17.1), and
-  `siteName` follows Q2.
+  `siteName` is the help site's own name, "Pause Plan" (answered Q2).
 - A help social image at its own path (`/help-share-image`, path PROPOSED,
   class `HELP`) with no review, bonus or casino words. On the help host the
   root metadata, `programme-metadata.ts` and `social-image.ts` name it;
@@ -914,16 +949,17 @@ canonical URLs.
 - Structured data on the help host: its own `WebSite` (`HELP_ORIGIN/#website`)
   and its own `Organization` node (`HELP_ORIGIN/#organization`, legal name
   7BE Inc., `url: HELP_ORIGIN`), because a `b4gamble.com` URL in JSON-LD would
-  break rule §6.1. The display name follows Q2; `sameAs` lists the social
+  break rule §6.1. The display name is "Pause Plan" (answered Q2); `sameAs` lists the social
   profiles whose bios point to the help site (§15).
   Every field above takes the site, not only the `url`:
   - `logo` — the help host cannot print `ORGANIZATION_LOGO_PATH` resolved
     against `siteUrl`, and it cannot serve `public/brand/b4gamble-logo-512.png`
     first-party either, because that re-exports the B4GAMBLE mark onto a site
-    Q2 may rename (and §4.2 denies the folder). The help host's `logo` is its
-    own file at its own path, made with the Q2 name, or the field is left out
+    the help host does not use (and §4.2 denies the folder). The help host's
+    `logo` is its own file at its own path, made with the "Pause Plan" name of
+    Q2, or the field is left out
     until that name exists;
-  - `name` and `alternateName` — the Q2 name; the "Before Gamble" aliases are
+  - `name` and `alternateName` — "Pause Plan" (answered Q2); the "Before Gamble" aliases are
     the main site's brand and are not printed on the help host;
   - `organizationReference()` and `editorialAuthor()` take the site too, so
     the control pages (`lib/seo/control-page-schema.ts:20`) and the help
@@ -1002,15 +1038,16 @@ canonical URLs.
   ownership of an authorised domain (Search Console), and a verified screen may
   need review after a change. The OAuth state and PKCE cookies are host-only,
   so a sign-in starts and finishes on one host.
-- **Google consent screen — Founder question Q8.** With one Production
-  client, a person signing in on the help host sees the B4GAMBLE application
-  name and its `b4gamble.com` home, privacy and terms links on Google's screen.
-  **INFERRED** (Google's setup): the consent screen belongs to the Google Cloud
-  project, so a separate name and links need a second client in its own
-  project. Options: (a) one client, and the help host accepts Google's screen
-  naming B4GAMBLE and `b4gamble.com`; (b) a second client in a second project
-  for the help host, with the help name and the help host's privacy and terms
-  links. Option (b) needs Better Auth to choose the Google client by host
+- **Google consent screen — answered (Q8, 17 October 2026): (a) for phase 2,
+  (b) before phase 4.** With one Production client, a person signing in on the
+  help host sees the B4GAMBLE application name and its `b4gamble.com` home,
+  privacy and terms links on Google's screen. That is accepted while the help
+  site is live but not yet announced, because sign-in has to work on the help
+  host first. **INFERRED** (Google's setup): the consent screen belongs to the
+  Google Cloud project, so a separate name and links need a second client in
+  its own project; before phase 4 (outreach) the help host gets that second
+  client, carrying the "Pause Plan" name of Q2 and the help host's own privacy
+  and terms links. It needs Better Auth to choose the Google client by host
   (**INFERRED:** one Better Auth instance per site; feasibility checked in
   phase 1) and its own consent-screen verification.
 - **Customers end up only on the help site.** Every customer account is a
@@ -1044,7 +1081,7 @@ canonical URLs.
   it); any other origin is still refused. E-mail sign-up and password reset on the help host
   are phase-2 checks (§20.3).
 
-## 10. Consent and analytics — Founder question Q3
+## 10. Consent and analytics — answered (Q3): none on the help host
 
 ### 10.1 Facts (DETECTED)
 
@@ -1057,7 +1094,11 @@ canonical URLs.
 - The help-channel audit (§3.4) records that Help for Dependency cited data
   protection, and that the database is in the United States.
 
-### 10.2 Options for the help host (PROPOSED; the main site keeps the 4 October decision whatever is chosen)
+### 10.2 The answer: G3 (the main site keeps the 4 October decision unchanged)
+
+**Founder decision, 17 October 2026 (Q3): G3.** No Google tag and no cookie
+banner on the help host; the counts come from the server. `b4gamble.com` is
+not touched by this. The options as they were put to him:
 
 | Option | What happens on `<help-domain>` | Banner | Cost |
 | --- | --- | --- | --- |
@@ -1071,10 +1112,15 @@ that blockers and site-classification services can use to join the help
 domain to `b4gamble.com`; the consent choice is stored per host, so a person
 who answered the banner on `b4gamble.com` is asked again on the help host.
 
-Recommendation G3: it is the only option that lets the owner page say "this
-site sets no tracking cookies", it needs no banner (one notice fewer, as the
-Founder's consent-once rule asks), and the CSP can drop the Google hosts.
-Until the Founder answers, the 4 October decision applies everywhere.
+G3 was recommended and chosen: it is the only option that lets the owner page
+say "this site sets no tracking cookies", it needs no banner (one notice
+fewer, as the Founder's consent-once rule asks), and the CSP can drop the
+Google hosts on the help host. **What phase 1 builds:** the Google tag and the
+consent banner are not rendered on the help host, `/api/consent/analytics` and
+`/api/analytics/events` are not served there (§4.1), the help host's CSP drops
+the Google hosts (§13), and the help site's numbers come from
+`programme_funnel`, the `social_hit` log line, request logs, the help-link
+count and Search Console. This amends RFC-046 §16 for the help host only.
 
 ## 11. E-mail links
 
@@ -1119,10 +1165,14 @@ letter at all.
   data for commercial targeting that AGENTS.md forbids. If the Founder ever
   wants a commercial mailing list, it needs its own consented list and its own
   decision, not these accounts.
-- The sender stays `@b4gamble.com` until the Founder chooses otherwise (Q6); a
-  help-domain sender needs Resend DNS records on `<help-domain>`.
+- The sender stays `@b4gamble.com` through phase 2 and moves to a help-domain
+  mailbox afterwards (answered Q6: (b) eventually, (a) acceptable for phase 2);
+  a help-domain sender needs Resend DNS records on `<help-domain>` and an alias
+  in Google Workspace. That is DNS and mailbox work, not code, so it does not
+  gate any phase.
 - Contact (RFC-028) is unchanged: the form posts to the host's own
-  `/api/contact`. The `mailto:` support address follows Q6 (§6, rule 2).
+  `/api/contact`. The `mailto:` support address stays `support@b4gamble.com`
+  until that mailbox exists (§6, rule 2).
 
 ## 12. Search: sitemap, robots, `llms.txt`, IndexNow, hreflang, consoles
 
@@ -1135,7 +1185,7 @@ letter at all.
 | `llms.txt` | the help site: the one phrase, the Programme, pause plans, help guides, control answers, owner page, data statement; no casino text | the commercial site, with the help site named in one line for readers who need help — the mirror of the footer link (§6.6). The 15 October ordering that put the Programme first (AEO work) is reversed on this host: comparison first, the help line last |
 | `llms-full.txt` | 404 (offers) | unchanged |
 | IndexNow | its own, second key and key file, at its own path; announcements are grouped by host, one POST per host with that host's key, and a guide is announced under the host it lives on | unchanged for commercial URLs; its key file is not served on the help host. At phase 3 the moved URLs are announced on both: the old ones from the main host (so the 301 is read) and the new ones from the help host |
-| icons (`app/icon.svg`, `app/favicon.ico`) | the help site's own icon, following the name of Q2; the current `icon.svg` is the B4GAMBLE mark, so with Q2's recommendation it is replaced rather than shared | unchanged |
+| icons (`app/icon.svg`, `app/favicon.ico`) | the help site's own icon, under the name "Pause Plan" (answered Q2); the current `icon.svg` is the B4GAMBLE mark, so on the help host it is replaced, not shared | unchanged |
 | hreflang | language alternates on `HELP_ORIGIN` only | commercial pages only, alternates on `b4gamble.com` only. No page ever lists an alternate on the other host: two hosts are two sites, not two languages of one |
 
 **DETECTED, where the per-host sitemap split actually happens:** the sitemap
@@ -1330,7 +1380,7 @@ moves; no column records the host.
 | Who runs the site, and is it linked to gambling companies? | 7BE Inc. (United States), which also runs `b4gamble.com`, a comparison site paid commissions by licensed operators | DETECTED (Privacy Notice, affiliate disclosure) |
 | Does the help site or the Programme carry partner links or earn money? | No partner links: the Programme since PR #530 (merged 16 October), the help site once this RFC is live; the help site earns nothing itself | DETECTED (PR #530) / PROPOSED |
 | Is Programme data shared with operators, sold or used for marketing? | Not sold or shared; never used to choose, rank or personalise anything commercial | DETECTED (Privacy Notice; RFC-017, RFC-025 firewall) |
-| … but is it combined with casino clicks anywhere? | Yes. Each partner press by a signed-in person is stored with the account (`OutboundClick.userId`, indexed `[userId, attemptedAt]`), and the internal `programme_funnel` count reads it next to Programme stages (`lib/analytics/programme-funnel.server.ts:165-176`). Removing the count alone would leave the stored per-account link | DETECTED (`prisma/schema.prisma`, PROGRAMME-FUNNEL-MCP-2026-10-14) — Q7 |
+| … but is it combined with casino clicks anywhere? | Today yes. Each partner press by a signed-in person is stored with the account (`OutboundClick.userId`, indexed `[userId, attemptedAt]`), and the internal `programme_funnel` count reads it next to Programme stages (`lib/analytics/programme-funnel.server.ts:165-176`). **Answered Q7 (a):** new presses stop storing the account and the count loses its partner-press stages; the older rows keep their link until a separate data job clears them, so the owner page says so while that is true | DETECTED (`prisma/schema.prisma`, PROGRAMME-FUNNEL-MCP-2026-10-14) — Q7 answered |
 | Is it the same database as the casino business? | Yes | DETECTED |
 | Where is it stored and processed? | United States (Vercel `iad1`, Prisma Postgres) | DETECTED in a decision record; exact region UNKNOWN |
 | Which safeguard covers transfers from the UK/EU? | The Privacy Notice says "contact us"; the mechanism per provider is not recorded | UNKNOWN (RFC-036 recorded vendor DPA and transfer evidence as deferred) |
@@ -1339,7 +1389,7 @@ moves; no column records the host.
 | Is the AI on? | Optional and consent-based; the real provider has been switched off in Production since 12 October 2026 (`PROGRAM_AI_REAL_PROVIDER_ENABLED=false`, the Founder's choice that day) | INFERRED from the session record of 12 October, not yet in `CURRENT_STATE`; verify the Production variable before stating it |
 | Who at the company can see a person's answers? | Staff with Admin access and MFA; whether any Admin screen shows Programme answers is not established | UNKNOWN |
 | How long is data kept; how is it deleted? | Retention list in the Privacy Notice; deletion on request | DETECTED |
-| Which trackers run on help pages? | Today GA4 from the first page on Programme pages | DETECTED — Q3 |
+| Which trackers run on help pages? | Today GA4 from the first page on Programme pages; on the help host, none (answered Q3: G3, §10) | DETECTED, and PROPOSED for the help host — Q3 answered |
 | Security? | HTTPS only, encrypted OAuth tokens, Admin MFA, backups, breach runbook | DETECTED (`lib/auth/config.ts`, RFC-017, Backup-and-Restore runbook) |
 | Age? | 18+ self-attestation, no KYC | DETECTED (RFC-021) |
 | Registration with the ICO? | Not recorded | UNKNOWN |
@@ -1371,7 +1421,9 @@ be combined with an EU region at that time.
 UK charities and OHID-funded organisations accept no industry money; the
 audit found that only a separate non-profit entity is likely to pass that test.
 It is outside this RFC; the architecture does not prevent it (the help site
-would then move to its own project and database). Q4.
+would then move to its own project and database). **Answered (Q4,
+17 October 2026): not now** — only if a named organisation makes it the
+condition for working with us. Nothing in phases 1–4 depends on it.
 
 ## 17. Owner-disclosure page (PROPOSED)
 
@@ -1391,14 +1443,16 @@ approves the exact text before merge. Content, in plain words:
    offer or advertising, and is never given to an operator or affiliate
    partner. **DETECTED:** today a partner press by a signed-in person is
    stored with the account (`OutboundClick.userId`), and `programme_funnel`
-   counts those presses next to Programme stages. The sentence is true only
-   with Q7 (a): the count loses its partner-press stages and new presses stop
-   storing the account. With Q7 (b) the page says plainly that presses on
-   `b4gamble.com` are stored with the account and counted next to Programme
-   progress.
+   counts those presses next to Programme stages. **Answered (Q7 (a)):** new
+   presses stop storing the account and the count loses its partner-press
+   stages, which is what makes the sentence true going forward. Clearing the
+   older rows is a separate data job, not part of phase 1, so until it is run
+   the page also says plainly that presses made before the change are still
+   stored with the account.
 5. **What is stored and where**, with a link to `/for-organisations` and the
    Privacy Notice.
-6. Where the help site sets no tracking cookies (G3), it says so.
+6. **The help site sets no tracking cookies** and carries no Google tag
+   (answered Q3: G3), so the page says so plainly.
 
 The page replaces the help-side use of `/can-you-trust-b4gamble`, whose
 research next-step block cannot appear on the help host.
@@ -1440,7 +1494,7 @@ lines of test:
 
 | Phase | What | Gate before the next phase |
 | --- | --- | --- |
-| **0 — Decisions and accounts** (Founder) | answers to §22; domain done (`pauseplan.help` bought 16 October, DNS at Vercel); Search Console Domain property and Bing site; optional Resend domain; a second Google client if Q8 (b) | answers recorded in a decision record |
+| **0 — Decisions and accounts** (Founder) | **DONE, 17 October 2026.** The §22 answers are given and recorded in [HELP-SITE-RFC-057-APPROVED-2026-10-17](../07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md); the domain is done (`pauseplan.help` bought 16 October, DNS at Vercel). Still outstanding, and none of them gates phase 1: the Search Console Domain property and the Bing site (needed in phase 3), the Resend domain and help mailbox (Q6, between phases 2 and 4), and the second Google client (Q8 (b), before phase 4) | **MET** — answers recorded in the decision record |
 | **1 — Code, dark** | one or more PRs: host manifest (with metadata routes and `public/`), middleware gate, help shell and host-aware root not-found, help home, host-aware root metadata and the help share image, per-site origins and site-keyed caches, Better Auth two-host config (code only), auth letters accepting the request's own origin, per-host search files (robots per request, second IndexNow key), e-mail origins, Learn origin by category and the stored-canonical rule, first-party help images, help-host copy (§17.1), owner page and data statement, link guard over raw HTML, inline page data and `?_rsc=` responses, and two-host browser specs. All switches off: the main site behaves exactly as before, which tests prove | PR #530 merged (done, `774dd2f7`) and `researchNavigation={false}` still passed by the Programme layout after the menu change; the replacement step-3 lesson (decision 3) merged, so the help site never launches with a casino-comparison lesson; the Founder has seen help-host screens and copy as Production renders them (phone first, Google button shown); CI green |
 | **2 — Help host live, not indexed, not linked** | the help-host Firewall deny rule (§4.2); attach `<help-domain>` and `www` to the project; set `BETTER_AUTH_TRUSTED_ORIGINS`; add the Google origin and callback; `HELP_SITE_SERVING=true`; redeploy | checks in §20.3 pass, including e-mail sign-up and reset, the Founder's own Google sign-in on his phone and the blocker check; help pages fetched 200 from GB, SE, DK |
 | **3 — Move and index** | `HELP_SITE_REDIRECTS=true`, in one deployment: help-host pages become indexable and main-host 301s start together, so no page is indexable on both hosts; the main site drops its help links, its "Programme and support" footer column and its customer Log in, and gains the one "need help" line (§5, §6.6, §9.2); Learn origin switch, letters, short links; submit the help sitemap and IndexNow for help URLs; bios on the Founder's word; registry and `CURRENT_STATE` updated | one-hop 301s verified; help guides announced; no 404 among moved URLs; the required-notice check of §5 done for GB, SE, DK and DE; exactly one help link per main-host page |
@@ -1528,7 +1582,7 @@ not run.
   IndexNow groups by host and uses each host's own key; the main key file
   answers 404 on the help host.
 - Root metadata: on the help host `metadataBase` is `HELP_ORIGIN`, the default
-  description has no casino words, `siteName` follows Q2 and the default image
+  description has no casino words, `siteName` is "Pause Plan" (Q2) and the default image
   is the help share image; on the main host the metadata is unchanged.
 - Caches: robots differs by host in the same process; every cache entry
   holding absolute URLs has the site in its key; no response whose body
@@ -1547,7 +1601,7 @@ not run.
   commercial or `b4gamble.com` link; a stored absolute canonical renders on
   the help host as `HELP_ORIGIN` plus its path; the verifier checks the help
   host.
-- Analytics: per the Q3 answer (for G3: no Google tag, no banner and no
+- Analytics: Q3 is answered G3, so the help host serves no Google tag, no banner and no
   Google hosts in the CSP on the help host).
 
 ### 20.2 Link guard and browser
@@ -1560,8 +1614,8 @@ not run.
   the inline page data (`self.__next_f`) and the `?_rsc=` data responses
   fetched during client navigation between help pages. The allowed exceptions
   (§6, rule 2) are checked exactly: the plain-text mention on `/who-runs-this`
-  is text, not a link, and the only `b4gamble.com` address is the Q6 support
-  `mailto:` on `/contact`, if Q6 (a).
+  is text, not a link, and the only `b4gamble.com` address is the support
+  `mailto:` on `/contact`, until the help-domain mailbox of Q6 replaces it.
 - Playwright on a local production build with two hosts (`localhost` and
   `help.localhost`): help home → pause plan → Programme step 1 → sign-up with
   e-mail and the Google button rendered (placeholder keys) → the new step-3
@@ -1577,7 +1631,7 @@ not run.
   folder of §4.2 (`/best-offers/…`, `/bonus-directory/…`, `/casino-brands/…`,
   `/casino-directory/…`, `/demo-casinos/…`, `/partner-preview/…`,
   `/brand/b4gamble-logo-512.png`, `/learn/…`, `/about/…`, and `/home/…`
-  unless Q5 (a)) and `/_next/image` requests for them refused on the help
+  included, since Q5 is answered (b)) and `/_next/image` requests for them refused on the help
   host, with `/data/*.csv` still served (§4.2).
 - From a KZ exit: 451 on the help host; 403 on its raster assets.
 - The four path-only Firewall rules (auth entry, second factor, contact,
@@ -1606,11 +1660,11 @@ not run.
 4. Learn verification, result URLs and context schemas assume `b4gamble.com`
    (§14).
 5. RFC-046 §16 counts Programme pages in GA4, while help organisations ask
-   about data protection (§10, Q3).
+   about data protection (§10; answered Q3: G3, no Google tag and no banner on the help host).
 6. Partner presses are stored with the account (`OutboundClick.userId`) and
    `programme_funnel` counts them next to Programme stages, while the owner
    page should say Programme data never reaches the casino side (§16.2,
-   §17.4, Q7).
+   §17.4; answered Q7 (a)).
 7. The Mission 08 lesson still teaches comparing casinos and bonus terms
    (DETECTED in the PR #530 record), which a help-only site cannot carry —
    handled by decision 3 as a phase-1 gate.
@@ -1677,8 +1731,10 @@ not run.
     (**DETECTED**, §5; the earlier claim of a second `/10-steps` link on the
     home was wrong and is corrected there). Any of the three ways out is a
     visible change or a cross-site link on the home, and the change is made
-    in the home's transform rather than in a page file. Put to him as Q9; the
-    recommendation keeps the home as it looks.
+    in the home's transform rather than in a page file. **Answered Q9 (a),
+    17 October 2026:** the link stays exactly as it is, in its place and with
+    its words, and after phase 3 it points at the help site, so the home keeps
+    the look he asked not to touch.
 22. **A commercial site with no account, and letters that are all help
     letters.** From phase 3 `b4gamble.com` has no customer sign-in while every
     stored customer account is a Programme account on the other host
@@ -1715,84 +1771,93 @@ not run.
     - the per-host sitemap split happens in `coreRoutes`
       (`lib/site.ts:28-50`), and `app/icon.svg` needed a row in §12.
 
-## 22. Open Founder questions
+## 22. Founder answers (17 October 2026)
 
-Two earlier questions are closed and are not repeated here: the **domain**
-(answered 16 October — `pauseplan.help`, bought, DNS at Vercel, §3) and
-**which site is which** (answered 17 October — `b4gamble.com` commercial with
-the full menu, the Programme and the help content on the help site; §1).
-Their old numbers are kept free so that Q2–Q8 below still mean what they mean
-everywhere else in this RFC.
+**All eight questions are answered.** The Founder read this RFC and the eight
+questions below, each put to him with one recommendation, and replied «ок,
+начинай первый этап» — approving the architecture and, with the same word,
+every recommendation as it was written to him. He was not asked to repeat the
+answers one by one. The decision record is
+[HELP-SITE-RFC-057-APPROVED-2026-10-17](../07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md),
+and it is the phase 0 gate of §18.
 
-Each question ends with my recommendation in one line. They are
-recommendations, not decisions.
+Two earlier questions were closed before this: the **domain** (answered
+16 October — `pauseplan.help`, bought, DNS at Vercel, §3) and **which site is
+which** (answered 17 October — `b4gamble.com` commercial with the full menu,
+the Programme and the help content on the help site; §1). Their old numbers
+are kept free so that Q2–Q9 still mean what they mean everywhere else in this
+RFC.
 
-2. **Name.** Keep "B4GAMBLE" on the help site, or give it its own name. The
-   name sets the wordmark, page titles, structured data, the owner page,
-   letter sender name and bios.
-   **Recommendation: its own name, taken from the domain ("Pause Plan"),**
-   because a B4GAMBLE wordmark re-joins the two sites in one glance for the
-   organisations the split is meant to open, while `/who-runs-this` still
-   names 7BE Inc. honestly.
-3. **Google Analytics on the help site:** G1 same as `b4gamble.com` (your
-   4 October choice), G2 only after "Accept cookies", G3 none — no banner,
-   counts from the server, or G4 GA4 except the Programme and Help.
-   `b4gamble.com` stays as it is in every option.
-   **Recommendation: G3.** It is the only one that lets the owner page say
-   "this site sets no tracking cookies", it needs no banner, and the same GA4
-   ID on both domains is a public marker joining them.
-4. **Non-profit entity, later.** Not needed for phases 1–3; if you want it
-   later, which country and form. It would also bring the separate database.
-   **Recommendation: not now.** Decide it only if a named organisation makes
-   it the condition for working with us; it costs a separate entity, database
-   and accounts for a door that may never be used.
-5. **Help home page:** (a) the current home layout with the help menu, no new
-   design, or (b) the pause plan as the home page.
-   **Recommendation: (b).** The pause plan is where the social links already
-   land (`/ig` → `/sv/pause-plan`), it exists in sv, da and en, and it helps
-   on the first screen; the Programme entry stays its main call to action.
-6. **Sender and contact address on the help side:** (a) keep `@b4gamble.com`
-   (then the contact page keeps its `mailto:support@b4gamble.com` link, the
-   one allowed `b4gamble.com` address on the help site), or (b) a mailbox on
-   `<help-domain>` (DNS records for Resend and an alias in Google Workspace).
-   **Recommendation: (b), with (a) acceptable for phase 2.** An organisation
-   that receives a help letter from `@b4gamble.com` learns the connection from
-   the envelope; moving the mailbox is DNS work, not code, and can be done
-   between phases 2 and 4.
-7. **What still ties the Programme to the casino side.** Casino links in
-   letters are already refused, the marketing broadcast included (PR #530).
-   What remains: (a) remove the partner-press stages from the weekly
-   `programme_funnel` count and stop storing the account on new partner
-   presses (no schema change; it changes RFC-046 §7); older presses keep their
-   account link unless you also want it cleared, which is a data update, or
-   (b) keep both and say so on the owner page.
-   **Recommendation: (a), including clearing the older links.** It is what
-   makes the owner page's sentence true, and after 17 October the count has
-   lost its purpose anyway: the Programme no longer leads to the catalogue, so
-   partner presses measure the commercial site, not the Programme.
-8. **Google sign-in screen on the help site:** (a) one Google client: Google's
-   screen names B4GAMBLE and links `b4gamble.com` home, privacy and terms; or
-   (b) a second Google client in its own Google Cloud project, with the help
-   site's name and links (more setup and its own Google review).
-   **Recommendation: (a) for phase 2, (b) before phase 4.** Sign-in must work
-   on the help host first; by the time we write to help organisations, the
-   consent screen should carry the name chosen in Q2 and the help site's own
-   links.
-9. **New, from the 17 October decision — the home page's Programme call to
-   action.** The desktop home carries exactly one Programme link, the hero
-   call to action (**DETECTED**, §5: the "10 Steps" link in the captured
-   footer never reaches the page, and the home has no "About the Programme →"
-   link). After the move that one link leads to the other site. Your standing
-   rule is that the desktop home is not touched, so: (a) the link stays
-   exactly as it is and points at the help site; (b) it keeps its place but
-   takes the "need help" wording of §6.6; or (c) it goes, and the home
-   becomes purely commercial.
-   **Recommendation: (a) now, (c) later if the commercial home is redesigned.**
-   (a) changes nothing a visitor sees and needs no decision about the home's
-   design; the footer line already gives every other page its way out. Note
-   for implementation: even (a) is a change to the home's transform, which is
-   the code the do-not-touch rule protects, so it is written and reviewed as
-   carefully as a visible change.
+2. **Name — its own name, "Pause Plan".** The help site carries no B4GAMBLE
+   wordmark and no B4GAMBLE logo: the whole point of the split is that the two
+   sites are not visibly one, and a B4GAMBLE mark re-joins them in one glance
+   for the organisations the split is meant to open. `/who-runs-this` still
+   names 7BE Inc. honestly, so the connection is disclosed in words.
+   **Build:** wordmark, page titles, `siteName`, structured-data `name`,
+   `alternateName` and `logo`, the share image, icons, the letter sender name
+   and the bios all read "Pause Plan"; `public/brand/` and the current
+   `app/icon.svg` are denied on the help host (§4.2, §8, §12, §17).
+3. **Google Analytics on the help site — G3, none.** No Google tag and no
+   cookie banner on the help host; the counts come from what the server
+   already records. `b4gamble.com` keeps its 4 October 2026 GA4 decision
+   unchanged.
+   **Build:** no tag and no banner on the help host, `/api/consent/analytics`
+   and `/api/analytics/events` not served there, the Google hosts out of the
+   help host's CSP, and the owner page may say the site sets no tracking
+   cookies. Amends RFC-046 §16 for the help host only (§4.1, §10, §13, §17).
+4. **Non-profit entity — not now.** Only if a named organisation makes it the
+   condition for working with us.
+   **Build:** nothing. No entity, no separate database, no separate accounts
+   in phases 1–4; the option stays in §16.5 for a later decision.
+5. **Help home page — (b), the pause plan is the home page.** Not the current
+   home layout with a help menu.
+   **Build:** `/` on the help host serves the pause plan in sv, da and en,
+   with the Programme entry as its main call to action; `public/home/` is
+   denied on the help host (§4.1, §4.2, §20.3). The main site's home is not
+   touched.
+6. **Sender and contact address — (b) eventually, (a) acceptable for
+   phase 2.** A mailbox on the help domain in the end; phase 2 may still use
+   `support@b4gamble.com`.
+   **Build:** nothing blocking. Until the move, the one allowed
+   `b4gamble.com` address on the help site is the `mailto:support@b4gamble.com`
+   link on `/contact` (§6, rule 2). Moving it is DNS and mailbox work — Resend
+   records on the help domain and a Google Workspace alias — not code, and it
+   gates no phase (§11).
+7. **The Programme/casino tie in the data — (a), remove it.** Stop storing the
+   account on new partner presses, and drop the partner-press stages from the
+   weekly `programme_funnel` count. **Clearing the older rows is a separate
+   data job and is not part of phase 1.**
+   **Build:** new `OutboundClick` rows are written without `userId`;
+   `programme_funnel` stops returning partner-press stages and stops reading
+   `OutboundClick` beside Programme stages. No schema change, no migration, no
+   column removed — the field stays and simply receives nothing new. Amends
+   RFC-046 §7. While older rows still carry their account link,
+   `/who-runs-this` says so plainly (§16.2, §17.4).
+8. **Google sign-in screen — (a) for phase 2, (b) before phase 4.** The
+   current client is fine while the help site is live but not yet announced: a
+   person signing in there sees Google's screen naming B4GAMBLE and linking
+   `b4gamble.com`. Before the outreach phase, a second Google client in its own
+   project carries the "Pause Plan" name and the help site's own privacy and
+   terms links.
+   **Build:** phases 1–2 add the help origin and callback to the existing
+   Production client; the second client and the host-aware Better Auth client
+   choice are a phase-3/4 item with their own consent-screen verification
+   (§9.2).
+9. **The home hero link to the Programme — (a), leave it exactly as it is.**
+   The one Programme link on the home page keeps its place and its words, and
+   after the move it points at the help site. **The desktop homepage is not
+   changed.**
+   **Build:** the home's handoff transform keeps rewriting that one link and
+   at phase 3 its target becomes the help origin. Nothing a visitor sees on
+   the home changes. Because that transform is the code the do-not-touch rule
+   protects, the change is written and reviewed as carefully as a visible one,
+   and the home is checked on a phone and on the desktop before and after
+   (§5, §21.21).
+
+**Still outstanding from phase 0, and none of it gates phase 1:** the Search
+Console Domain property and the Bing site for the help domain (needed in
+phase 3), the Resend domain and help mailbox (Q6), and the second Google
+client (Q8).
 
 ## 23. Consequences
 
@@ -1805,8 +1870,10 @@ recommendations, not decisions.
   pages' traffic to the help site; **INFERRED** small (1 Search Console click
   in 28 days, read 16 October). **Measure it:** the two Search Console
   properties separately (§12), and partner presses before and after the menu
-  change through `programme_funnel` — with the caveat of Q7 (a), which would
-  retire those stages.
+  change through `programme_funnel` — but only until Q7 (a) ships, which
+  retires those stages. Read them before the change, because afterwards the
+  count no longer carries them, and partner presses are then measured on the
+  commercial side alone.
 - **Operations:** one more domain, Search Console property, Firewall check and
   runbook row; one code base and one deployment.
 - **People:** signed-in users sign in once more after phase 3; anonymous
