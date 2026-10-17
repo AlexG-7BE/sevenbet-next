@@ -59,10 +59,12 @@ const missionContent = [
     minutes: 20,
   },
   {
+    // The slug is the step's stored identity; the lesson is "Know who to turn to" since
+    // 16 October 2026 (docs/07_Decisions/STEP3-HELP-LESSON-2026-10-16.md).
     slug: "research-responsibly",
-    description: "Apply the decision checklist to eligible information or choose a non-commercial alternative.",
-    objective: "Save research criteria without requiring a referral.",
-    takeaway: "Research should follow the person's criteria, not promotional pressure.",
+    description: "Choose one person or one help service, and plan the first 10 minutes of an urge.",
+    objective: "Save a support card: one person, one help service and the first 10 minutes of an urge.",
+    takeaway: "An urge is easier to get through when one person knows and the number is ready.",
     minutes: 22,
   },
   {

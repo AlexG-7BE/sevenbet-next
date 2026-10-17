@@ -44,15 +44,16 @@ const missionTwoAfterFirstAction = {
   currentAction: "build_7_day_goal", currentActionPosition: 2, actionsCompleted: 1,
   artifact: { direction: "pause" }, xpEarnedHere: 15,
 };
+// Step 3, "Know who to turn to", at its last question: two or three moves for the first 10 minutes.
 const missionEight = {
-  missionNumber: 8, step: missionStep(8), stepId: "research", title: titles[7], purpose: "", status: "current",
+  missionNumber: 8, step: missionStep(8), stepId: "help", title: titles[7], purpose: "", status: "current",
   actions: [
-    { id: "learn_comparison_signals", label: "Learn comparison signals", xp: 15, completed: false },
-    { id: "decode_offer_terms", label: "Decode offer terms", xp: 20, completed: false },
-    { id: "build_research_checklist", label: "Build a research checklist", xp: 15, completed: false },
+    { id: "learn_comparison_signals", label: "Choose one person", xp: 15, completed: true },
+    { id: "decode_offer_terms", label: "Choose one help service", xp: 20, completed: true },
+    { id: "build_research_checklist", label: "Plan the first 10 minutes", xp: 15, completed: false },
   ],
-  currentAction: "learn_comparison_signals", currentActionPosition: 1, actionsCompleted: 0, actionsTotal: 3,
-  artifact: {}, artifactVersion: "1", xpEarnedHere: 0, completionBonus: 25, completedAt: null, legacyCompletion: false, programmeFacts: null,
+  currentAction: "build_research_checklist", currentActionPosition: 3, actionsCompleted: 2, actionsTotal: 3,
+  artifact: { trustedPerson: "friend", openingLine: "call_me", helpService: "phone" }, artifactVersion: "programme-ai-v1:mission-08", xpEarnedHere: 35, completionBonus: 25, completedAt: null, legacyCompletion: false, programmeFacts: null,
 };
 const drafts = {
   kind: "candidates", operation: "goal", title: "Three ways to word it", summary: "Pick the wording closest to what you would do.",
@@ -226,15 +227,15 @@ test("multiple choice uses the same card and keeps its pick 2–3 rule", async (
   await openStep(page, missionEight);
 
   await expect(page.getByText(`Step ${missionStep(8)} of 10`, { exact: true })).toBeVisible();
-  await expect(page.getByRole("group", { name: "Comparison signals · choose 2–3" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Your first 10 minutes · choose 2–3" })).toBeVisible();
   const cards = page.locator("[data-programme-choice]");
-  await expect(cards).toHaveCount(7);
-  await expect(page.getByRole("checkbox")).toHaveCount(7);
+  await expect(cards).toHaveCount(6);
+  await expect(page.getByRole("checkbox")).toHaveCount(6);
   const hint = page.locator("[data-programme-step-hint]");
   await expect(hint).toHaveText("choose 2–3");
-  await page.getByRole("checkbox", { name: "Who operates the casino" }).check();
+  await page.getByRole("checkbox", { name: "Put the phone away" }).check();
   await expect(continueButton(page)).toBeDisabled();
-  await page.getByRole("checkbox", { name: "Withdrawal conditions" }).check();
+  await page.getByRole("checkbox", { name: "Send my line to my person" }).check();
   await expect(page.locator('[data-programme-choice="selected"]')).toHaveCount(2);
   await expect(continueButton(page)).toBeEnabled();
   for (const card of await page.locator('[data-programme-choice="selected"]').all()) {
@@ -242,9 +243,37 @@ test("multiple choice uses the same card and keeps its pick 2–3 rule", async (
     expect((await card.boundingBox())!.height).toBeGreaterThanOrEqual(66);
   }
   // A fourth pick is not taken: the rule is the Mission's, unchanged.
-  await page.getByRole("checkbox", { name: "Payments" }).check();
-  await page.getByRole("checkbox", { name: "Material terms" }).click();
+  await page.getByRole("checkbox", { name: "Go outside or move" }).check();
+  await page.getByRole("checkbox", { name: "Read my support card" }).click();
   await expect(page.locator('[data-programme-choice="selected"]')).toHaveCount(3);
+});
+
+// Step 3 at its second question: the kind of help, then the service that answers for it.
+const missionEightHelpService = {
+  ...missionEight,
+  actions: missionEight.actions.map((action, index) => ({ ...action, completed: index < 1 })),
+  currentAction: "decode_offer_terms", currentActionPosition: 2, actionsCompleted: 1,
+  artifact: { trustedPerson: "friend", openingLine: "call_me" }, xpEarnedHere: 15,
+};
+
+test("step 3's help service card fits a phone: no sideways scroll, 44px call buttons, the urge line for a group", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openStep(page, missionEightHelpService);
+  await expect(page.getByRole("heading", { name: "Which kind of help would you try first?" })).toBeVisible();
+  for (const [choice, service, urge] of [["Talk on the phone", "National Gambling Helpline", false], ["Join a group or see a counsellor", "NHS gambling treatment clinics", true], ["Get help with money and debt", "StepChange", true]] as const) {
+    await page.getByRole("radio", { name: new RegExp(choice) }).check();
+    const card = page.locator("[data-programme-help-service]");
+    await expect(card.getByRole("heading", { name: service, exact: true })).toBeVisible();
+    await expect(card.getByText("When the urge comes", { exact: true })).toHaveCount(urge ? 1 : 0);
+    await expect(card.locator("[data-programme-crisis-line]")).toContainText("Samaritans · 116 123");
+    await expect(card.locator("a[data-programme-emergency-call]")).toHaveAttribute("href", "tel:999");
+    // Wales has its own NHS lines; each card can dial one.
+    await expect(card.getByRole("link", { name: /in Wales$/ }).first()).toHaveAttribute("href", /^tel:0(8082819265|3000859464)$/);
+    for (const call of await card.locator("a[data-programme-help-call]").all()) {
+      expect((await call.boundingBox())!.height, `${choice}: a call button is a 44px target`).toBeGreaterThanOrEqual(44);
+    }
+    await noHorizontalOverflow(page, choice);
+  }
 });
 
 test("at the end of the list the last card is never under the pinned bar", async ({ page }) => {

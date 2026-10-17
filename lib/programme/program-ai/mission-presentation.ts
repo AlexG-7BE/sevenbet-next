@@ -1,6 +1,13 @@
 import type { ProgramAiStructuralArtifact } from "@/lib/programme/program-ai/mission-validation";
 import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
+import {
+  crisisLine,
+  helpContactLine,
+  isProgrammeHelpServiceType,
+  programmeHelpExtras,
+  programmeHelpMarket,
+} from "@/lib/programme/program-ai/help-services";
 
 const fieldLabels: Record<string, ProgrammeMessageKey> = {
   direction: "Your direction",
@@ -23,9 +30,10 @@ const fieldLabels: Record<string, ProgrammeMessageKey> = {
   supportModes: "Support routes",
   supportCardStyle: "Support card",
   exitActionType: "Your exit action",
-  comparisonSignals: "Comparison signals",
-  offerTermSignal: "Offer term to check",
-  researchCriteria: "Your research checklist",
+  trustedPerson: "My person",
+  openingLine: "What I will say",
+  helpService: "My help service",
+  firstTenMinutes: "First 10 minutes",
   scenarioType: "Rehearsal moment",
   responseStrategy: "First response",
   fallbackStrategy: "Fallback response",
@@ -113,20 +121,7 @@ const valueLabels: Record<string, ProgrammeMessageKey> = {
   leave_page: "Leave the page",
   close_account_tools: "Open account control tools",
   take_a_walk: "Step away",
-  licensing_status: "Licence and regulatory status",
-  operator_identity: "Who operates the casino",
-  material_terms: "Material terms",
-  withdrawal_conditions: "Withdrawal conditions",
-  payments: "Payments",
-  safer_gambling_tools: "Tools and limits",
-  offer_conditions: "Offer conditions",
-  wagering_requirement: "Wagering requirement",
-  expiry: "Expiry",
-  eligible_games: "Eligible games",
-  deposit_condition: "Deposit condition",
-  withdrawal_limit: "Withdrawal limit",
   unclear_terms: "Terms remain unclear",
-  withdrawals: "Withdrawal conditions",
   urge_after_stress: "An urge after stress",
   social_invitation: "A social invitation",
   pause_and_check: "Pause and run the checks",
@@ -139,7 +134,7 @@ const valueLabels: Record<string, ProgrammeMessageKey> = {
   decision_checks: "Decision checks",
   friction: "Friction",
   support: "Support",
-  research: "Research checklist",
+  support_card: "Support card",
   fallback: "Fallback",
   yes: "I reviewed the available structural facts",
 };
@@ -154,16 +149,50 @@ const fieldValueLabels: Record<string, Record<string, ProgrammeMessageKey>> = {
     mood: "Am I reacting to the moment?",
     exit: "What is my exit route?",
   },
-  researchCriteria: {
-    licensing_status: "Licence and regulatory status",
-    operator_identity: "Who operates the casino",
-    terms: "Material terms",
-    withdrawals: "Withdrawal conditions",
-    payments: "Payments",
-    safer_gambling_tools: "Tools and limits",
-    offer_conditions: "Bonus conditions",
+  // Step 3 · Know who to turn to (Mission 08)
+  trustedPerson: {
+    partner: "My partner",
+    family: "Someone in my family",
+    friend: "A friend",
+    colleague: "Someone at work",
+    been_there: "Someone who has been there",
+    professional: "A doctor or counsellor",
+    service_first: "Nobody yet: a help service first",
+  },
+  openingLine: {
+    call_me: "Can you call me? I'm having a hard moment.",
+    tell_you: "I want to tell you something about my gambling.",
+    one_word: "If I text you one word, can you call me?",
+    check_in: "Can you ask me how it is going this week?",
+    first_call: "I would like to talk about my gambling.",
+  },
+  helpService: {
+    phone: "Talk on the phone",
+    chat: "Write in a chat",
+    in_person: "Join a group or see a counsellor",
+    debt: "Get help with money and debt",
+    close_ones: "Help for the people close to me",
+  },
+  firstTenMinutes: {
+    phone_away: "Put the phone away",
+    send_line: "Send my line to my person",
+    contact_service: "Call or write to my help service",
+    wait_ten_minutes: "Wait for 10 minutes",
+    go_outside: "Go outside or move",
+    read_card: "Read my support card",
   },
 };
+
+/** Values an earlier lesson could store and the current one no longer offers: they are left out. */
+const retiredFieldValues: Record<string, readonly string[]> = {
+  // "Research checklist" was a final-plan priority while step 3 was "Research responsibly".
+  planPriorityIds: ["research"],
+};
+
+/** A stored value an earlier lesson offered and the current one does not: screens and the provider leave it out. */
+export function isRetiredFieldValue(key: string, value: unknown) {
+  return (retiredFieldValues[key] ?? []).includes(String(value));
+}
 
 const missionResultTitles: Record<number, ProgrammeMessageKey> = {
   2: "MY 7-DAY GOAL",
@@ -172,7 +201,7 @@ const missionResultTitles: Record<number, ProgrammeMessageKey> = {
   5: "MY 3-CHECK ROUTINE",
   6: "MY FRICTION STACK",
   7: "MY SUPPORT ROUTE",
-  8: "MY RESEARCH CHECKLIST",
+  8: "MY SUPPORT CARD",
   9: "MY REHEARSED DECISION",
   10: "MY PLAN",
 };
@@ -183,11 +212,22 @@ function presentValue(key: string, value: string | number | boolean | string[], 
   if (key === "reviewWindowDays") return programmeText(locale, "In 7 days");
   if (key === "reviewCadenceDays") return programmeText(locale, "Every {days} days", { days: String(value) });
   if (key === "timelineReviewed") return programmeText(locale, value === true ? "Reviewed" : "Not reviewed yet");
-  const values = Array.isArray(value) ? value : [value];
+  if (key === "helpService") return helpServiceValue(value, locale);
+  const values = (Array.isArray(value) ? value : [value]).filter((item) => !isRetiredFieldValue(key, item));
+  if (!values.length) return programmeText(locale, "Unavailable");
   return values.map((item) => {
     const label = fieldValueLabels[key]?.[String(item)] ?? valueLabels[String(item)];
     return label ? programmeText(locale, label) : programmeText(locale, "Unavailable");
   }).join(" · ");
+}
+
+/** The kind of help a person chose, as the service that answers for it in their language's market. */
+function helpServiceValue(value: string | number | boolean | string[], locale: ProgrammeLocale) {
+  if (!isProgrammeHelpServiceType(value)) return programmeText(locale, "Unavailable");
+  const market = programmeHelpMarket(locale);
+  return market
+    ? helpContactLine(market.services[value])
+    : `${programmeText(locale, fieldValueLabels.helpService[value])} · ${programmeText(locale, "See the Help page")}`;
 }
 
 export function presentMissionArtifact(
@@ -222,12 +262,47 @@ const planPriorityFacts: Record<string, { missionNumber: number; fields: readonl
   decision_checks: { missionNumber: 5, fields: ["decisionChecks", "pauseRuleType"] },
   friction: { missionNumber: 6, fields: ["frictionMethods", "fallbackMethod"] },
   support: { missionNumber: 7, fields: ["supportModes", "exitActionType"] },
-  research: { missionNumber: 8, fields: ["researchCriteria"] },
+  support_card: { missionNumber: 8, fields: ["trustedPerson", "helpService", "firstTenMinutes"] },
   fallback: { missionNumber: 9, fields: ["responseStrategy", "fallbackStrategy"] },
 };
 
-function boundedSegment(value: string, maximum = 84) {
+const PLAN_SEGMENT_MAXIMUM = 84;
+
+function boundedSegment(value: string, maximum = PLAN_SEGMENT_MAXIMUM) {
   return value.length <= maximum ? value : `${value.slice(0, maximum - 1).trimEnd()}…`;
+}
+
+/**
+ * The support card in the one-screen plan (code review, 17 October 2026): the person, then the
+ * moves for the first 10 minutes, then the help service by name. Only whole parts are taken, so
+ * no number, opening time or move is ever cut; the number itself stays on the support card of
+ * step 3. A language without a checked list names the kind of help.
+ */
+function supportCardPlanSegment(artifact: ProgramAiStructuralArtifact, locale: ProgrammeLocale) {
+  const label = (key: string, value: unknown) => {
+    const message = typeof value === "string" ? fieldValueLabels[key]?.[value] : undefined;
+    return message ? programmeText(locale, message) : "";
+  };
+  const market = programmeHelpMarket(locale);
+  const service = isProgrammeHelpServiceType(artifact.helpService)
+    ? market ? market.services[artifact.helpService].name : label("helpService", artifact.helpService)
+    : "";
+  const moves = Array.isArray(artifact.firstTenMinutes) ? artifact.firstTenMinutes.map((move) => label("firstTenMinutes", move)) : [];
+  const groups = [[label("trustedPerson", artifact.trustedPerson)], moves, [service]]
+    .map((group) => group.filter(Boolean))
+    .filter((group) => group.length);
+  let text = "";
+  for (const group of groups) {
+    let part = "";
+    for (const item of group) {
+      const nextPart = part ? `${part} · ${item}` : item;
+      const candidate = text ? `${text}; ${nextPart}` : nextPart;
+      if (candidate.length > PLAN_SEGMENT_MAXIMUM) break;
+      part = nextPart;
+    }
+    if (part) text = text ? `${text}; ${part}` : part;
+  }
+  return text || (groups[0] ? boundedSegment(groups[0][0]) : "");
 }
 
 export function deterministicFinalPlanText(context: unknown, locale: ProgrammeLocale = "en-GB") {
@@ -254,6 +329,10 @@ export function deterministicFinalPlanText(context: unknown, locale: ProgrammeLo
     const artifact = fact?.artifact && typeof fact.artifact === "object" && !Array.isArray(fact.artifact)
       ? fact.artifact as ProgramAiStructuralArtifact
       : {};
+    if (priority === "support_card") {
+      const card = supportCardPlanSegment(artifact, locale);
+      return card ? [`${humanValue(priority, locale)}: ${card}`] : [];
+    }
     const values = presentMissionArtifact(artifact, locale)
       .filter((row) => projection.fields.includes(row.key) && row.value !== "Unavailable")
       .map((row) => row.value);
@@ -276,36 +355,61 @@ const scenarioCopy: Record<string, ProgrammeMessageKey> = {
   unclear_terms: "The headline is clear, but the conditions that would shape the decision are not.",
 };
 
-const offerExplanations: Record<string, ProgrammeMessageKey> = {
-  wagering_requirement: "This tells you how much activity may be required before bonus-linked funds can be withdrawn.",
-  expiry: "This tells you how long the terms remain available and whether pressure is being created by a deadline.",
-  eligible_games: "This shows which activity counts toward the stated conditions and which does not.",
-  deposit_condition: "This shows what must be paid before the headline becomes relevant.",
-  withdrawal_limit: "This shows whether access to funds is restricted after the offer is used.",
-  unclear_terms: "If the material conditions are not clear, the headline is not enough to judge the offer.",
-};
-
-const optionDescriptions: Record<string, ProgrammeMessageKey> = {
-  licensing_status: "Confirms whether the product is permitted for the relevant market.",
-  operator_identity: "Shows the legal business behind the consumer brand.",
-  material_terms: "Reveals the conditions that shape the headline.",
-  withdrawal_conditions: "Shows how and when funds can be accessed.",
-  payments: "Makes fees, methods and processing expectations visible.",
-  safer_gambling_tools: "Shows what account controls are available before they are needed.",
-  offer_conditions: "Separates the headline from the conditions attached to it.",
-};
-
 export function programmeScenarioText(scenario: string, locale: ProgrammeLocale) {
   const message = scenarioCopy[scenario];
   return message ? programmeText(locale, message) : scenario;
 }
 
-export function programmeOfferExplanation(value: string, locale: ProgrammeLocale) {
-  const message = offerExplanations[value];
-  return message ? programmeText(locale, message) : programmeText(locale, "Unavailable");
+/** The Mission whose result is the support card of step 3, "Know who to turn to". */
+export const SUPPORT_CARD_MISSION = 8;
+
+/**
+ * A step's result as its keepsake: its name, its own sentence and its rows. Most steps take the
+ * sentence a person wrote in the tab. The support card of step 3 takes the line they chose
+ * instead when they wrote none, shows it once, as the sentence, and always ends with the crisis
+ * line of the person's market, so the saved picture carries it too.
+ */
+export function programmeMissionKeepsake(
+  missionNumber: number,
+  artifact: ProgramAiStructuralArtifact,
+  locale: ProgrammeLocale,
+  localWording = "",
+) {
+  const title = programmeMissionResultTitle(missionNumber, locale);
+  const rows = presentMissionArtifact(artifact, locale);
+  const written = localWording.trim();
+  if (missionNumber !== SUPPORT_CARD_MISSION) return { title, sentence: written || undefined, rows };
+  const line = typeof artifact.openingLine === "string" && fieldValueLabels.openingLine[artifact.openingLine]
+    ? programmeText(locale, fieldValueLabels.openingLine[artifact.openingLine])
+    : "";
+  return {
+    title,
+    sentence: written || line || undefined,
+    // The line to call when the urge comes and the one that answers when it is closed stand
+    // right under the service.
+    rows: [
+      ...rows.filter((row) => row.key !== "openingLine").flatMap((row) => row.key === "helpService" ? [row, ...programmeHelpExtraRows(artifact, locale)] : [row]),
+      programmeCrisisRow(locale),
+    ],
+  };
 }
 
-export function programmeOptionDescription(value: string, locale: ProgrammeLocale) {
-  const message = optionDescriptions[value];
-  return message ? programmeText(locale, message) : undefined;
+/** The rows under the chosen service: its market's phone line for the urge, and the line for when it is closed. */
+function programmeHelpExtraRows(artifact: ProgramAiStructuralArtifact, locale: ProgrammeLocale): PresentedArtifactRow[] {
+  const market = programmeHelpMarket(locale);
+  if (!market || !isProgrammeHelpServiceType(artifact.helpService)) return [];
+  return programmeHelpExtras(market, artifact.helpService).map(({ kind, contact }) => kind === "urge"
+    ? { key: "urgeLine", label: programmeText(locale, "When the urge comes"), value: helpContactLine(contact) }
+    : { key: "afterHours", label: programmeText(locale, "When it is closed"), value: helpContactLine(contact) });
+}
+
+export function programmeCrisisRow(locale: ProgrammeLocale): PresentedArtifactRow {
+  const market = programmeHelpMarket(locale);
+  return {
+    key: "crisisLine",
+    label: programmeText(locale, "If you have thoughts of suicide"),
+    value: market
+      ? `${crisisLine(market.crisis)}. ${market.crisis.emergency}.`
+      : programmeText(locale, "Call your local emergency number now."),
+  };
 }

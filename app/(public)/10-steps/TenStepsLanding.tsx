@@ -12,7 +12,7 @@ const missionDescriptions = [
   "Put three practical checks between an impulse and a decision.",
   "Make the fast route less automatic with one or two practical layers.",
   "Prepare a support route without needing to disclose a person's identity.",
-  "Use material terms and safer-gambling facts when comparing options.",
+  "Choose one person or one help service, and plan the first 10 minutes of an urge.",
   "Practise one response before the decision is live.",
   "Bring the useful parts together and decide when to review them.",
 ];

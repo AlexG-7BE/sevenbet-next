@@ -78,16 +78,16 @@ test("mounted Mission path is registry-owned and renders all ten current titles 
     "Check before deciding",
     "Add friction",
     "Prepare support",
-    "Research responsibly",
+    "Know who to turn to",
     "Rehearse the decision",
     "Make the plan reviewable",
   ]);
 
   const localizedTitles = Array.from({ length: 10 }, (_, index) => messages.text[20 + index * 2]);
   const localizedPurposes = Array.from({ length: 10 }, (_, index) => messages.text[21 + index * 2]);
-  // The page lists them in the order a person takes them: "Research responsibly" is the third step.
+  // The page lists them in the order a person takes them: "Know who to turn to" is the third step.
   assert.deepEqual(localizedTitles, programmeJourney.map((missionNumber) => programmeMissionTitles[missionNumber - 1]));
-  assert.deepEqual(localizedTitles.slice(0, 4), ["Map the moment", "Set a 7-day goal", "Research responsibly", "Understand the urge"]);
+  assert.deepEqual(localizedTitles.slice(0, 4), ["Map the moment", "Set a 7-day goal", "Know who to turn to", "Understand the urge"]);
   assert.equal((runtime.match(/data-ten-steps-mission="[^"]*" role="listitem"/g) ?? []).length, 10);
 
   const missionMap = runtime.slice(

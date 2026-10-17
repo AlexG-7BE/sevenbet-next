@@ -6,8 +6,9 @@ export type ProgramAiReviewMilestone = "first" | "mid" | "full";
 /**
  * The order a person takes the Missions in. A Mission's number is its identity: progress rows,
  * reward keys, artifact versions and routes use it and it never changes. Its step is its place
- * in this list, and the step is the number a person sees. "Research responsibly" (08) is the
- * third step (Founder decision, 10 October 2026).
+ * in this list, and the step is the number a person sees. Mission 08 is the third step (Founder
+ * decision, 10 October 2026). Its lesson is "Know who to turn to" since 16 October 2026 (Founder:
+ * the research lesson is replaced by a help lesson; number, step, rewards and prerequisites stay).
  */
 export const programmeJourney = [1, 2, 8, 3, 4, 5, 6, 7, 9, 10] as const;
 
@@ -62,6 +63,9 @@ function mission(
 /** In journey order, so a walk through the registry is a walk through the Programme. */
 export const programAiMissionRegistry = [
   mission(2, ["choose_direction", "build_7_day_goal", "reality_check"]),
+  // Mission 08's action ids are identities from its first lesson ("Research responsibly"): task
+  // states and reward keys are built from them, so they stay. Since 16 October 2026 they carry
+  // the help lesson: choose one person, choose one help service, plan the first 10 minutes.
   mission(8, ["learn_comparison_signals", "decode_offer_terms", "build_research_checklist"]),
   mission(3, ["map_urge_sequence", "name_early_signal", "choose_pause_move"]),
   mission(4, ["choose_boundary", "build_boundary_rule", "choose_execution"]),
@@ -91,9 +95,9 @@ const actionSourceLabels: Readonly<Record<string, string>> = {
   choose_support_route: "Choose a support route",
   build_support_card: "Build the support card",
   choose_exit_action: "Choose an exit action",
-  learn_comparison_signals: "Learn comparison signals",
-  decode_offer_terms: "Decode offer terms",
-  build_research_checklist: "Build a research checklist",
+  learn_comparison_signals: "Choose one person",
+  decode_offer_terms: "Choose one help service",
+  build_research_checklist: "Plan the first 10 minutes",
   choose_scenario: "Choose a scenario",
   rehearse_response: "Rehearse a response",
   build_fallback_response: "Build a fallback response",
@@ -109,7 +113,7 @@ const missionSourcePresentation = [
   { missionNumber: 5, title: "Check before deciding", purpose: "Put three practical checks between an impulse and a decision." },
   { missionNumber: 6, title: "Add friction", purpose: "Make the fast route less automatic with one or two practical layers." },
   { missionNumber: 7, title: "Prepare support", purpose: "Prepare a support route without needing to disclose a person's identity." },
-  { missionNumber: 8, title: "Research responsibly", purpose: "Use material terms and safer-gambling facts when comparing options." },
+  { missionNumber: 8, title: "Know who to turn to", purpose: "Choose one person or one help service, and plan the first 10 minutes of an urge." },
   { missionNumber: 9, title: "Rehearse the decision", purpose: "Practise one response before the decision is live." },
   { missionNumber: 10, title: "Make the plan reviewable", purpose: "Bring the useful parts together and decide when to review them." },
 ] as const;

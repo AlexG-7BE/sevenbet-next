@@ -218,7 +218,7 @@ test("the Prisma store only reads, reads two sign-up fields and dates, and nothi
   ]);
   const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "").replace(/^export const PROGRAMME_FUNNEL_NOTES = \[[\s\S]*?\] as const;$/m, "");
   assert.doesNotMatch(code, /email|userId|anonymousId|\bname: true|draft|taskStates|pause|preferredLocale|signupReferrerHost|signupUtmCampaign|signupUtmContent/);
-  // The third step is the lesson "Research responsibly", Mission 08.
+  // The third step is Mission 08, the lesson "Know who to turn to" ("Research responsibly" before 16 October 2026).
   assert.match(source, /const STEP_THREE_MISSION_NUMBER = programmeJourney\[2\];/);
   assert.equal(programmeJourney[2], 8);
   assert.equal(missionStep(8), 3);
@@ -269,7 +269,7 @@ test("MCP discovery lists programme_funnel as a read-only tool next to social_tr
     assert.equal(programmeFunnelTool.inputSchema.required, undefined);
     assert.deepEqual(Object.keys(programmeFunnelTool.inputSchema.properties as object), ["from", "to"]);
     assert.match(tool?.description ?? "", /withheld \(null\)/);
-    assert.match(tool?.description ?? "", /Research responsibly/);
+    assert.match(tool?.description ?? "", /Know who to turn to/);
     assert.match(tool?.description ?? "", /no account, user, session, email, IP, answer or pause data/);
     assert.equal(learnMcpToolSurfaceIsExpected(discovered.tools.map((candidate) => candidate.name)), true);
     assert.equal(learnMcpToolSurfaceIsExpected(["programme_funnel"]), false);

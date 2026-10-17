@@ -142,7 +142,7 @@ export const controlProgrammePath = [
   "Check before deciding",
   "Add friction",
   "Prepare support",
-  "Research responsibly",
+  "Know who to turn to",
   "Rehearse the decision",
   "Make the plan reviewable",
 ] as const;

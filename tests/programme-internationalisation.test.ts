@@ -383,20 +383,19 @@ test("Swedish Programme copy keeps the step's own words, the site's spelling of 
     assert.doesNotMatch(value, /kasino/i, `sv-SE ${key}`);
     assert.doesNotMatch(value, /\bflik/i, `sv-SE ${key}`);
   }
-  // The step is "Undersök ansvarsfullt"; what it asks for inside uses the same verb.
-  assert.match(programmeMissionCopy("sv-SE", 8).title, /^Undersök /);
+  // Step 3 is the help lesson "Bestäm vem du vänder dig till" since 16 October 2026; its card is a support card.
+  assert.equal(programmeMissionCopy("sv-SE", 8).title, "Bestäm vem du vänder dig till");
+  assert.equal(programmeText("sv-SE", "MY SUPPORT CARD"), "MITT STÖDKORT");
   assert.equal(programmeText("sv-SE", "Research only after a pause"), "Undersök först efter en paus");
-  assert.equal(programmeText("sv-SE", "MY RESEARCH CHECKLIST"), "MIN CHECKLISTA FÖR JÄMFÖRELSER");
   // One spelling with the menu ("Casinon") and the casino pages.
   assert.equal(publicShellMessages("sv-SE").casinos, "Casinon");
-  assert.equal(programmeText("sv-SE", "Who operates the casino"), "Vem som driver casinot");
   // The personal wording is kept in this tab's storage and is not written to the account: said without "tab".
   assert.equal(programmeText("sv-SE", "Your wording · kept in this tab"), "Din formulering · stannar på den här sidan");
   assert.match(programmeText("sv-SE", "The wording can stay broad. Your optional personal wording stays in this tab."), /stannar på den här sidan och sparas inte på ditt konto\.$/);
 
-  // Danish had the same leftover in the same rows; its step is "Undersøg ansvarligt".
+  // Danish had the same leftover in the same rows; its step 3 is "Bestem, hvem du kan gå til".
   for (const { key, value } of programmeCatalogueEntries("da-DK")) assert.doesNotMatch(value, /research/i, `da-DK ${key}`);
-  assert.match(programmeMissionCopy("da-DK", 8).title, /^Undersøg /);
+  assert.equal(programmeMissionCopy("da-DK", 8).title, "Bestem, hvem du kan gå til");
   assert.equal(programmeText("da-DK", "Research only after a pause"), "Undersøg først efter en pause");
 });
 

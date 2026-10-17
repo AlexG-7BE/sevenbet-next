@@ -51,9 +51,11 @@ function drawSpaced(context: Context, text: string, x: number, y: number, spacin
 
 function wrap(context: Context, text: string, maxWidth: number, width: (line: string) => number = (line) => context.measureText(line).width) {
   const lines: string[] = [];
-  for (const paragraph of text.split(/\n+/)) {
+  // A no-break space keeps a number or a time range on one line, as on the card; word joiners
+  // only matter to the browser, since lines here break at spaces alone.
+  for (const paragraph of text.replace(/\u2060/g, "").split(/\n+/)) {
     let line = "";
-    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+    for (const word of paragraph.split(/[^\S\u00a0]+/).filter(Boolean)) {
       const candidate = line ? `${line} ${word}` : word;
       if (!line || width(candidate) <= maxWidth) { line = candidate; continue; }
       lines.push(line);

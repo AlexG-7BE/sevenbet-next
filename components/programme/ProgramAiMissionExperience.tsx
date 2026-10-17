@@ -11,7 +11,7 @@ import {
   DecisionApplication,
   HumanArtifact,
   KeepsakeCard,
-  OfferDecoder,
+  HelpServiceCard,
   ProgrammeTimeline,
   ScenarioPanel,
   SequenceBuilder,
@@ -24,7 +24,7 @@ import type {
 } from "@/components/programme/ProgramAiAuthenticated.types";
 import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import { deliverKeepsakeImage, keepsakeFonts, keepsakeImage } from "@/lib/programme/program-ai/keepsake-image";
-import { presentMissionArtifact, programmeMissionResultTitle } from "@/lib/programme/program-ai/mission-presentation";
+import { presentMissionArtifact, programmeMissionKeepsake } from "@/lib/programme/program-ai/mission-presentation";
 import { QUESTION_REWARD_LABEL_MS, questionOptionLine, questionWhyLine, splitQuestionHeadline } from "@/lib/programme/program-ai/question-screen";
 import { programmeHelpPath, type ProgrammeLocale } from "@/lib/programme/presentation";
 import { fetchProgrammeWithRetry } from "@/lib/programme/request-retry";
@@ -55,24 +55,24 @@ const actionUi: Record<string, ActionUi> = {
   choose_support_route: { prompt: "Which support route could be available?", explanation: "Choose a type of support, without adding a name. ‘Not ready’ is a valid choice.", fields: [{ key: "supportModes", legend: "Support route", multiple: true, minimum: 1, maximum: 2, options: [option("trusted_person", "A trusted person"), option("professional_support", "Professional support"), option("peer_support", "Peer support"), option("protected_help", "Help"), option("not_ready", "Not ready")]}] },
   build_support_card: { prompt: "Choose the shape of a short support card.", explanation: "Personal names and wording can stay local to this tab.", fields: [{ key: "supportCardStyle", legend: "Card style", options: [option("when_then", "When X, I can Y"), option("short_prompt", "One short prompt"), option("two_step", "A two-step route")] }] },
   choose_exit_action: { prompt: "Choose an exit action that does not depend on disclosure.", explanation: "Protected Help remains available whether or not you finish this Mission.", fields: [{ key: "exitActionType", legend: "Exit action", options: [option("leave_page", "Leave the page"), option("close_account_tools", "Open account control tools"), option("open_help", "Open protected Help"), option("contact_support", "Use the support route"), option("take_a_walk", "Step away")]}] },
-  learn_comparison_signals: { prompt: "Which facts make a comparison materially clearer?", explanation: "Choose two or three signals and see why each matters.", fields: [{ key: "comparisonSignals", legend: "Comparison signals", multiple: true, minimum: 2, maximum: 3, options: comparisonOptions() }] },
-  decode_offer_terms: { prompt: "Which offer term most needs clarification?", explanation: "The example is generic and is not fictional operator inventory.", fields: [{ key: "offerTermSignal", legend: "Material term", options: [option("wagering_requirement", "Wagering requirement"), option("expiry", "Expiry"), option("eligible_games", "Eligible games"), option("deposit_condition", "Deposit condition"), option("withdrawal_limit", "Withdrawal limit"), option("unclear_terms", "Terms remain unclear")] }] },
-  build_research_checklist: { prompt: "Build a reusable research checklist.", explanation: "Choose three to five things you want to check every time.", fields: [{ key: "researchCriteria", legend: "Research checklist", multiple: true, minimum: 3, maximum: 5, options: researchOptions() }] },
+  // Step 3 · Know who to turn to (Founder, 16 October 2026). The action ids are the Mission's
+  // identities from its earlier lesson; the questions are the help lesson's.
+  learn_comparison_signals: { prompt: "Who is one person you could tell?", explanation: "Choose who they are to you, not their name. Nobody is contacted and nothing is sent.", fields: [{ key: "trustedPerson", legend: "Your person", options: [option("partner", "My partner"), option("family", "Someone in my family"), option("friend", "A friend"), option("colleague", "Someone at work"), option("been_there", "Someone who has been there"), option("professional", "A doctor or counsellor"), option("service_first", "Nobody yet: a help service first")] }, { key: "openingLine", legend: "What you would say", options: [option("call_me", "Can you call me? I'm having a hard moment."), option("tell_you", "I want to tell you something about my gambling."), option("one_word", "If I text you one word, can you call me?"), option("check_in", "Can you ask me how it is going this week?"), option("first_call", "I would like to talk about my gambling.")] }] },
+  decode_offer_terms: { prompt: "Which kind of help would you try first?", explanation: "Choose the one you would really use. You will see who answers and when.", fields: [{ key: "helpService", legend: "Your help service", options: [option("phone", "Talk on the phone"), option("chat", "Write in a chat"), option("in_person", "Join a group or see a counsellor"), option("debt", "Get help with money and debt"), option("close_ones", "Help for the people close to me")] }] },
+  build_research_checklist: { prompt: "What will you do in the first 10 minutes of an urge?", explanation: "Choose two or three moves, in the order you will make them.", fields: [{ key: "firstTenMinutes", legend: "Your first 10 minutes", multiple: true, minimum: 2, maximum: 3, options: [option("phone_away", "Put the phone away"), option("send_line", "Send my line to my person"), option("contact_service", "Call or write to my help service"), option("wait_ten_minutes", "Wait for 10 minutes"), option("go_outside", "Go outside or move"), option("read_card", "Read my support card")] }] },
   choose_scenario: { prompt: "Choose one decision scenario to rehearse.", explanation: "You will practise one response and one fallback.", fields: [{ key: "scenarioType", legend: "Scenario", options: [option("unexpected_offer", "An unexpected offer"), option("urge_after_stress", "An urge after stress"), option("social_invitation", "A social invitation"), option("unclear_terms", "Unclear terms")] }] },
   rehearse_response: { prompt: "Rehearse the response at the choice point.", explanation: "Choose a strategy; feedback stays short and non-shaming.", fields: [{ key: "responseStrategy", legend: "Response strategy", options: responseOptions() }] },
   build_fallback_response: { prompt: "If the first response is hard to use, what is the fallback?", explanation: "A fallback keeps the plan usable without claiming certainty.", fields: [{ key: "fallbackStrategy", legend: "Fallback strategy", options: responseOptions() }] },
   review_my_plan: { prompt: "Review what is legitimately present.", explanation: "Missing outputs are omitted. Nothing is invented to make the timeline look complete.", constants: { timelineReviewed: true }, fields: [{ key: "confirm", legend: "Timeline check", options: [option("yes", "I reviewed the available structural facts")] }] },
-  assemble_final_plan: { prompt: "Choose up to three priorities for the one-screen plan.", explanation: "Save the parts you want the final plan to emphasise. Only confirmed facts from those parts will be used.", fields: [{ key: "planPriorityIds", legend: "Plan priorities", multiple: true, minimum: 1, maximum: 3, options: [option("starting_point", "Starting Point"), option("goal", "7-day goal"), option("early_signal", "Early signal"), option("pause_move", "Pause move"), option("boundary", "Boundary"), option("decision_checks", "Decision checks"), option("friction", "Friction"), option("support", "Support"), option("research", "Research checklist"), option("fallback", "Fallback")] }] },
+  assemble_final_plan: { prompt: "Choose up to three priorities for the one-screen plan.", explanation: "Save the parts you want the final plan to emphasise. Only confirmed facts from those parts will be used.", fields: [{ key: "planPriorityIds", legend: "Plan priorities", multiple: true, minimum: 1, maximum: 3, options: [option("starting_point", "Starting Point"), option("goal", "7-day goal"), option("early_signal", "Early signal"), option("pause_move", "Pause move"), option("boundary", "Boundary"), option("decision_checks", "Decision checks"), option("friction", "Friction"), option("support", "Support"), option("support_card", "Support card"), option("fallback", "Fallback")] }] },
   choose_review_cadence: { prompt: "Build the plan, then choose when to review it.", explanation: "The draft uses your persisted priorities and confirmed Programme facts. The cadence creates no email or reminder.", fields: [{ key: "reviewCadenceDays", legend: "Review cadence", options: [option("7", "Every 7 days"), option("14", "Every 14 days"), option("30", "Every 30 days")] }] },
 };
 
 function frictionOptions() { return [option("operator_limit", "Operator limit"), option("bank_block", "Bank block"), option("device_or_site_block", "Device or site block"), option("remove_saved_payment", "Remove saved payment"), option("trusted_contact", "Trusted contact"), option("self_exclusion_or_help", "Self-exclusion or protected Help")]; }
-function comparisonOptions() { return [option("licensing_status", "Licence / regulatory status", "Confirms whether the product is permitted for the relevant market."), option("operator_identity", "Who operates the casino", "Shows the legal business behind the consumer brand."), option("material_terms", "Material terms", "Reveals the conditions that shape the headline."), option("withdrawal_conditions", "Withdrawal conditions", "Shows how and when funds can be accessed."), option("payments", "Payments", "Makes fees, methods and processing expectations visible."), option("safer_gambling_tools", "Tools and limits", "Shows what account controls are available before they are needed."), option("offer_conditions", "Bonus conditions", "Separates the headline from the conditions attached to it.")]; }
-function researchOptions() { return [option("licensing_status", "Licensing or regulatory status"), option("operator_identity", "Operator identity"), option("terms", "Material terms"), option("withdrawals", "Withdrawal conditions"), option("payments", "Payments"), option("safer_gambling_tools", "Safer-gambling tools"), option("offer_conditions", "Offer conditions")]; }
 function responseOptions() { return [option("pause_and_check", "Pause and run the checks"), option("leave_and_return", "Leave and return later"), option("use_boundary", "Use the boundary"), option("ask_for_support", "Use support")]; }
 
 const guidanceActions = new Set(["build_7_day_goal", "name_early_signal", "build_boundary_rule", "build_friction_stack", "build_support_card", "rehearse_response"]);
-const localWordingActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_support_card"]);
+const localWordingActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_support_card", "learn_comparison_signals"]);
 const guidanceBuilderActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_friction_stack", "build_support_card", "rehearse_response"]);
 const correctSequence = ["cue", "early_signal", "urge_builds", "choice_point"];
 
@@ -199,7 +199,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     questionRef.current?.focus({ preventScroll: true });
   }, [completionReceipt]);
   const revealed = !current ? ""
-    : current.id === "decode_offer_terms" ? values.offerTermSignal?.[0] ?? ""
+    : current.id === "decode_offer_terms" ? values.helpService?.[0] ?? ""
       : current.id === "run_decision_check" ? values.scenarioChoice?.[0] ?? ""
         : guidance ? `guidance:${guidance.title}` : "";
   const lastRevealed = useRef({ action: mission.currentAction, value: "" });
@@ -348,7 +348,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   </div>;
   const privacyCue = <p className={styles.stepNote} data-programme-privacy-cue=""><LockIcon /><span>{t("Your data is private. We never use it for offers or rankings.")}</span></p>;
   // The person's result as a keepsake: its own sentence when it has one, and its rows.
-  const keepsake = { title: programmeMissionResultTitle(mission.missionNumber, locale), sentence: localWording.trim() || undefined, rows: presentMissionArtifact(mission.artifact, locale) };
+  const keepsake = programmeMissionKeepsake(mission.missionNumber, mission.artifact, locale, localWording);
   // The picture is made on the device from what the card shows; nothing is sent anywhere.
   async function saveAsImage() {
     setImageState("busy");
@@ -424,7 +424,11 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const guidanceLabel = finalPlanStage ? t("Build my plan")
     : guidanceActions.has(current.id) ? t(current.id === "rehearse_response" ? "Create my rehearsal" : current.id === "build_friction_stack" ? "Suggest an order" : current.id === "name_early_signal" ? "Show one possible pattern" : "Create personal drafts")
       : "";
-  const choiceFields = sequenceAction || current.id === "rehearse_response" ? [] : ui.fields;
+  // A step 3 begun under the earlier lesson has no chosen line, so "Send my line to my person" is left out.
+  const choiceFields = sequenceAction || current.id === "rehearse_response" ? []
+    : current.id === "build_research_checklist" && typeof mission.artifact.openingLine !== "string"
+      ? ui.fields.map((field) => ({ ...field, options: field.options.filter((item) => item.value !== "send_line") }))
+      : ui.fields;
   // A lone single-choice list is named by the question itself; its legend stays for assistive technology.
   const legendHidden = choiceFields.length === 1 && !choiceFields[0].multiple;
   const choiceCards = (field: Field) => <ChoiceCards key={field.key} legend={t(field.legend)} legendHidden={legendHidden} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={localizedOptions(field, locale, current.id)} selected={values[field.key] ?? []} selectionNote={selectionNote(field, locale)} />;
@@ -471,12 +475,12 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
         </> : choiceFields.map(choiceCards)}
         {current.id === "run_decision_check" && values.scenarioChoice?.[0] ? <div className={styles.stepReveal} ref={revealRef}><ChoiceCards legend={t("What would you check first?")} onChoose={setFirstCheck} options={localizedOptions({ key: "decisionChecks", legend: "Three checks", options: [option("purpose", "Why am I considering this?"), option("terms", "Are the material terms clear?"), option("mood", "Am I reacting to the moment?"), option("exit", "What is my exit route?")] }, locale)} selected={firstCheck ? [firstCheck] : []} /></div> : null}
         {current.id === "build_friction_stack" ? <StackBuilder locale={locale} onMove={(index, direction) => moveSelected("frictionMethods", index, direction)} selected={values.frictionMethods ?? []} /> : null}
-        {current.id === "decode_offer_terms" ? <div className={styles.stepReveal} ref={revealRef}><OfferDecoder locale={locale} selected={values.offerTermSignal?.[0] ?? ""} /></div> : null}
+        {current.id === "decode_offer_terms" && values.helpService?.[0] ? <div className={styles.stepReveal} ref={revealRef}><HelpServiceCard locale={locale} service={values.helpService[0]} /></div> : null}
         {!finalPlanStage && guidanceActions.has(current.id) && !guidance ? <ActionButton className={styles.stepSecondary} disabled={busy} onClick={getGuidance} variant="ghost-night">{guidanceLabel}{busy && !saving ? <SavingDots /> : null}</ActionButton> : null}
         {guidance && guidanceBuilderActions.has(current.id) ? <div className={styles.stepReveal} ref={revealRef}><AiCandidatePicker guidance={guidance} heading={current.id === "rehearse_response" ? guidance.title : t("Choose or edit the wording that fits")} locale={locale} onSelect={selectGuidance} selectedId={guidanceSelected} /></div> : null}
         {guidance && !guidanceBuilderActions.has(current.id) && !finalPlanStage ? <div className={styles.stepReveal} ref={revealRef}><aside className={styles.guidance} aria-live="polite"><span className={styles.eyebrow}>{t("USEFUL INSIGHT")}</span><h3>{guidance.title}</h3><p>{guidance.summary}</p><ul>{guidance.options.map((item) => <li key={item.id}>{item.text}</li>)}</ul></aside></div> : null}
         {current.id === "rehearse_response" && guidanceSelected ? <p className={styles.contextFeedback} role="status">{t("That response creates a clear next move. You can still choose a different option before confirming it.")}</p> : null}
-        {localWordingActions.has(current.id) ? <label className={styles.localField}><span>{t("Your wording · kept in this tab")}</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder={t("Choose a draft above or write your own version…")} value={localWording} /></label> : null}
+        {localWordingActions.has(current.id) ? <label className={styles.localField}><span>{t("Your wording · kept in this tab")}</span><textarea maxLength={current.id === "learn_comparison_signals" ? 160 : 600} onChange={(event) => onLocalWording(event.target.value)} placeholder={t(current.id === "learn_comparison_signals" ? "Or write the line in your own words…" : "Choose a draft above or write your own version…")} value={localWording} /></label> : null}
       </section>
       {artifactShown ? <HumanArtifact artifact={mission.artifact} guidance={guidance} guidanceSelected={guidanceSelected} locale={locale} localWording={localWording} missionNumber={mission.missionNumber} /> : null}
       {supportNote}
