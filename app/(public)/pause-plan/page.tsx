@@ -16,7 +16,7 @@ import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
 import { HELP_OWNER_PATH, helpRevenueLine, helpRevenueLinkLabel, withSiteNameDeep } from "@/lib/site/help-copy";
-import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
+import { HELP_SITE_NAME } from "@/lib/site/host-gate";
 import { resolveServerSite } from "@/lib/site/server-site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
@@ -40,18 +40,15 @@ export async function generateMetadata(): Promise<Metadata> {
  * guides for a person on a pause: it lists the published guides of its language that carry the
  * register's name as a tag, or the page's hub tag ("GAMSTOP" in English) when it offers a choice
  * of registers (lib/articles/pause-hub.server.ts).
+ *
+ * It keeps this address on both hosts. Between 17 and 18 October 2026 the help host also served
+ * it at `/`; since the Founder asked for a designed help home it is reached there from the
+ * header, the footer, the home hero and a screen of the home page
+ * (docs/07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md, the Q5 amendment).
  */
 export default async function PausePlanPage() {
-  return <PausePlanView pathname="/pause-plan" site={await resolveServerSite()} />;
-}
-
-/**
- * The plan itself, so that the help site can render it as its home page (RFC-057 §4.1, Founder
- * answer Q5 (b): "the pause plan is the home page of the help site"). `pathname` is the address
- * the page is being served at, which decides its canonical and its breadcrumb; everything else
- * is identical, because the plan is the same plan.
- */
-export async function PausePlanView({ pathname, site }: { pathname: string; site: SiteClass }) {
+  const pathname = "/pause-plan";
+  const site = await resolveServerSite();
   const presentation = await resolveServerPresentationContext();
   const messages = withSiteNameDeep(pausePlanMessages(presentation.locale), site);
   const contentLocale = pausePlanLocale(presentation.locale);

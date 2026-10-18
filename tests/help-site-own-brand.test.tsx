@@ -15,19 +15,28 @@
 // The main host is checked too, in the other direction: it must still say B4GAMBLE exactly where
 // it says it today, so that phase 1 changes nothing a visitor to b4gamble.com can see.
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { transformCommonHandoff } from "../lib/final-handoff/transforms";
+import { markHandoffReadability } from "../lib/final-handoff/readability";
+import {
+  transformCommonHandoff,
+  transformCommonHandoffCss,
+  transformHelpHomeHandoff,
+  transformHomeHandoff,
+  transformHomeHandoffCss,
+} from "../lib/final-handoff/transforms";
 import generatedPages from "../lib/final-handoff/generated-pages.json";
 import { besideMessages } from "../lib/i18n/static-pages/beside";
 import { contactMessages } from "../lib/i18n/static-pages/contact";
 import { controlToolsMessages } from "../lib/i18n/static-pages/gambling-control-tools";
 import { controlSharedMessages, gamblingControlHubMessages } from "../lib/i18n/static-pages/gambling-control";
 import { innanMessages } from "../lib/i18n/static-pages/innan";
+import { HOME_SOURCE_COPY, homeTranslation } from "../lib/i18n/home-catalog";
 import { learningMessages } from "../lib/i18n/learning-center";
 import { pausePlanMessages } from "../lib/i18n/static-pages/pause-plan";
 import { forumStudyMessages } from "../lib/i18n/static-pages/forum-study";
@@ -41,7 +50,9 @@ import {
 } from "../lib/security/help-host-firewall-rule";
 import {
   HELP_LOCALES,
+  HELP_OWNER_PATH,
   MAIN_SITE_NAME,
+  helpHomeCopy,
   helpOwnerLinkLabel,
   helpRoutePath,
   siteFileSlug,
@@ -289,8 +300,12 @@ test("every captured page a help route serves is unbranded once the pipeline has
   ]) {
     assert.match(readFileSync(path, "utf8"), /<HandoffPage[^>]*site=\{site\}/, `${path} tells HandoffPage which site is answering`);
   }
-  // The home capture is never rendered on the help host at all: `/` is the pause plan there.
-  assert.match(readFileSync("app/(public)/page.tsx", "utf8"), /=== "help"\) return <PausePlanView/, "the help home is the pause plan");
+  // The home capture IS rendered on the help host since 18 October 2026, and `HandoffPage`
+  // is told which site is answering, so "B4GAMBLE uses public NHS and NICE guidance…" in the
+  // evidence screen reads "Pause Plan uses…" there.
+  const home = readFileSync("app/(public)/page.tsx", "utf8");
+  assert.match(home, /<HandoffPage[\s\S]*?site="help"/, "the help home tells HandoffPage which site is answering");
+  assert.match(home, /transformHelpHomeHandoff\(transformHomeHandoff\(/, "and runs the help host's own pass over the captured design");
 });
 
 // ---------------------------------------------------------------------------
@@ -455,7 +470,7 @@ test("every photograph a help page shows is served from a path the Firewall rule
     assert.match(url, /^\/_next\/static\//, `${url} is not a hashed build file`);
     assert.equal(refusedOnTheHelpHost(url), false, `${url} is refused on the help host`);
   }
-  assert.equal(helpHostPhotoUrls().length, 18, "two photographs, a JPEG fallback and four widths in avif and webp each");
+  assert.equal(helpHostPhotoUrls().length, 45, "five photographs, a JPEG fallback and four widths in avif and webp each");
 
   // And nothing the hero renders is left on the denied path.
   const art = helpHostPhoto("hero-plan.jpg");
@@ -526,4 +541,130 @@ test("a file saved from the help site names the help site", () => {
   assert.match(mission, /`\$\{siteFileSlug\(site\)\}-step-\$\{mission\.step\}\.png`/, "the keepsake image too");
   const keepsake = readFileSync("lib/programme/program-ai/keepsake-image.ts", "utf8");
   assert.match(keepsake, /model\.brand \?\? DEFAULT_KEEPSAKE_BRAND/, "the keepsake card draws the name it is given");
+});
+
+// ---------------------------------------------------------------------------
+// the help home (Founder, 18 October 2026)
+// ---------------------------------------------------------------------------
+
+/**
+ * The help host's home page exactly as `app/(public)/page.tsx` builds it: the captured design,
+ * the help host's own pass over it, the readability pass and the name of the serving site.
+ * Rendering it here rather than asserting on the source is the point — the Founder's two
+ * instructions about this host are about what a response contains, not about how it is built.
+ */
+async function renderHelpHome(locale: (typeof HELP_LOCALES)[number]) {
+  const { helpHostHomePhotoRewrites } = await import("../lib/media/help-host-photos");
+  const copy = helpHomeCopy(locale);
+  const design = transformHomeHandoff(transformCommonHandoff(generatedPages.home.html, "/program"), locale);
+  return withSiteName(markHandoffReadability(transformHelpHomeHandoff(design, {
+    owner: { ...copy.owner, href: HELP_OWNER_PATH, linkLabel: helpOwnerLinkLabel(locale) },
+    pausePlan: { ...copy.pausePlan, heroLink: copy.heroPausePlanLink, href: "/pause-plan" },
+    photos: helpHostHomePhotoRewrites(),
+  })), "help");
+}
+
+test("the help home is the designed home page and it never says the other brand", async () => {
+  // Founder, 18 October 2026, after opening the help site on his phone: «сделай главную как у
+  // основного сайта». The captured design's own headings are already about control, so the
+  // page arrives whole; only the screen that explained the affiliate business is replaced.
+  for (const locale of HELP_LOCALES) {
+    const html = await renderHelpHome(locale);
+    assertUnbranded(html, `the help home ${locale}`);
+    // The design, screen by screen: the capture's own labels are what proves it is the same page.
+    assert.deepEqual(
+      [...html.matchAll(/data-home-snap-label="([^"]+)"/g)].map((match) => match[1]),
+      [
+        "Hero",
+        "Recognition",
+        "Pause plan",
+        "A plan you can see",
+        "Missions 01-03",
+        "Missions 04-07",
+        "Missions 08-10",
+        "Built from evidence",
+        "Who runs this site",
+        "Final CTA",
+      ],
+      `the help home ${locale} serves the captured design with the pause plan added`,
+    );
+    // "Two businesses. One wall between them." is gone, in this locale's own words: the two
+    // heading lines and the whole reviews column of the captured screen, read from the
+    // catalogue rather than retyped, so a reworded capture cannot slip past this.
+    const trust = (homeTranslation(locale) ?? HOME_SOURCE_COPY).trust;
+    for (const index of [1, 2, 7, 8, 9, 10, 11]) {
+      assert.equal(html.includes(trust[index]), false, `the help home ${locale} still says ${JSON.stringify(trust[index])}`);
+    }
+    assert.doesNotMatch(html, /Editor Score/, `the help home ${locale} still names the editorial score`);
+  }
+});
+
+test("the help home answers who runs the site, and offers the pause plan twice", async () => {
+  for (const locale of HELP_LOCALES) {
+    const html = await renderHelpHome(locale);
+    const copy = helpHomeCopy(locale);
+    // The subject is not deleted: the short true version, and one click to the long one.
+    assert.ok(html.includes(copy.owner.body), `the help home ${locale} says how the site is paid for`);
+    assert.match(html, new RegExp(`data-help-home-owner="" href="${HELP_OWNER_PATH}"`), `the help home ${locale} links the owner page`);
+    assert.ok(html.includes(helpOwnerLinkLabel(locale)), `the help home ${locale} labels the owner link`);
+    // The pause plan is what most people arrive for: a line under the hero action, above the
+    // fold on a phone, and a screen of its own before the Programme is explained.
+    assert.ok(html.includes(copy.heroPausePlanLink), `the help home ${locale} offers the pause plan in the hero`);
+    assert.equal((html.match(/href="\/pause-plan"/g) ?? []).length, 2, `the help home ${locale} links the pause plan twice`);
+    assert.ok(html.includes(copy.pausePlan.cta), `the help home ${locale} opens the pause plan from its own screen`);
+    // Nothing below 12px (Founder's typography floor) in the two blocks this host adds.
+    for (const block of [/data-help-home-pause-plan=""[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/, /data-screen-label="Who runs this site"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/]) {
+      const section = block.exec(html)?.[0] ?? "";
+      assert.ok(section.length > 0, `the help home ${locale} renders the block ${block}`);
+      for (const size of [...section.matchAll(/font(?:-size)?: (?:\d+ )?(\d+)px/g)].map((match) => Number(match[1]))) {
+        assert.ok(size >= 12, `the help home ${locale} renders ${size}px text`);
+      }
+    }
+  }
+});
+
+test("the help home asks for no picture the Firewall rule denies", async () => {
+  // §4.2 again, now for five photographs instead of two: `public/home/` is COMMERCIAL and the
+  // rule denies every raster image outside `/_next/static/`, so the capture's own `/home/…`
+  // paths would have rendered an unstyled page of alt text on the help host.
+  const html = await renderHelpHome("en-GB");
+  assert.doesNotMatch(html, /\/home\//, "the help home still asks for public/home");
+  const assets = requestedAssets(html);
+  assert.ok(assets.length >= 45, `the help home asks for its photographs (${assets.length})`);
+  for (const url of assets) {
+    assert.equal(refusedOnTheHelpHost(url), false, `the help home asks for ${url}, which the Firewall rule denies`);
+  }
+  // The main host serves the same pictures from where it serves them today.
+  const main = markHandoffReadability(transformHomeHandoff(transformCommonHandoff(generatedPages.home.html, "/program"), "en-GB"));
+  assert.ok(requestedAssets(main).every((url) => url.startsWith("/home/")), "the main home still serves public/home");
+});
+
+test("the main host's home page is byte-identical to the design the Founder approved", async () => {
+  // His standing rule: the desktop home page is finished work and is never changed. Everything
+  // the help host needs is a second pass applied only when `site === "help"`, so the main
+  // host's bytes are a fixed value. A legitimate home change has to update these digests
+  // deliberately, in a pull request whose subject is the home page.
+  const digest = (value: string) => createHash("sha256").update(value).digest("hex");
+  const expected: Readonly<Record<string, string>> = {
+    "en-GB": "1ea27a42f73ae8a00b178648325dc0fe29f6a535397bb40cd3064477e0fc4c85",
+    "sv-SE": "30d6c3db2b3afef23ddda0e4ced66c0f754d378450a6b0a703830b75b22527ce",
+    "da-DK": "ef97bd5c6a64cb2d257f6cc7ded5decddb3e3f777b21bbc751e5f68d93a7cc25",
+    "de-DE": "66417e71f159c43730427ff790abbbc47519c95fbad4f49487bfb9ed0ab51995",
+  };
+  for (const [locale, hash] of Object.entries(expected)) {
+    // Exactly what `HandoffPage` renders for the main host: no `site` prop, so `withSiteName`
+    // returns the string it was given.
+    const html = withSiteName(markHandoffReadability(transformHomeHandoff(transformCommonHandoff(generatedPages.home.html, "/program"), locale as never)));
+    assert.equal(digest(html), hash, `the main host's home page changed in ${locale}`);
+  }
+  assert.equal(
+    digest(transformHomeHandoffCss(transformCommonHandoffCss(generatedPages.home.css))),
+    "be20074e7daa7e8aa0aa2ab71d231fd461589df5153fe2c88bfa183dd6f268e6",
+    "the main host's home stylesheet changed",
+  );
+  // And the help pass is reachable only behind the site class.
+  const page = readFileSync("app/(public)/page.tsx", "utf8");
+  const helpBranch = page.indexOf('if (site === "help")');
+  assert.ok(helpBranch > 0, "the help home is behind the site class");
+  assert.ok(page.indexOf("transformHelpHomeHandoff(") > helpBranch, "and the help pass is inside that branch");
 });

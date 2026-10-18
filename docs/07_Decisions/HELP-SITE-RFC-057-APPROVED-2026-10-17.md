@@ -63,9 +63,11 @@ Only if a named organisation makes it the condition for working with us.
 **For the build:** nothing. No entity, no separate database, no separate accounts in phases 1–4;
 the option stays recorded in RFC-057 §16.5 for a later Founder decision.
 
-### Q5 — Help home page: the pause plan is the home page
+### Q5 — Help home page: the pause plan is the home page — **REVERSED on 18 October 2026**
 
-Option (b). Not the current home layout with a help menu.
+Option (b). Not the current home layout with a help menu. **This answer no longer holds**: the
+amendment of 18 October 2026 at the end of this record is the current authority. It is kept here
+because it is what phase 1 and phase 2 were built against.
 
 **For the build:** `/` on the help host serves the pause plan, in sv, da and en, with the
 Programme entry as its main call to action; the `public/home/` folder (hero and chapter images,
@@ -221,6 +223,64 @@ font and photograph under `/_next/` — an unstyled, unhydrated page. **DETECTED
 been added to the Firewall rule by then, it should be removed in the same step, or the help host
 would serve its build files to a blocked country while refusing its pages.
 
+## Amendment, 18 October 2026: the help site gets a designed home page, and the pause plan becomes an ordinary page
+
+This reverses the answer to **Q5**. It is the final internal authority on the point.
+
+**What happened.** The morning after phase 2 went live the Founder opened `https://pauseplan.help`
+on his phone. The front page was the ten-day pause plan: a long, dense page of text where the
+main site has a designed home. His instruction: «сделай главную как у основного сайта… добавь как
+home page, а текущую page просто оставь как ссылку в header footer» — make the home page like the
+main site's, add it as the home page, and leave the current page as a link in the header and the
+footer.
+
+**Why the answer could change without changing anything else.** Q5 (b) was chosen because the
+captured home design is a photograph of a casino-comparison site: its raw HTML carries
+`/best-offers`, `/casinos`, `/bonuses` and `/affiliate-disclosure`, which §6 rule 1 forbids on this
+host. That was true of the capture, not of the design. The chrome is already stripped by
+`stripHandoffGlobalChrome` before the page is rendered, and the design's own words were never
+about casinos: "Control starts here", "Is gambling becoming harder to control?", "A plan you can
+actually see", "See the pattern", "Write the rule", "Use it. Make it yours.", "Built from
+evidence. Honest about its limits.", "Start with one honest minute." One screen was the exception,
+and it is the one that changed.
+
+**For the build.**
+
+- **`/` on the help host serves the captured home design**, through the same `HandoffPage` the
+  main site uses, with `site="help"` so every sentence that names the brand reads "Pause Plan".
+- **"Two businesses. One wall between them." is replaced, not deleted.** That screen is the
+  affiliate business explaining its own wall, and it carried the page's one surviving commercial
+  link. In its place, in the same design and the same position: the eyebrow "Straight answers",
+  the heading "Who runs this site. / And who pays for it.", one short paragraph saying the site is
+  free and earns nothing — no casinos, no adverts, no affiliate links — that 7BE Inc. also runs a
+  casino-comparison site at a different address, and that nothing written here reaches it; then one
+  link to `/who-runs-this`, which is where the long answer already lives. A visitor or a help
+  organisation still reaches the full disclosure in one click, which is the point of §17.
+- **The pause plan is offered twice from the home page**: a line under the hero action, above the
+  fold on a phone, and a screen of its own between "Is gambling becoming harder to control?" and
+  the Programme — where a reader who has just recognised themselves is looking for the first thing
+  to do.
+- **The pause plan keeps `/pause-plan`** on both hosts, and is in the help header and the help
+  footer, as it already was: "Pause plan", "Pausplan", "Pauseplan". No address a visitor, a
+  bookmark or a help organisation already holds starts answering 404 — `/` now answers with the
+  home page instead of the plan, and `/pause-plan` answers as it always did.
+- **The photographs.** `public/home` stays `COMMERCIAL` and stays denied by the phase-2 Firewall
+  rule. The five home photographs join the two of the 17 October amendment as static imports, so
+  the bundler serves them hashed under `/_next/static/`, and the help pass rewrites every
+  `/home/…` address the capture writes. **The rule is unchanged and still a default deny.**
+- **`b4gamble.com` is untouched.** The whole help pass is behind `site === "help"`, and
+  `tests/help-site-own-brand.test.tsx` holds the main host's home HTML and CSS to a digest in four
+  languages, so any change to the bytes a visitor to the main site receives fails CI. The
+  Founder's standing rule that the desktop home page is never changed is now enforced by a test
+  rather than by care.
+
+**What it costs.** The help home is now nine screens of design plus the pause-plan screen rather
+than one page of plan, so a reader who wanted the plan itself takes one tap to reach it. That is
+the trade he asked for: he would not read the wall of text, and neither will a first-time visitor.
+
+**Way back.** Reverting the pull request restores the pause plan at `/`. Nothing about the main
+site, the Firewall rule, the route manifest or the database changes either way.
+
 ## Evidence
 
 - RFC-057 §22, where each of these eight questions is written out with the recommendation he
@@ -230,5 +290,11 @@ would serve its build files to a blocked country while refusing its pages.
   and this record.
 - `docs/06_RFC/README.md`: RFC-057 is `ACTIVE`, the counts reconciled.
 - `docs/CURRENT_STATE.md`: the help site's state, as approved and not yet built.
-- The amendment above is built on branch `feat/help-site-own-brand`, with
+- The 17 October amendment is built on branch `feat/help-site-own-brand`, with
   `tests/help-site-own-brand.test.tsx` as its guard, in `ci:quality`.
+- The 18 October amendment is built on branch `feat/help-home-design`. Its guards are in the same
+  two files `ci:quality` already runs: `tests/help-site-own-brand.test.tsx` (the help home is the
+  captured design, it never says the other brand, it asks for no denied picture, and the main
+  host's home is held to a digest) and `tests/help-site-shell.test.tsx` (the help home's only
+  three links are `/program`, `/pause-plan` and `/who-runs-this`), with the address-stability
+  check in `tests/help-site-host.test.ts`.

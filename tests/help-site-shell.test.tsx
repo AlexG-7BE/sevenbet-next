@@ -20,6 +20,9 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import { markHandoffReadability } from "../lib/final-handoff/readability";
+import { transformCommonHandoff, transformHelpHomeHandoff, transformHomeHandoff } from "../lib/final-handoff/transforms";
+import generatedPages from "../lib/final-handoff/generated-pages.json";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import { accountNavigationFor, HELP_NAVIGATION } from "../lib/public-shell";
 import { editorialAuthor, organizationReference, organizationSchema, websiteSchema } from "../lib/seo/structured-data";
@@ -40,12 +43,20 @@ import {
   needHelpLine,
   withHelpOrigin,
 } from "../lib/site/help-copy";
+import { helpHomeCopy, helpOwnerLinkLabel, withSiteName } from "../lib/site/help-copy";
 import { helpMediaPath, helpMediaStorageKey, helpMediaUrl } from "../lib/site/help-media";
 import { HELP_CANONICAL_ORIGIN, HELP_SITE_NAME } from "../lib/site/host-gate";
 import { classifySitePath, HELP_SHELL_READY, helpHostServesRequest } from "../lib/site/host-routes";
 
 const require = createRequire(import.meta.url);
 require.extensions[".css"] = (module) => { module.exports = {}; };
+/** A static image import, as the bundler resolves one; `node --test` has no bundler. */
+for (const extension of [".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif"]) {
+  require.extensions[extension] = (module, filename) => {
+    const name = filename.split("/").pop() ?? "asset";
+    module.exports = { src: `/_next/static/media/${name.replace(/\.(\w+)$/, ".1a2b3c4d.$1")}`, height: 2336, width: 3500 };
+  };
+}
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
 
 /**
@@ -201,6 +212,13 @@ test("the help shell carries the help site's own name and no B4GAMBLE wordmark",
       assert.doesNotMatch(html, /b4gamble-logo/i, `${name} ${locale} prints the B4GAMBLE logo`);
       assertNoCommercialAddress(html, `${name} ${locale}`);
       assertTreeIsClean(element, `${name} ${locale}`);
+      // …and the layer the browser receives but never paints. `PublicNavigation` is a client
+      // component, so the whole `PublicShellMessages` object is serialised into `self.__next_f`
+      // and into every `?_rsc=` response: until 18 October 2026 that carried "B4GAMBLE home"
+      // on every help page, including this one.
+      for (const value of treeStrings(element)) {
+        assert.doesNotMatch(value, /B4GAMBLE/i, `${name} ${locale} serialises the B4GAMBLE wordmark: ${value}`);
+      }
     }
   }
 });
@@ -215,6 +233,40 @@ test("the help menu is 10 Steps, Pause plan, Guides and Help, and nothing else",
   // The commercial destinations are not built at all, hidden or shown.
   for (const href of ["/best-offers", "/casinos", "/bonuses"]) {
     assert.equal(html.includes(href), false, `the help header must not build ${href}`);
+  }
+});
+
+/**
+ * The help host's home page exactly as `app/(public)/page.tsx` builds it. The page is a server
+ * component that hands `HandoffPage` a string, and the string is what lands in the document, in
+ * `self.__next_f` and in the `?_rsc=` response a client navigation fetches — so reading it is
+ * reading all three layers at once.
+ */
+async function helpHome(locale: (typeof HELP_LOCALES)[number]) {
+  const { helpHostHomePhotoRewrites } = await import("../lib/media/help-host-photos");
+  const copy = helpHomeCopy(locale);
+  const design = transformHomeHandoff(transformCommonHandoff(generatedPages.home.html, "/program"), locale);
+  return withSiteName(markHandoffReadability(transformHelpHomeHandoff(design, {
+    owner: { ...copy.owner, href: HELP_OWNER_PATH, linkLabel: helpOwnerLinkLabel(locale) },
+    pausePlan: { ...copy.pausePlan, heroLink: copy.heroPausePlanLink, href: "/pause-plan" },
+    photos: helpHostHomePhotoRewrites(),
+  })), "help");
+}
+
+test("the help home carries three links and no commercial address of any kind", async () => {
+  // Founder, 18 October 2026: the help site gets the designed home page. The captured design
+  // ships `/best-offers`, `/casinos`, `/bonuses` and `/affiliate-disclosure` in its raw HTML,
+  // which is why `/` served the pause plan until now. The chrome is stripped by
+  // `stripHandoffGlobalChrome` and the one surviving commercial link, "How we're funded" in
+  // the trust screen, goes with the screen that carried it.
+  for (const locale of HELP_LOCALES) {
+    const html = await helpHome(locale);
+    assertNoCommercialAddress(html, `the help home ${locale}`);
+    const hrefs = [...new Set([...html.matchAll(/href="([^"]*)"/g)].map((match) => match[1]))].sort();
+    assert.deepEqual(hrefs, ["/pause-plan", "/program", HELP_OWNER_PATH].sort(), `the help home ${locale} links something else`);
+    // The two destinations the Founder asked for, by their own hooks.
+    assert.match(html, /data-help-home-pause-plan-cta="" href="\/pause-plan"/, `the help home ${locale} opens the pause plan`);
+    assert.match(html, new RegExp(`data-help-home-owner="" href="${HELP_OWNER_PATH}"`), `the help home ${locale} opens the owner page`);
   }
 });
 

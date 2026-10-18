@@ -40,6 +40,21 @@ serves its HTML and `/icon.svg` but answers 403 for every stylesheet, script, we
 photograph under `/_next/` (**DETECTED from a KZ exit, 18 October 2026**). The exact condition he
 needs to add is in [the geo-block runbook](06_Operations/Geo-Block-Runbook.md).
 
+**The help site has a designed home page (Founder decision, 18 October 2026).** He opened
+`https://pauseplan.help` on his phone and found the ten-day pause plan as the front page — a wall
+of text where the main site has a home: «сделай главную как у основного сайта… добавь как home
+page, а текущую page просто оставь как ссылку в header footer». This **reverses answer Q5** of the
+17 October record, which is amended accordingly. `/` on the help host now serves the same captured
+home design the main site serves, through the same `HandoffPage` with `site="help"`; the screen
+"Two businesses. One wall between them." — the affiliate business explaining its own wall, and the
+page's last commercial link — is replaced by a short owner block that links `/who-runs-this`; the
+pause plan is offered from the hero and from a screen of its own and keeps its address
+`/pause-plan`, in the header and the footer as before. The five home photographs join the two of
+17 October as static imports, so `public/home` stays denied on the help host and the design is
+still served whole. `b4gamble.com` is byte-identical: the whole pass is behind `site === "help"`,
+and `tests/help-site-own-brand.test.tsx` holds the main home's HTML and CSS to a digest in four
+languages.
+
 ### Phase 1, the host foundation (PR #535, merged 17 October 2026 as `7e171506`)
 
 **DETECTED in the repository and deployed to Production with every switch unset, so nothing it
@@ -118,12 +133,21 @@ unchanged.
   The footer loses the Explore and Trust columns, the brand's social profiles, the commission
   disclosure, the operator disclaimer and the cookie-choices button, and gains the owner page,
   the data statement and the legal links.
-- **The help home is the pause plan** (Q5 (b)). `app/(public)/page.tsx` renders `PausePlanView`
-  on the help host; the handoff home is never rendered there, because its capture carries
-  `/best-offers`, `/casinos` and `/bonuses` in the raw HTML. The main home is untouched, and
+- **The help home was the pause plan** (Q5 (b)) — **superseded on 18 October 2026**, see the
+  paragraph at the top of this section. `/` on the help host now renders the captured home design
+  with the help host's own pass over it; the capture's `/best-offers`, `/casinos` and `/bonuses`
+  never survive `stripHandoffGlobalChrome`, and the one link that did,
+  `/affiliate-disclosure`, went with the screen that carried it. The main home is untouched, and
   the desktop home page is not changed.
 - **The root not-found reads the site** and is built from the help shell and the help site's
   own words on the help host — the boundary Next writes into every document's inline data.
+- **The shell's message catalogue is said in the serving site's name** (added 18 October 2026).
+  `PublicNavigation` is a client component, so the whole `PublicShellMessages` object is
+  serialised into `self.__next_f` and into every `?_rsc=` response whether or not the help branch
+  paints it: until this change every help-host page carried `"B4GAMBLE home"` there. `PublicHeader`
+  now passes `withSiteNameDeep(publicShellMessages(locale), site)`, which returns the main host's
+  object by reference, so `b4gamble.com` is unchanged. `tests/help-site-shell.test.tsx` walks the
+  element tree, not only the rendered HTML.
 - **Host-aware root metadata** (`generateMetadata` in `app/layout.tsx`): on the help host
   `metadataBase` is the help origin, the title and description are the help site's own, with
   no "casino comparison" in them, `siteName` is "Pause Plan", and the default social image is
@@ -239,12 +263,24 @@ main site, so the main host behaves exactly as before:
 - **Still to come in phase 1:** a help-site not-found page that replaces the gate's own
   self-contained 404 body (`lib/site/help-not-found-page.ts`) and the two-host Playwright specs
   of §20.2. The icon, the per-host `llms.txt` body and the copy follow-up below are done.
-- **Not verified, and the next pull request has to solve it:** a local two-host run still does
-  not work. `HELP_SITE_DEV_HOST` was set at build time, at run time and in `.env.local` against
-  a local production server and the edge middleware sandbox did not see it, although middleware
-  itself was running. The help half is therefore proved by unit tests that call `middleware()`
-  directly and by component renders, not by an HTTP round trip. §20.2's two-host browser specs
-  need a working mechanism first.
+- **Solved on 18 October 2026: a local two-host run works, with one correction.** The earlier
+  note said the edge middleware sandbox did not see `HELP_SITE_DEV_HOST`. **It does** — the
+  sandbox copies the whole of `process.env` (`next/dist/server/web/sandbox/context.js`,
+  `buildEnvironmentVariablesFrom`). What does not work is naming a *virtual* host:
+  **`next start` builds `request.url` from its own hostname, not from the request's `Host` or
+  `X-Forwarded-Host` header**, so every request to a local production server is
+  `http://localhost:<port>/…` whatever host the client asked for, and `help.localhost` can never
+  match. The working recipe is one server per site, told which one it is:
+
+  ```
+  HELP_SITE_DEV_HOST=localhost npx next start -p 4176   # the help site
+  npx next start -p 4177                                # b4gamble.com
+  ```
+
+  **DETECTED, 18 October 2026:** `/best-offers` answers 404 on 4176 and 307 on 4177; the help
+  host's `robots.txt` is `Disallow: /` and the main host's is today's file; `/` on 4176 serves
+  the help home with no B4GAMBLE anywhere. §20.2's two-host browser specs can be written against
+  this.
 ### Phase 1, the name and the pictures (branch `feat/help-site-own-brand`)
 
 **Founder, 17 October 2026: «убери B4GAMBLE из текстов и перенеси картинки».** The copy
@@ -320,7 +356,9 @@ sentence, every address and every image below is what it is today.
 - **His answers, recorded in the decision record:** the help site gets its own name "Pause Plan"
   with no B4GAMBLE wordmark or logo (Q2); no Google tag and no cookie banner on the help host,
   counts from the server, and `b4gamble.com` keeps its 4 October 2026 GA4 decision unchanged (Q3);
-  no non-profit entity now (Q4); the pause plan is the help home page (Q5); the help mailbox moves
+  no non-profit entity now (Q4); the pause plan is the help home page (Q5 — **reversed on
+  18 October 2026**: the help site serves the home design and the pause plan is an ordinary page);
+  the help mailbox moves
   to the help domain later and `support@b4gamble.com` is acceptable for phase 2 (Q6); new partner
   presses stop storing the account and the weekly `programme_funnel` count drops its partner-press
   stages, with the older rows left to a separate data job (Q7); the current Google client is fine

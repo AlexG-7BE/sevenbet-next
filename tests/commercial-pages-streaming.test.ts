@@ -40,8 +40,11 @@ test("a casino profile settles existence before its frame streams, so a missing 
 test("the home page streams its frame only to browsers, like the commercial pages", () => {
   const page = read("app/(public)/page.tsx");
   const exported = page.slice(page.indexOf("export default async function"));
-  assert.match(exported, /if \(!shouldStreamRouteFrame\(await headers\(\)\)\) return <HomeContent \/>;/);
-  assert.match(exported, /<Suspense fallback=\{<PublicRouteLoadingFrame destination="home" label="B4GAMBLE" \/>\}><HomeContent \/><\/Suspense>/);
+  assert.match(exported, /if \(!shouldStreamRouteFrame\(await headers\(\)\)\) return <HomeContent site=\{site\} \/>;/);
+  // The frame's label is the name of the site that is answering (Founder, 18 October 2026: the
+  // help host serves this page too, and it carries no B4GAMBLE wordmark). Everything else about
+  // the streaming decision is unchanged.
+  assert.match(exported, /<Suspense fallback=\{<PublicRouteLoadingFrame destination="home" label=\{site === "help" \? HELP_SITE_NAME : "B4GAMBLE"\} \/>\}><HomeContent site=\{site\} \/><\/Suspense>/);
 });
 
 test("the frame goes to a real browser only: Fetch Metadata present and not a crawler", () => {

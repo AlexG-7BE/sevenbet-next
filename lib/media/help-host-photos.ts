@@ -7,6 +7,34 @@ import heroPlan320Webp from "@/public/home/responsive/hero-plan-320.webp";
 import heroPlan640Webp from "@/public/home/responsive/hero-plan-640.webp";
 import heroPlan1280Webp from "@/public/home/responsive/hero-plan-1280.webp";
 import heroPlan1920Webp from "@/public/home/responsive/hero-plan-1920.webp";
+import heroConfidenceJpg from "@/public/home/hero-confidence.jpg";
+import heroConfidence320Avif from "@/public/home/responsive/hero-confidence-320.avif";
+import heroConfidence640Avif from "@/public/home/responsive/hero-confidence-640.avif";
+import heroConfidence1280Avif from "@/public/home/responsive/hero-confidence-1280.avif";
+import heroConfidence1920Avif from "@/public/home/responsive/hero-confidence-1920.avif";
+import heroConfidence320Webp from "@/public/home/responsive/hero-confidence-320.webp";
+import heroConfidence640Webp from "@/public/home/responsive/hero-confidence-640.webp";
+import heroConfidence1280Webp from "@/public/home/responsive/hero-confidence-1280.webp";
+import heroConfidence1920Webp from "@/public/home/responsive/hero-confidence-1920.webp";
+import heroCreatorJpg from "@/public/home/hero-creator.jpg";
+import heroCreator320Avif from "@/public/home/responsive/hero-creator-320.avif";
+import heroCreator640Avif from "@/public/home/responsive/hero-creator-640.avif";
+import heroCreator1280Avif from "@/public/home/responsive/hero-creator-1280.avif";
+import heroCreator1920Avif from "@/public/home/responsive/hero-creator-1920.avif";
+import heroCreator320Webp from "@/public/home/responsive/hero-creator-320.webp";
+import heroCreator640Webp from "@/public/home/responsive/hero-creator-640.webp";
+import heroCreator1280Webp from "@/public/home/responsive/hero-creator-1280.webp";
+import heroCreator1920Webp from "@/public/home/responsive/hero-creator-1920.webp";
+import heroOutcomeJpg from "@/public/home/hero-outcome.jpg";
+import heroOutcome320Avif from "@/public/home/responsive/hero-outcome-320.avif";
+import heroOutcome640Avif from "@/public/home/responsive/hero-outcome-640.avif";
+import heroOutcome1280Avif from "@/public/home/responsive/hero-outcome-1280.avif";
+import heroOutcome1920Avif from "@/public/home/responsive/hero-outcome-1920.avif";
+import heroOutcome320Webp from "@/public/home/responsive/hero-outcome-320.webp";
+import heroOutcome640Webp from "@/public/home/responsive/hero-outcome-640.webp";
+import heroOutcome1280Webp from "@/public/home/responsive/hero-outcome-1280.webp";
+import heroOutcome1920Webp from "@/public/home/responsive/hero-outcome-1920.webp";
+
 import chapterApplyJpg from "@/public/home/chapter-apply.jpg";
 import chapterApply320Avif from "@/public/home/responsive/chapter-apply-320.avif";
 import chapterApply640Avif from "@/public/home/responsive/chapter-apply-640.avif";
@@ -50,13 +78,33 @@ export type HelpHostPhoto = Readonly<{
   webpSrcSet: string;
 }>;
 
-export type HelpHostPhotoName = "chapter-apply.jpg" | "hero-plan.jpg";
+export type HelpHostPhotoName =
+  | "chapter-apply.jpg"
+  | "hero-confidence.jpg"
+  | "hero-creator.jpg"
+  | "hero-outcome.jpg"
+  | "hero-plan.jpg";
 
 const PHOTOS: Readonly<Record<HelpHostPhotoName, HelpHostPhoto>> = {
   "hero-plan.jpg": {
     fallbackSrc: heroPlanJpg.src,
     avifSrcSet: [`${heroPlan320Avif.src} 320w`, `${heroPlan640Avif.src} 640w`, `${heroPlan1280Avif.src} 1280w`, `${heroPlan1920Avif.src} 1920w`].join(", "),
     webpSrcSet: [`${heroPlan320Webp.src} 320w`, `${heroPlan640Webp.src} 640w`, `${heroPlan1280Webp.src} 1280w`, `${heroPlan1920Webp.src} 1920w`].join(", "),
+  },
+  "hero-confidence.jpg": {
+    fallbackSrc: heroConfidenceJpg.src,
+    avifSrcSet: [`${heroConfidence320Avif.src} 320w`, `${heroConfidence640Avif.src} 640w`, `${heroConfidence1280Avif.src} 1280w`, `${heroConfidence1920Avif.src} 1920w`].join(", "),
+    webpSrcSet: [`${heroConfidence320Webp.src} 320w`, `${heroConfidence640Webp.src} 640w`, `${heroConfidence1280Webp.src} 1280w`, `${heroConfidence1920Webp.src} 1920w`].join(", "),
+  },
+  "hero-creator.jpg": {
+    fallbackSrc: heroCreatorJpg.src,
+    avifSrcSet: [`${heroCreator320Avif.src} 320w`, `${heroCreator640Avif.src} 640w`, `${heroCreator1280Avif.src} 1280w`, `${heroCreator1920Avif.src} 1920w`].join(", "),
+    webpSrcSet: [`${heroCreator320Webp.src} 320w`, `${heroCreator640Webp.src} 640w`, `${heroCreator1280Webp.src} 1280w`, `${heroCreator1920Webp.src} 1920w`].join(", "),
+  },
+  "hero-outcome.jpg": {
+    fallbackSrc: heroOutcomeJpg.src,
+    avifSrcSet: [`${heroOutcome320Avif.src} 320w`, `${heroOutcome640Avif.src} 640w`, `${heroOutcome1280Avif.src} 1280w`, `${heroOutcome1920Avif.src} 1920w`].join(", "),
+    webpSrcSet: [`${heroOutcome320Webp.src} 320w`, `${heroOutcome640Webp.src} 640w`, `${heroOutcome1280Webp.src} 1280w`, `${heroOutcome1920Webp.src} 1920w`].join(", "),
   },
   "chapter-apply.jpg": {
     fallbackSrc: chapterApplyJpg.src,
@@ -77,4 +125,31 @@ export function helpHostPhotoUrls(): readonly string[] {
     ...photo.avifSrcSet.split(", ").map((candidate) => candidate.split(" ")[0]),
     ...photo.webpSrcSet.split(", ").map((candidate) => candidate.split(" ")[0]),
   ]);
+}
+
+const RESPONSIVE_WIDTHS = [320, 640, 1280, 1920] as const;
+
+/**
+ * Every `/home/…` path the captured home page asks for, mapped to the hashed build file that
+ * serves the same picture (Founder, 18 October 2026: the help site gets the designed home).
+ *
+ * The capture writes the five photographs as `/home/<name>.jpg` plus four widths in `avif`
+ * and `webp` under `/home/responsive/`, and `public/home` is `COMMERCIAL` in the route
+ * manifest and denied outright by the phase-2 Firewall rule. Rewriting the whole set at once
+ * is what lets the help host serve the design unchanged: the markup, the `sizes` and the
+ * widths are the main site's, only the addresses move under `/_next/static/`.
+ */
+export function helpHostHomePhotoRewrites(): ReadonlyMap<string, string> {
+  const rewrites = new Map<string, string>();
+  for (const [name, photo] of Object.entries(PHOTOS) as [HelpHostPhotoName, HelpHostPhoto][]) {
+    const stem = name.replace(/\.jpg$/, "");
+    rewrites.set(`/home/${name}`, photo.fallbackSrc);
+    for (const [format, srcSet] of [["avif", photo.avifSrcSet], ["webp", photo.webpSrcSet]] as const) {
+      const candidates = srcSet.split(", ").map((candidate) => candidate.split(" ")[0]);
+      RESPONSIVE_WIDTHS.forEach((width, index) => {
+        rewrites.set(`/home/responsive/${stem}-${width}.${format}`, candidates[index]);
+      });
+    }
+  }
+  return rewrites;
 }

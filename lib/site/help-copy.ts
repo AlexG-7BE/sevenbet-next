@@ -812,3 +812,87 @@ const trustCardCopy: Readonly<Record<HelpLocale, Readonly<{ title: string; body:
 export function helpTrustCardCopy(locale: SupportedLocale | string | null | undefined) {
   return trustCardCopy[helpLocale(locale)];
 }
+
+// ---------------------------------------------------------------------------
+// §4.1 the help home, as the Founder asked for it on 18 October 2026
+// ---------------------------------------------------------------------------
+
+/**
+ * The words the designed home page says on this host and nowhere else (Founder, 18 October
+ * 2026, after opening the help site on his phone: «сделай главную как у основного сайта…
+ * добавь как home page, а текущую page просто оставь как ссылку в header footer»).
+ *
+ * Two blocks, and only two, because everything else on that page is already about control
+ * rather than casinos and is served exactly as the main site serves it:
+ *
+ *  1. **the pause plan**, which is what most people who find a help site came for. It is a
+ *     screen of its own between "Is gambling becoming harder to control?" and the Programme,
+ *     and a second line under the hero action, so a phone shows it without scrolling.
+ *  2. **who runs this site**, which replaces the captured "Two businesses. One wall between
+ *     them." That section is the affiliate business explaining its own wall, and on a help
+ *     domain it cannot stand as it is. Deleting the subject would be worse than leaving it:
+ *     a visitor and a help organisation must still be able to find out, in one click, who
+ *     runs the site and how it is paid for. So the section keeps its place and its design,
+ *     says the short true version, and links to `/who-runs-this` for the long one.
+ */
+export type HelpHomeCopy = Readonly<{
+  /** The second line under the hero's Programme button. */
+  heroPausePlanLink: string;
+  pausePlan: Readonly<{ eyebrow: string; headingLead: string; headingEmphasis: string; body: string; cta: string }>;
+  owner: Readonly<{ eyebrow: string; headingLead: string; headingEmphasis: string; body: string }>;
+}>;
+
+const homePage: Readonly<Record<HelpLocale, HelpHomeCopy>> = {
+  "en-GB": {
+    heroPausePlanLink: "Or start with the ten-day pause plan →",
+    pausePlan: {
+      eyebrow: "Start today",
+      headingLead: "Ten days.",
+      headingEmphasis: "One at a time.",
+      body: "The pause plan is one small thing to do each day for ten days: what to turn off, who to tell, and what to do with the evening you suddenly have. It is free, there is nothing to sign up for, and you can put it straight into your calendar.",
+      cta: "Open the pause plan",
+    },
+    owner: {
+      eyebrow: "Straight answers",
+      headingLead: "Who runs this site.",
+      headingEmphasis: "And who pays for it.",
+      body: `This site is free and earns nothing: no casinos, no adverts, no affiliate links. It is run by ${HELP_OWNER.legalName}, which also runs a casino-comparison site at a different address, and nothing you write here ever reaches it. Who the owner is, where the money comes from and what is stored are all answered in plain words on one page.`,
+    },
+  },
+  "sv-SE": {
+    heroPausePlanLink: "Eller börja med pausplanen på tio dagar →",
+    pausePlan: {
+      eyebrow: "Börja i dag",
+      headingLead: "Tio dagar.",
+      headingEmphasis: "En i taget.",
+      body: "Pausplanen är en liten sak att göra varje dag i tio dagar: vad du stänger av, vem du berättar för och vad du gör med kvällen du plötsligt har. Den är gratis, du behöver inte skapa något konto, och du kan lägga in den direkt i kalendern.",
+      cta: "Öppna pausplanen",
+    },
+    owner: {
+      eyebrow: "Raka svar",
+      headingLead: "Vem driver sajten.",
+      headingEmphasis: "Och vem betalar.",
+      body: `Den här sajten är gratis och tjänar ingenting: inga casinon, ingen reklam, inga affiliatelänkar. Den drivs av ${HELP_OWNER.legalName}, som också driver en jämförelsesajt för casinon på en annan adress, och ingenting du skriver här går dit. Vem ägaren är, varifrån pengarna kommer och vad som sparas står på en enda sida, på vanlig svenska.`,
+    },
+  },
+  "da-DK": {
+    heroPausePlanLink: "Eller start med pauseplanen på ti dage →",
+    pausePlan: {
+      eyebrow: "Start i dag",
+      headingLead: "Ti dage.",
+      headingEmphasis: "Én ad gangen.",
+      body: "Pauseplanen er én lille ting, du gør hver dag i ti dage: hvad du slukker for, hvem du siger det til, og hvad du gør med den aften, du pludselig har. Den er gratis, du skal ikke oprette noget, og du kan lægge den direkte i kalenderen.",
+      cta: "Åbn pauseplanen",
+    },
+    owner: {
+      eyebrow: "Klare svar",
+      headingLead: "Hvem står bag.",
+      headingEmphasis: "Og hvem betaler.",
+      body: `Dette websted er gratis og tjener ingenting: ingen casinoer, ingen reklamer, ingen affiliate-links. Det drives af ${HELP_OWNER.legalName}, som også driver et sammenligningssite for casinoer på en anden adresse, og intet af det, du skriver her, går derhen. Hvem ejeren er, hvor pengene kommer fra, og hvad der gemmes, står på én side i almindeligt sprog.`,
+    },
+  },
+};
+
+export function helpHomeCopy(locale: SupportedLocale | string | null | undefined): HelpHomeCopy {
+  return homePage[helpLocale(locale)];
+}
