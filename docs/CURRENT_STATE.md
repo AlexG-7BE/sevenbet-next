@@ -141,6 +141,13 @@ unchanged.
   the desktop home page is not changed.
 - **The root not-found reads the site** and is built from the help shell and the help site's
   own words on the help host — the boundary Next writes into every document's inline data.
+- **The shell's message catalogue is said in the serving site's name** (added 18 October 2026).
+  `PublicNavigation` is a client component, so the whole `PublicShellMessages` object is
+  serialised into `self.__next_f` and into every `?_rsc=` response whether or not the help branch
+  paints it: until this change every help-host page carried `"B4GAMBLE home"` there. `PublicHeader`
+  now passes `withSiteNameDeep(publicShellMessages(locale), site)`, which returns the main host's
+  object by reference, so `b4gamble.com` is unchanged. `tests/help-site-shell.test.tsx` walks the
+  element tree, not only the rendered HTML.
 - **Host-aware root metadata** (`generateMetadata` in `app/layout.tsx`): on the help host
   `metadataBase` is the help origin, the title and description are the help site's own, with
   no "casino comparison" in them, `siteName` is "Pause Plan", and the default social image is
@@ -256,12 +263,24 @@ main site, so the main host behaves exactly as before:
 - **Still to come in phase 1:** a help-site not-found page that replaces the gate's own
   self-contained 404 body (`lib/site/help-not-found-page.ts`) and the two-host Playwright specs
   of §20.2. The icon, the per-host `llms.txt` body and the copy follow-up below are done.
-- **Not verified, and the next pull request has to solve it:** a local two-host run still does
-  not work. `HELP_SITE_DEV_HOST` was set at build time, at run time and in `.env.local` against
-  a local production server and the edge middleware sandbox did not see it, although middleware
-  itself was running. The help half is therefore proved by unit tests that call `middleware()`
-  directly and by component renders, not by an HTTP round trip. §20.2's two-host browser specs
-  need a working mechanism first.
+- **Solved on 18 October 2026: a local two-host run works, with one correction.** The earlier
+  note said the edge middleware sandbox did not see `HELP_SITE_DEV_HOST`. **It does** — the
+  sandbox copies the whole of `process.env` (`next/dist/server/web/sandbox/context.js`,
+  `buildEnvironmentVariablesFrom`). What does not work is naming a *virtual* host:
+  **`next start` builds `request.url` from its own hostname, not from the request's `Host` or
+  `X-Forwarded-Host` header**, so every request to a local production server is
+  `http://localhost:<port>/…` whatever host the client asked for, and `help.localhost` can never
+  match. The working recipe is one server per site, told which one it is:
+
+  ```
+  HELP_SITE_DEV_HOST=localhost npx next start -p 4176   # the help site
+  npx next start -p 4177                                # b4gamble.com
+  ```
+
+  **DETECTED, 18 October 2026:** `/best-offers` answers 404 on 4176 and 307 on 4177; the help
+  host's `robots.txt` is `Disallow: /` and the main host's is today's file; `/` on 4176 serves
+  the help home with no B4GAMBLE anywhere. §20.2's two-host browser specs can be written against
+  this.
 ### Phase 1, the name and the pictures (branch `feat/help-site-own-brand`)
 
 **Founder, 17 October 2026: «убери B4GAMBLE из текстов и перенеси картинки».** The copy

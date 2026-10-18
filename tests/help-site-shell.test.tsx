@@ -212,6 +212,13 @@ test("the help shell carries the help site's own name and no B4GAMBLE wordmark",
       assert.doesNotMatch(html, /b4gamble-logo/i, `${name} ${locale} prints the B4GAMBLE logo`);
       assertNoCommercialAddress(html, `${name} ${locale}`);
       assertTreeIsClean(element, `${name} ${locale}`);
+      // …and the layer the browser receives but never paints. `PublicNavigation` is a client
+      // component, so the whole `PublicShellMessages` object is serialised into `self.__next_f`
+      // and into every `?_rsc=` response: until 18 October 2026 that carried "B4GAMBLE home"
+      // on every help page, including this one.
+      for (const value of treeStrings(element)) {
+        assert.doesNotMatch(value, /B4GAMBLE/i, `${name} ${locale} serialises the B4GAMBLE wordmark: ${value}`);
+      }
     }
   }
 });

@@ -6,7 +6,7 @@ import { resolvePresentationContext, type PresentationResolution } from "@/lib/m
 import { DEFAULT_MARKET_PROFILE, PUBLISHED_LANGUAGE_ROUTE_PROFILES, marketProfileByLocale, publicMarketPath } from "@/lib/market/registry";
 import { finalPublicHref } from "@/lib/market/routing";
 import { commercialDestinationsNavigable, type PublicAccountNavigation } from "@/lib/public-shell";
-import { helpShellCopy } from "@/lib/site/help-copy";
+import { helpShellCopy, withSiteNameDeep } from "@/lib/site/help-copy";
 import { HELP_SITE_NAME, type SiteClass } from "@/lib/site/host-gate";
 import type { CommercialProductState } from "@/lib/market/commercial-product-state";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
@@ -57,7 +57,11 @@ export function PublicHeader({
    */
   site?: SiteClass;
 }) {
-  const messages = publicShellMessages(presentation.locale);
+  // The whole object is a prop of `PublicNavigation`, a client component, so every string in it
+  // travels in `self.__next_f` and in a `?_rsc=` response whether or not the help branch paints
+  // it (Founder, 17 October 2026). `withSiteNameDeep` returns the main host's object by
+  // reference, so nothing on `b4gamble.com` moves.
+  const messages = withSiteNameDeep(publicShellMessages(presentation.locale), site);
   const help = site === "help" ? helpShellCopy(presentation.locale) : null;
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
