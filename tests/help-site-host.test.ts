@@ -46,6 +46,7 @@ import {
   SITE_ROUTE_MANIFEST,
   stripSiteRoutePrefixes,
 } from "../lib/site/host-routes";
+import { helpShellCopy } from "../lib/site/help-copy";
 import { robotsForSite } from "../app/robots";
 import { middleware } from "../middleware";
 
@@ -491,6 +492,32 @@ test("the help host serves the help and shared routes", () => {
   ]) {
     assert.equal(helpHostServes(path), true, path);
   }
+});
+
+test("the help home and the pause plan are two addresses, and both of them answer", () => {
+  // Founder, 18 October 2026: `/` becomes the designed home page and the pause plan stays an
+  // ordinary page reached from the header and the footer. Between 17 and 18 October `/` served
+  // the plan itself, so the point of this test is that nothing a visitor, a bookmark, a share
+  // link or a help organisation already has can start answering 404 — `/pause-plan` was always
+  // served on this host too, and it still is, in every language shape.
+  for (const path of ["/", "/sv", "/da", "/pause-plan", "/sv/pause-plan", "/da/pause-plan"]) {
+    assert.equal(helpHostServes(path), true, path);
+    assert.equal(classifySitePath(path), path === "/" || path === "/sv" || path === "/da" ? "SHARED" : "HELP", path);
+  }
+  // The two pages the menu and the footer link, and the page the home's own screen links.
+  const home = readFileSync(join(repositoryRoot, "app/(public)/page.tsx"), "utf8");
+  assert.match(home, /productHref\(presentation, "\/pause-plan"\)/, "the home links the pause plan at its own address");
+  assert.match(home, /productHref\(presentation, HELP_OWNER_PATH\)/, "and the owner page at its own address");
+  for (const [file, where] of [
+    ["lib/public-shell.ts", "the help menu"],
+    ["components/public-shell/PublicFooter.tsx", "the help footer"],
+  ] as const) {
+    assert.match(readFileSync(join(repositoryRoot, file), "utf8"), /"\/pause-plan"/, `${where} links the pause plan`);
+  }
+  // The label is the help shell's own, in the three published languages.
+  assert.equal(helpShellCopy("en-GB").navigation.pausePlan, "Pause plan");
+  assert.equal(helpShellCopy("sv-SE").navigation.pausePlan, "Pausplan");
+  assert.equal(helpShellCopy("da-DK").navigation.pausePlan, "Pauseplan");
 });
 
 test("COMMERCIAL and INTERNAL routes answer 404 on the help host, under every prefix shape", () => {

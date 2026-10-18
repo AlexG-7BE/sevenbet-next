@@ -339,7 +339,7 @@ the menu for every visitor of the main site.
 
 | Routes | Help-host behaviour |
 | --- | --- |
-| `/` | the help home: the pause plan (answered Q5 (b)); the main home is unchanged |
+| `/` | the help home: the captured home design, with the affiliate-business screen replaced by the owner block and the pause plan added (Q5 **amended 18 October 2026**; it was the pause plan from 17 to 18 October). The pause plan keeps `/pause-plan`. The main home is unchanged |
 | `/learn` | lists only `responsible-gambling` guides; a tag hub (Spelpaus, ROFUS, GAMSTOP) works as today because it already selects inside that category (**DETECTED** `lib/articles/pause-hub-selection.ts`). Help-host copy: today's meta description "Plain-language guides to casino bonuses, banking, games, reviews and responsible play" (`lib/i18n/learning-center.ts:47`, and its translations) is replaced, and the topic chips Bonuses, Banking, Casinos, Games and Industry (`lib/final-handoff/transforms.ts:466-472`) are not rendered |
 | `/privacy`, `/terms`, `/contact` | the same controller and documents, with the sections that do not apply on the help host left out (§10, §17) |
 | `/login`, `/reset-password`, `/unsubscribe` | customer sign-in; after phase 3 the main site's `/login` and `/reset-password` 301 to the help host, because customer accounts exist only for the Programme |
@@ -403,7 +403,7 @@ middleware alone.
   | `learn` (`magazine-shelf-…jpg`, `welcome-bonus-feature-cover.png`) | **denied** — both are covers of commercial guides; help-guide images are first-party through the help image route (§13) |
   | `about` (`fresh-interruption.png`) | **denied** — `/about` is `COMMERCIAL` |
   | `data` (`spelpaus-registrations.csv`, `rofus-registrations.csv`) | **allowed** — the pause statistics the help pages print |
-  | `home` (hero and chapter images, tool SVGs) | **denied** — the pause plan is the help home (answered Q5 (b)), so the handoff home's images are never requested there |
+  | `home` (hero and chapter images, tool SVGs) | **denied** — and it stays denied now that the help host serves the home design (Q5 amended 18 October 2026): the five photographs are imported, so the bundler serves them hashed under `/_next/static/` through the one exception below, and `lib/media/help-host-photos.ts` rewrites every `/home/…` address the capture writes. The tool SVGs are not requested by the home page |
 
   The rule is reviewed whenever a top-level entry is added; the manifest test
   of §4.1 already fails on an unclassified folder, and the Firewall rule is
@@ -1695,7 +1695,8 @@ not run.
   folder of §4.2 (`/best-offers/…`, `/bonus-directory/…`, `/casino-brands/…`,
   `/casino-directory/…`, `/demo-casinos/…`, `/partner-preview/…`,
   `/brand/b4gamble-logo-512.png`, `/learn/…`, `/about/…`, and `/home/…`
-  included, since Q5 is answered (b)) and `/_next/image` requests for them refused on the help
+  included — the home design takes its photographs hashed under `/_next/static/`, so no
+  `/home/…` address is requested there) and `/_next/image` requests for them refused on the help
   host, with `/data/*.csv` still served (§4.2).
 - From a KZ exit: 451 on the help host; 403 on its raster assets.
 - The four path-only Firewall rules (auth entry, second factor, contact,
@@ -1873,12 +1874,20 @@ RFC.
    condition for working with us.
    **Build:** nothing. No entity, no separate database, no separate accounts
    in phases 1–4; the option stays in §16.5 for a later decision.
-5. **Help home page — (b), the pause plan is the home page.** Not the current
-   home layout with a help menu.
-   **Build:** `/` on the help host serves the pause plan in sv, da and en,
-   with the Programme entry as its main call to action; `public/home/` is
-   denied on the help host (§4.1, §4.2, §20.3). The main site's home is not
-   touched.
+5. **Help home page — AMENDED 18 October 2026: the home design, not the pause
+   plan.** The original answer was (b), the pause plan as the home page. He
+   opened it on his phone the morning after phase 2 went live and would not
+   read it: «сделай главную как у основного сайта… добавь как home page, а
+   текущую page просто оставь как ссылку в header footer».
+   **Build:** `/` on the help host serves the captured home design in sv, da
+   and en, with the screen "Two businesses. One wall between them." replaced
+   by a short owner block linking `/who-runs-this`, a pause-plan screen added
+   between "Is gambling becoming harder to control?" and the Programme, and a
+   second line under the hero action. The pause plan keeps `/pause-plan` and
+   is in the header and the footer. `public/home/` stays denied on the help
+   host; the photographs are served hashed under `/_next/static/`
+   (§4.1, §4.2, §20.3). The main site's home is not touched — a digest test
+   holds its output byte-identical.
 6. **Sender and contact address — (b) eventually, (a) acceptable for
    phase 2.** A mailbox on the help domain in the end; phase 2 may still use
    `support@b4gamble.com`.

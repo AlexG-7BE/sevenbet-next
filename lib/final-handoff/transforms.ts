@@ -967,6 +967,80 @@ export function transformHomeHandoffCss(css: string) {
   `;
 }
 
+/**
+ * The help host's own home page (Founder, 18 October 2026). It is the same captured design the
+ * main site serves — the headings were already about control rather than casinos: "Control
+ * starts here", "Is gambling becoming harder to control?", "A plan you can actually see",
+ * "See the pattern", "Write the rule", "Use it. Make it yours." — with three changes and no
+ * fourth:
+ *
+ *  1. **"Two businesses. One wall between them." is replaced.** That screen is the affiliate
+ *     business explaining its own wall, and it carries the page's one commercial link
+ *     (`/affiliate-disclosure`). On this host it says the short true thing and links to
+ *     `/who-runs-this`, so the question it answers is still answered in one click.
+ *  2. **the pause plan gets a screen and a line under the hero action**, because it is what
+ *     most people who reach a help site came for, and `/` no longer serves it.
+ *  3. **the photographs move to their hashed build paths**, which is the only way the help
+ *     host may serve them: `public/home` is COMMERCIAL in the route manifest and the phase-2
+ *     Firewall rule denies every raster image outside `/_next/static/` (RFC-057 §4.2).
+ *
+ * Everything else — the markup, the inline styles, the chapter stack, the snap paging, the
+ * `sizes` attributes and the widths — is the main site's, byte for byte, so the design the
+ * Founder approved is the design this host renders. The main home never calls this function.
+ */
+export function transformHelpHomeHandoff(html: string, options: Readonly<{
+  /** The pause-plan screen and the hero's second line. */
+  pausePlan: Readonly<{ href: string; eyebrow: string; headingLead: string; headingEmphasis: string; body: string; cta: string; heroLink: string }>;
+  /** The screen that replaces "Two businesses. One wall between them." */
+  owner: Readonly<{ href: string; linkLabel: string; eyebrow: string; headingLead: string; headingEmphasis: string; body: string }>;
+  /** `/home/…` → the hashed build file that serves the same picture. */
+  photos: ReadonlyMap<string, string>;
+}>) {
+  const { owner, pausePlan, photos } = options;
+  const withOwner = transformElementContaining(
+    html,
+    'data-screen-label="Why trust"',
+    (_elementHtml, startTag) => startTag.includes('data-screen-label="Why trust"'),
+    (_elementHtml, startTag) => `${startTag.replaceAll('"Why trust"', '"Who runs this site"')}
+    <div style="max-width: 1440px; margin: 0px auto; width: 100%;">
+      <div data-rise="" style="text-align: center; max-width: 760px; margin: 0px auto; opacity: 0; transform: translateY(44px);">
+        <div style="font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; color: rgb(42, 76, 72); margin-bottom: 20px;">${escapeHtml(owner.eyebrow)}</div>
+        <h2 style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: clamp(30px, 3.8vw, 60px); line-height: 1.06; letter-spacing: -0.01em; margin: 0px;">${escapeHtml(owner.headingLead)}<br>${escapeHtml(owner.headingEmphasis)}</h2>
+        <p style="font-size: 17px; line-height: 1.7; color: rgb(100, 99, 92); margin: 28px auto 36px; max-width: 62ch;">${escapeHtml(owner.body)}</p>
+        <a data-help-home-owner="" href="${escapeHtml(owner.href)}" style="display: inline-block; border: 1px solid rgba(16, 15, 15, 0.35); border-radius: 999px; padding: 17px 40px; font: 600 16px Archivo, sans-serif; letter-spacing: 0.02em; color: rgb(16, 15, 15); text-decoration: none;">${escapeHtml(owner.linkLabel)}</a>
+      </div>
+    </div>
+  </div>`,
+  );
+
+  // The hero's second line, inside the column that already holds the Programme button.
+  const withHeroLink = withOwner.replace(
+    /(<a href="[^"]*" class="scp2" data-home-hero-cta=""[^>]*>[^<]*<\/a>)/,
+    `$1<a data-help-home-hero-pause-plan="" href="${escapeHtml(pausePlan.href)}" style="color: rgba(250, 250, 247, 0.72); font: 600 15px Archivo, sans-serif; letter-spacing: 0.02em; text-decoration: none; border-bottom: 1px solid rgba(250, 250, 247, 0.35); padding-bottom: 3px;">${escapeHtml(pausePlan.heroLink)}</a>`,
+  );
+
+  // One screen between "Is gambling becoming harder to control?" and the Programme, where a
+  // reader who has just recognised themselves is looking for the first thing to do.
+  const pausePlanScreen = `<div data-screen-label="Pause plan" data-help-home-pause-plan="" data-home-snap="" data-home-snap-label="Pause plan" data-snap="" data-nav-theme="dark" style="position: relative; z-index: 1; background: rgb(16, 15, 15); color: rgb(250, 250, 247); min-height: 100svh; box-sizing: border-box; display: flex; align-items: center; padding: 100px clamp(24px, 5vw, 72px);">
+    <div style="max-width: 1440px; margin: 0px auto; width: 100%;">
+      <div data-rise="" style="max-width: 760px; opacity: 0; transform: translateY(44px);">
+        <div style="font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; color: rgb(228, 226, 78); margin-bottom: 20px;">${escapeHtml(pausePlan.eyebrow)}</div>
+        <h2 style="font-family: Archivo, sans-serif; font-weight: 900; text-transform: uppercase; font-size: clamp(36px, 5.6vw, 92px); line-height: 1; letter-spacing: -0.025em; margin: 0px;">${escapeHtml(pausePlan.headingLead)}<br><em style="font-family: &quot;Instrument Serif&quot;, serif; font-weight: 400; text-transform: none; letter-spacing: -0.01em; font-style: italic; color: rgb(228, 226, 78);">${escapeHtml(pausePlan.headingEmphasis)}</em></h2>
+        <p style="font-size: 17px; line-height: 1.7; color: rgba(250, 250, 247, 0.72); margin: 28px 0px 40px; max-width: 56ch;">${escapeHtml(pausePlan.body)}</p>
+        <a data-help-home-pause-plan-cta="" href="${escapeHtml(pausePlan.href)}" style="display: inline-block; background: rgb(228, 226, 78); color: rgb(16, 15, 15); border-radius: 999px; padding: 19px 46px; font: 600 16px Archivo, sans-serif; letter-spacing: 0.02em; text-decoration: none;">${escapeHtml(pausePlan.cta)}</a>
+      </div>
+    </div>
+  </div>
+
+  `;
+  const anchorForProgramme = '<div aria-hidden="true" data-home-snap="" data-home-snap-anchor="" data-home-snap-label="A plan you can see"';
+  const withPausePlan = withHeroLink.includes(anchorForProgramme)
+    ? withHeroLink.replace(anchorForProgramme, `${pausePlanScreen}${anchorForProgramme}`)
+    : withHeroLink;
+
+  return [...photos].reduce((output, [from, to]) => output.replaceAll(from, to), withPausePlan);
+}
+
 export function transformTenStepsHandoff(html: string, locale: SupportedLocale = "en-GB", programmePath = "/program") {
   let semanticHtml = transformElementContaining(
     html,
