@@ -35,4 +35,5 @@ export const CASINO_EDITORIAL_NATIVE_TEXT: Readonly<Record<CasinoEditorialLangua
   ],
   uk: [],
   ru: [],
+  uz: [],
 };

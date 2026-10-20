@@ -99,4 +99,17 @@ export const PROFILE_FAQ_COPY: Readonly<Record<"en" | CasinoEditorialLanguage, P
     reviewWithoutActionQuestion: "Остаётся ли обзор доступным без ссылки для перехода?",
     reviewWithoutActionAnswer: "Да. Доступность редакционного обзора и доступность коммерческой ссылки — разные вещи. Если ссылки нет или она не действует там, где ты находишься, опубликованный обзор остаётся.",
   },
+  uz: {
+    locale: "uz-UZ",
+    licenceQuestion: (casinoName) => `${casinoName} boʻyicha qanday litsenziya maʼlumotlari eʼlon qilingan?`,
+    licenceChecked: (authority, checkedOn) => `Eʼlon qilingan profilda ${authority} koʻrsatilgan; dalillar tekshirilgan sana: ${checkedOn}. Litsenziya — bu minimal talab, u kazino sizga mos kelishini yoki oʻyin natijalarini kafolatlamaydi.`,
+    licenceUnchecked: (authority) => `Eʼlon qilingan profilda ${authority} koʻrsatilgan. Mustaqil tekshiruv sanasi eʼlon qilinmagan. Litsenziya — bu minimal talab, u kazino sizga mos kelishini yoki oʻyin natijalarini kafolatlamaydi.`,
+    wageringQuestion: "Aylantirish talabi haqida qanday maʼlumot eʼlon qilingan?",
+    wageringListed: (multiplier) => `${multiplier}× aylantirish talabi koʻrsatilgan.`,
+    eligibilityQuestion: "Eʼlon qilingan taklif kimlar uchun moʻljallangan?",
+    withdrawalQuestion: "Pul yechishning qanday muddatlari koʻrsatilgan?",
+    withdrawalAnswer: (timings) => `${timings}. Eʼlon qilingan muddatlar kafolat emas, hisob tekshiruvlari ham boʻlishi mumkin.`,
+    reviewWithoutActionQuestion: "Kazinoga oʻtish havolasi boʻlmasa ham sharh ochiq qoladimi?",
+    reviewWithoutActionAnswer: "Ha. Tahririy sharhning mavjudligi va tijoriy havolaning mavjudligi — alohida narsalar. Havola boʻlmasa yoki u siz turgan joyda amal qilmasa ham, eʼlon qilingan sharh oʻchirilmaydi.",
+  },
 };

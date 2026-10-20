@@ -130,6 +130,58 @@ test("a hidden language is never chosen for a visitor: not by country, browser o
   assert.equal(chosen.source, "USER_PREFERENCE");
 });
 
+// UZBEK-LANGUAGE-2026-10-20: Uzbek is published at /uz; in Uzbekistan the country decides first.
+test("Uzbekistan opens Uzbek before the browser, and an Uzbek browser opens it anywhere", async () => {
+  const uzbek = languageRouteByPublicSlug("uz");
+  assert.equal(uzbek?.published, true);
+  assert.equal(uzbek?.indexable, true);
+  assert.equal(uzbek?.defaultLocale, "uz-UZ");
+  assert.equal(uzbek?.label, "Oʻzbekcha");
+
+  for (const acceptLanguage of ["ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7", "en-US,en;q=0.9", "uz-UZ,uz;q=0.9", null]) {
+    const result = resolvePresentationContext({ trustedCountryCode: "UZ", acceptLanguage });
+    assert.equal(result.language, "uz", String(acceptLanguage));
+    assert.equal(result.locale, "uz-UZ", String(acceptLanguage));
+    assert.equal(result.source, "TRUSTED_GEO", String(acceptLanguage));
+    assert.equal(result.market?.countryCode, "UZ");
+    assert.equal(result.marketDisplayName, "Oʻzbekiston");
+  }
+  // An explicit address and a language picked in the menu still come first.
+  assert.equal(resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "UZ" }).language, "en");
+  const picked = resolvePresentationContext({ preference: { language: "en" }, trustedCountryCode: "UZ", acceptLanguage: "ru-RU" });
+  assert.equal(picked.language, "en");
+  assert.equal(picked.source, "USER_PREFERENCE");
+
+  // Elsewhere Uzbek follows the browser, and the market stays the visitor's own.
+  const abroad = resolvePresentationContext({ trustedCountryCode: "DE", acceptLanguage: "uz-UZ,uz;q=0.9,ru;q=0.8" });
+  assert.equal(abroad.language, "uz");
+  assert.equal(abroad.source, "ACCEPT_LANGUAGE");
+  assert.equal(abroad.market?.countryCode, "DE");
+  assert.equal(resolvePresentationContext({ trustedCountryCode: "KG", acceptLanguage: "ru-RU,ru;q=0.9" }).language, "en");
+
+  const legacy = parsePublicMarketRoute("/uz-uz/casinos");
+  assert.equal(legacy.kind, "LEGACY_MARKET_ROUTE");
+  if (legacy.kind === "LEGACY_MARKET_ROUTE") assert.equal(legacy.canonicalPath, "/uz/casinos");
+
+  const previous = { vercel: process.env.VERCEL, vercelEnv: process.env.VERCEL_ENV, secret: process.env.BETTER_AUTH_SECRET };
+  process.env.BETTER_AUTH_SECRET = "uzbek-language-test-secret";
+  process.env.VERCEL = "1";
+  process.env.VERCEL_ENV = "production";
+  try {
+    const home = await middleware(new NextRequest("https://b4gamble.com/", { headers: { "accept-language": "ru-RU,ru;q=0.9", "x-vercel-ip-country": "UZ" } }));
+    assert.equal(home.status, 307);
+    assert.equal(new URL(home.headers.get("location") ?? "http://invalid").pathname, "/uz");
+    for (const path of ["/uz", "/uz/casinos", "/uz/program"]) {
+      const page = await middleware(new NextRequest(`https://b4gamble.com${path}`, { headers: { "x-vercel-ip-country": "DE" } }));
+      assert.equal(page.headers.get("content-language"), "uz-UZ", path);
+    }
+  } finally {
+    if (previous.secret === undefined) delete process.env.BETTER_AUTH_SECRET; else process.env.BETTER_AUTH_SECRET = previous.secret;
+    if (previous.vercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = previous.vercel;
+    if (previous.vercelEnv === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous.vercelEnv;
+  }
+});
+
 test("Production serves no address of a hidden language and sends nobody to one", async () => {
   const hiddenPaths = [
     "/uk", "/uk/casinos", "/uk/help", "/uk/program",

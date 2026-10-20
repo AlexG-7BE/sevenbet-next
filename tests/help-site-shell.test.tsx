@@ -128,7 +128,7 @@ function assertTreeIsClean(element: React.ReactElement, where: string) {
   for (const value of treeStrings(element)) assertNoCommercialAddress(value, `${where} (inline page data)`);
 }
 
-const routeLanguageByLocale = { "en-GB": "en", "sv-SE": "sv", "da-DK": "da" } as const;
+const routeLanguageByLocale = { "en-GB": "en", "sv-SE": "sv", "da-DK": "da", "uz-UZ": "uz" } as const;
 
 const presentations = HELP_LOCALES.map((locale) => ({
   locale,
@@ -324,7 +324,7 @@ test("the owner page names the owner and the other site in plain text, and links
     const text = copy.sections.flatMap((section) => section.paragraphs).join(" ");
     assert.ok(text.includes(HELP_OWNER.legalName), "who runs it");
     assert.match(text, /New York/, "where the company is");
-    assert.match(text, /United States|USA/, "that it is a United States company");
+    assert.match(text, /United States|USA|Amerika Qoʻshma Shtatlari|AQSh/, "that it is a United States company");
     assert.ok(text.includes(HELP_OWNER.otherSite), "how the company earns");
     assert.equal(copy.sections.length, 5, `the owner page ${locale} gives five answers`);
     // The page offers exactly two routes: the data statement, with the rest of the answers,
@@ -349,19 +349,19 @@ test("the owner page is short, and what it stopped saying is still said on the d
       assert.ok(section.paragraphs.join(" ").length <= 330, `"${section.heading}" (${locale}) is a short answer`);
     }
     assert.doesNotMatch(ownerText, /447 Broadway/, `the owner page ${locale} no longer prints the street address`);
-    assert.doesNotMatch(ownerText, /\b17\.? (?:October|oktober)\b/, `the owner page ${locale} no longer carries the partner-press qualification`);
+    assert.doesNotMatch(ownerText, /\b17\.? (?:October|oktober)\b|17-oktabr/, `the owner page ${locale} no longer carries the partner-press qualification`);
 
     const organisations = helpOrganisationsPage(locale);
     const text = organisations.sections.flatMap((section) => section.paragraphs).join(" ");
     assert.match(text, /447 Broadway, 2nd Floor, 1663, New York, NY 10013/, `the data statement ${locale} prints the street address`);
-    assert.match(text, /\b17\.? (?:October|oktober) 2026\b/, `the data statement ${locale} carries the dated partner-press qualification`);
+    assert.match(text, /\b17\.? (?:October|oktober) 2026\b|2026-yil 17-oktabr/, `the data statement ${locale} carries the dated partner-press qualification`);
     assert.ok(text.includes(HELP_OWNER.otherSite), `the data statement ${locale} names the other site`);
-    assert.match(text, /\b16\.? (?:October|oktober) 2026\b/, `the data statement ${locale} dates the programme's clean state`);
-    assert.match(text, /automatic test|automatiskt test|automatisk test/, `the data statement ${locale} says a test keeps it so`);
-    assert.match(text, /gambling licence|spellicens|spillicens/, `the data statement ${locale} says the company holds no gambling licence`);
-    assert.match(text, /public body|myndighet|myndighed/, `the data statement ${locale} says the company is not a public body`);
-    assert.match(text, /start the programme|börjar programmet|starter programmet/, `the data statement ${locale} says what is counted`);
-    assert.match(text, /Privacy Notice|integritetspolicyn|privatlivspolitikken/, `the data statement ${locale} points at the Privacy Notice`);
+    assert.match(text, /\b16\.? (?:October|oktober) 2026\b|2026-yil 16-oktabr/, `the data statement ${locale} dates the programme's clean state`);
+    assert.match(text, /automatic test|automatiskt test|automatisk test|avtomatik test/, `the data statement ${locale} says a test keeps it so`);
+    assert.match(text, /gambling licence|spellicens|spillicens|qimor litsenziya/, `the data statement ${locale} says the company holds no gambling licence`);
+    assert.match(text, /public body|myndighet|myndighed|davlat organi/, `the data statement ${locale} says the company is not a public body`);
+    assert.match(text, /start the programme|börjar programmet|starter programmet|dasturni necha kishi boshlagan/, `the data statement ${locale} says what is counted`);
+    assert.match(text, /Privacy Notice|integritetspolicyn|privatlivspolitikken|Maxfiylik siyosati/, `the data statement ${locale} points at the Privacy Notice`);
   }
 });
 
@@ -379,7 +379,7 @@ test("the data statement answers every row, including the ones we cannot answer 
       assert.ok(text.includes(subject), `the data statement ${locale} names ${subject}`);
     }
     // §16.3's gate: the open questions are written down, not left out.
-    assert.ok(copy.sections.some((section) => /yet|endnu|ännu/i.test(section.heading)), `the data statement ${locale} lists what is not answered`);
+    assert.ok(copy.sections.some((section) => /yet|endnu|ännu|hali/i.test(section.heading)), `the data statement ${locale} lists what is not answered`);
   }
 });
 
@@ -478,7 +478,7 @@ test("the commission line is replaced, not carried over", () => {
   for (const locale of HELP_LOCALES) {
     const line = helpRevenueLine(locale);
     assert.doesNotMatch(line, /B4GAMBLE/i, `the ${locale} line names the other brand`);
-    assert.match(line, /gratis|free/i, `the ${locale} line says the site is free`);
+    assert.match(line, /gratis|free|bepul/i, `the ${locale} line says the site is free`);
     assert.ok(line.length > 80, `the ${locale} line explains, rather than hinting`);
   }
   // The five pages that print it all go through one component.

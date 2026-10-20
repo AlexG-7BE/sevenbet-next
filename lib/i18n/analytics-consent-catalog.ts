@@ -171,6 +171,18 @@ const baseMessages = {
     notNow: "Не сейчас",
     error: "Не удалось сохранить твой выбор. Попробуй ещё раз.",
   },
+  "uz-UZ": {
+    trigger: "Cookie sozlamalari",
+    dialogLabel: "Cookie sozlamalari",
+    title: "Cookie fayllari boʻyicha tanlovingiz",
+    body: "B4GAMBLE saytidan qanday foydalanilayotganini koʻrish uchun oʻz cookie fayllarimiz va Google Analytics xizmatidan foydalanamiz.",
+    detail: "Elektron pochtangiz, Dasturdagi javoblaringiz va hamkor tokenlari bunga hech qachon kirmaydi.",
+    privacyNotice: "Maxfiylik siyosati",
+    allow: "Cookie fayllarini qabul qilish",
+    decline: "Cookie fayllarini rad etish",
+    notNow: "Hozir emas",
+    error: "Tanlovingizni saqlab boʻlmadi. Iltimos, qayta urinib koʻring.",
+  },
   "fr-CA": {
     trigger: "Paramètres des témoins",
     dialogLabel: "Paramètres des témoins",

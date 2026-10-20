@@ -52,7 +52,8 @@ const namesCasino = (brand: string) => /casino/i.test(brand);
  * every review was titled "{Brand} review | B4GAMBLE" and Swedish, Danish and German pages
  * carried an English summary). German follows lib/i18n/german-terminology.ts: no generic
  * "Casino"; the brand name is kept as it is. Ukrainian and Russian decline nouns, so the brand
- * leads in the nominative ("{Brand} — огляд казино", "{Brand} — обзор казино").
+ * leads in the nominative ("{Brand} — огляд казино", "{Brand} — обзор казино"); Uzbek adds
+ * suffixes, so the brand leads there too ("{Brand} — kazino sharhi").
  */
 const REVIEW_COPY: Partial<Record<SupportedLocale, ReviewCopy>> = {
   "en-GB": {
@@ -80,6 +81,10 @@ const REVIEW_COPY: Partial<Record<SupportedLocale, ReviewCopy>> = {
   "ru-RU": {
     title: (brand, year) => `${brand} — обзор${namesCasino(brand) ? "" : " казино"}${year}: бонус, выплаты и лицензия | B4GAMBLE`,
     description: (brand, score) => `${brand} — обзор${namesCasino(brand) ? "" : " казино"}${score ? `: оценка ${score}/10` : ""}. Приветственный бонус и отыгрыш, скорость выплат, платежи и лицензия — проверено перед игрой.`,
+  },
+  "uz-UZ": {
+    title: (brand, year) => `${brand} — ${namesCasino(brand) ? "sharh" : "kazino sharhi"}${year}: bonus, toʻlovlar va litsenziya | B4GAMBLE`,
+    description: (brand, score) => `${brand} — ${namesCasino(brand) ? "sharh" : "kazino sharhi"}${score ? `: baho ${score}/10` : ""}. Xush kelibsiz bonusi, aylantirish, pul yechish tezligi, toʻlovlar va litsenziya — oʻyindan oldin tekshirildi.`,
   },
 };
 

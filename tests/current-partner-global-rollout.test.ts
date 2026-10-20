@@ -139,7 +139,8 @@ test("fr-FR remains ungenerated and localized SEO remains independently review-g
   assert.ok(!PROGRAMME_LOCALES.includes("fr-FR" as never));
   // SEO-INDEX-DE-SV-DA-2026-09-27: the Founder opened the launch languages to search.
   // LANGUAGES-HIDDEN-2026-10-09: Ukrainian and Russian are withdrawn, so they are not published languages at all.
-  const founderIndexed = new Set(["de", "sv", "da"]);
+  // UZBEK-LANGUAGE-2026-10-20: Uzbek is published and indexable from release.
+  const founderIndexed = new Set(["de", "sv", "da", "uz"]);
   for (const hidden of ["uk", "ru"]) assert.ok(!PUBLISHED_LANGUAGE_ROUTE_PROFILES.some((profile) => profile.language === hidden), hidden);
   for (const profile of PUBLISHED_LANGUAGE_ROUTE_PROFILES.filter((item) => item.language !== "en")) {
     assert.equal(profile.indexable, founderIndexed.has(profile.language), profile.language);

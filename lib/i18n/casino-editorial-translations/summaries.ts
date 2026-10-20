@@ -10,6 +10,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Eines der saubersten Profile dieser Ausgabe: belegte Regulierung in Peru, viele lokale Zahlungswege, genaue Willkommensbedingungen und Spielerschutz-Werkzeuge.",
     uk: "Один із найчистіших профілів у цьому випуску: точні дані про регулювання в Перу, широкі підтвердження щодо місцевої каси, докладні актуальні умови вітальної пропозиції та інструменти відповідальної гри.",
     ru: "Один из самых чистых профилей в этом выпуске: точные данные о регулировании в Перу, обширные подтверждения по местной кассе, подробные актуальные условия приветственного предложения и инструменты ответственной игры.",
+    uz: "Ushbu nashrdagi eng puxta profillardan biri: Peru boʻyicha aniq regulyatsiya maʼlumotlari, mahalliy kassa boʻyicha keng dalillar, batafsil joriy xush kelibsiz shartlari va masʼuliyatli oʻyin nazorat vositalari.",
   },
   // betsafe
   {
@@ -19,6 +20,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Gut belegte Regulierung im Baltikum, breites Angebot in den recherchierten Profilen für Estland und Lettland, mit offener Lücke bei den estnischen Zahlungsdaten.",
     uk: "Вагомі підтвердження щодо регулювання в країнах Балтії та широкий продукт у досліджених профілях Естонії й Латвії; залишається прогалина в даних про естонську касу.",
     ru: "Надёжные подтверждения регулирования в странах Балтии и широкий продукт в изученных профилях для Эстонии и Латвии; остаётся пробел в данных об эстонской кассе.",
+    uz: "Oʻrganilgan Estoniya va Latviya profillarida Boltiqboʻyi regulyatsiyasi boʻyicha kuchli dalillar va keng mahsulot tanlovi bor; Estoniya boʻyicha kassa maʼlumotlarida hali boʻshliq qolmoqda.",
   },
   // betsson
   {
@@ -28,6 +30,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein ausgereiftes, breites Glücksspielangebot mit ungewöhnlich guten lokalen Belegen für Peru und Schweden, dem eine schwere schwedische Sanktion wegen Geldwäsche-Mängeln und unvollständige aktuelle Angebotsdetails gegenüberstehen.",
     uk: "Зрілий і широкий продукт казино з незвично вагомими місцевими підтвердженнями в Перу та Швеції; водночас є серйозне шведське наглядове рішення щодо протидії відмиванню коштів, а умови актуальної пропозиції неповні.",
     ru: "Зрелый и широкий продукт казино с необычно сильными местными подтверждениями в Перу и Швеции; им противостоят серьёзные меры шведского регулятора за нарушения в противодействии отмыванию денег и неполная механика текущего предложения.",
+    uz: "Peru va Shvetsiyada gʻoyat kuchli mahalliy dalillarga ega yetuk va keng kazino mahsuloti; biroq bunga Shvetsiyada pul yuvishga qarshi talablar buzilgani uchun qoʻllanilgan jiddiy jazo choralari va joriy taklif mexanikasining toʻliq emasligi qarshi turadi.",
   },
   // starcasino
   {
@@ -37,6 +40,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein breites italienisches Spielangebot mit gut belegten Zahlungsmethoden und der aktuellen Konzession 16026; die Veröffentlichung dient nur zur Information, weil Italien Glücksspielwerbung streng beschränkt.",
     uk: "Широкий каталог італійського казино з вагомими підтвердженнями щодо платежів і чинною концесією 16026; публікація лишається суто інформаційною, бо в Італії діють суворі обмеження на рекламу азартних ігор.",
     ru: "Широкий каталог итальянского казино с надёжными подтверждениями по платежам и действующей концессией 16026; публикация остаётся информационной из-за строгих ограничений на рекламу азартных игр в Италии.",
+    uz: "Toʻlovlar boʻyicha kuchli dalillar va amaldagi 16026-sonli konsessiyaga ega keng Italiya kazino katalogi; Italiyada qimor oʻyinlari reklamasiga qatʼiy cheklovlar borligi sababli nashr faqat maʼlumot uchun beriladi.",
   },
   // supercasino
   {
@@ -46,6 +50,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein gut dokumentierter Anbieter für Neuseeland mit ungewöhnlich klaren aktuellen Willkommensbedingungen; genaue Limits pro Zahlungsmethode bleiben die größte Lücke.",
     uk: "Добре задокументоване казино для Нової Зеландії з незвично чіткими умовами актуальної вітальної пропозиції; головна прогалина в даних — точні ліміти каси для кожного способу оплати.",
     ru: "Хорошо задокументированное казино для Новой Зеландии с необычно понятной механикой текущего приветственного предложения; главный пробел в данных — точные лимиты по отдельным способам оплаты в кассе.",
+    uz: "Yangi Zelandiya oʻyinchilariga moʻljallangan, yaxshi hujjatlashtirilgan kazino; joriy xush kelibsiz bonusi mexanikasi gʻoyat aniq. Asosiy maʼlumot boʻshligʻi — kassadagi har bir toʻlov usuli boʻyicha aniq limitlar.",
   },
   // nordicbet
   {
@@ -55,6 +60,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein starkes lokales Profil für Schweden mit detaillierten Zahlungsangaben und aktueller Lizenz; lückenhafte Willkommensbedingungen und widersprüchliche allgemeine MGA-Angaben bleiben getrennt.",
     uk: "Сильний місцевий профіль для Швеції з докладними підтвердженнями щодо платежів і чинною ліцензією; неповні умови вітальної пропозиції та суперечливі загальні дані про MGA подано окремо.",
     ru: "Сильный местный профиль для Швеции с подробными подтверждениями по платежам и действующей лицензией; неполная механика приветственного предложения и противоречащие общие данные MGA учитываются отдельно.",
+    uz: "Toʻlovlar boʻyicha batafsil dalillar va amaldagi litsenziyaga ega kuchli mahalliy Shvetsiya profili; xush kelibsiz bonusi mexanikasining toʻliq emasligi va MGA boʻyicha bir-biriga zid umumiy dalillar alohida qayd etiladi.",
   },
   // rizk
   {
@@ -64,6 +70,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Gut belegte Angaben zu Angebot und Zahlungen in den veröffentlichten Profilen für Kanada und Serbien, während der ungeklärte Widerspruch im rechtlichen Seitenfuß für Neuseeland bewusst aus dieser Ausgabe herausgehalten wird.",
     uk: "Вагомі підтвердження щодо продукту й платежів в опублікованих профілях Канади та Сербії; нез'ясовану суперечність у юридичній інформації внизу новозеландського сайту свідомо не включено до цього випуску.",
     ru: "Надёжные подтверждения по продукту и платежам в опубликованных профилях для Канады и Сербии; неразрешённое противоречие в юридическом блоке внизу сайта для Новой Зеландии намеренно не включено в этот выпуск.",
+    uz: "Eʼlon qilingan Kanada va Serbiya profillarida mahsulot va toʻlovlar boʻyicha kuchli dalillar bor; Yangi Zelandiya saytining pastki qismidagi huquqiy maʼlumotlardagi hal qilinmagan ziddiyat esa ataylab ushbu nashrga kiritilmagan.",
   },
   // skol-casino
   {
@@ -73,6 +80,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein gut präsentierter Anbieter von White Hat Gaming mit breitem Spielangebot der Plattform und aktuellem Partnerangebot, aber lückenhaften Produktangaben pro Markt und ohne freigegebenen öffentlichen Link zum Anbieter.",
     uk: "Добре оформлене казино White Hat Gaming із широким каталогом на базі платформи та актуальною партнерською пропозицією, але лише з частковими підтвердженнями щодо продукту для конкретних регіонів і без схваленого публічного комерційного посилання.",
     ru: "Хорошо оформленное казино White Hat Gaming с широким каталогом на базе платформы и текущим партнёрским предложением, но лишь с частичными подтверждениями по продукту для конкретных регионов и без одобренной публичной коммерческой ссылки.",
+    uz: "Platforma taʼminlagan keng katalog va joriy hamkor taklifiga ega, yaxshi taqdim etilgan White Hat Gaming kazinosi; biroq aniq mamlakat boʻyicha mahsulot dalillari faqat qisman bor, tasdiqlangan ochiq tijoriy yoʻnalish esa yoʻq.",
   },
   // hello-casino
   {
@@ -82,6 +90,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Eine langjährige Marke von White Hat Gaming mit soliden Aufsichtsbelegen und neuerem, genau beschriebenem Partnerangebot; Freischaltung pro Land und passendes aktuelles Werbematerial bleiben bewusst offen.",
     uk: "Давній бренд White Hat Gaming із надійними підтвердженнями від регуляторів і новішою, чітко описаною партнерською пропозицією; активацію для окремих країн і відповідні актуальні рекламні матеріали свідомо залишено невирішеними.",
     ru: "Давно работающий бренд White Hat Gaming с надёжными подтверждениями от регуляторов и более новым, подробно описанным партнёрским предложением; активация для конкретных стран и подходящие актуальные рекламные материалы намеренно остаются нерешёнными.",
+    uz: "Regulyator boʻyicha ishonchli dalillar va yangiroq, aniq belgilangan hamkor taklifiga ega uzoq yillik White Hat Gaming brendi; aniq mamlakatda faollashtirish va unga mos joriy reklama materiallari masalasi ataylab ochiq qoldirilgan.",
   },
   // playojo
   {
@@ -91,6 +100,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "PlayOJO ist das Flaggschiff von SkillOnNet (gestartet im März 2017): keine Umsatzbedingungen bei allen Aktionen, OJOplus-Geld zurück bei jedem Einsatz, Slots, Bingo und weitere Spielarten. Mit lokalen Lizenzen aktiv in Großbritannien, Schweden, Ontario, Spanien, Mexiko und Dänemark.",
     uk: "PlayOJO — флагманське казино SkillOnNet (запущене в березні 2017 року): жодних вимог до відіграшу в будь-якій акції, повернення грошей OJOplus із кожної ставки, казино, лайв-казино, бінго та ігри з джекпотами. Працює у Великій Британії, Швеції, Онтаріо, Іспанії, Мексиці та Данії за місцевими ліцензіями.",
     ru: "PlayOJO — флагманское казино SkillOnNet (запущено в марте 2017 года): никаких требований по отыгрышу ни в одной акции, возврат денег OJOplus с каждой ставки, казино, лайв-казино, бинго и игры с джекпотами. Работает в Великобритании, Швеции, Онтарио, Испании, Мексике и Дании по местным лицензиям.",
+    uz: "PlayOJO — SkillOnNet kompaniyasining flagman kazinosi (2017-yil martda ishga tushgan): hech qanday aksiyada aylantirish talabi yoʻq, har bir stavkadan OJOplus pul qaytarish, kazino, jonli kazino, bingo va jekpot oʻyinlari. Mahalliy litsenziyalar asosida Buyuk Britaniya, Shvetsiya, Ontario, Ispaniya, Meksika va Daniyada ishlaydi.",
   },
   // gday-casino
   {
@@ -100,6 +110,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein eigenständiger Anbieter von White Hat Gaming mit belegtem Betreiber, aktiver Domain und aktuellem Partnerangebot, gebremst durch lückenhafte Ein- und Auszahlungsangaben pro Markt.",
     uk: "Самобутнє казино White Hat Gaming із підтвердженнями активного оператора й домену та актуальною партнерською пропозицією; оцінку стримують неповні точні дані про платежі та виведення коштів для конкретних регіонів.",
     ru: "Самобытное казино White Hat Gaming с подтверждениями действующего оператора и домена и текущим партнёрским предложением; оценку сдерживают неполные данные о платежах и выводе средств для конкретных регионов.",
+    uz: "Faol operator va domen dalillari hamda joriy hamkor taklifiga ega oʻziga xos White Hat Gaming kazinosi; aniq mamlakat boʻyicha toʻlov va pul yechish maʼlumotlarining toʻliq emasligi uning bahosini pasaytiradi.",
   },
   // bacanaplay
   {
@@ -109,6 +120,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "BacanaPlay (2019/20) ist das Angebot von SkillOnNet mit Fokus auf Portugal – 2,200+ Spiele, MB Way/Multibanco, VIB-Club –, von der SRIJ in Portugal lizenziert und in Brasilien aktiv (.bet.br); www.bacanaplay.com ist bei der UKGC aktiv, dazu gibt es Varianten mit MGA- und dänischer Lizenz.",
     uk: "BacanaPlay (2019/20) — казино SkillOnNet, орієнтоване насамперед на Португалію: 2,200+ ігор, MB Way/Multibanco, клуб VIB; має ліцензію SRIJ у Португалії та працює в Бразилії (.bet.br); www.bacanaplay.com активний у реєстрі UKGC, є також версії під ліцензією MGA та данською ліцензією.",
     ru: "BacanaPlay (2019/20) — казино SkillOnNet, ориентированное прежде всего на Португалию: 2,200+ игр, MB Way/Multibanco, клуб VIB; лицензировано SRIJ в Португалии и работает в Бразилии (.bet.br); www.bacanaplay.com активен в реестре UKGC, есть версии по лицензии MGA и датской лицензии.",
+    uz: "BacanaPlay (2019/20) — SkillOnNet kompaniyasining asosan portugal tilidagi oʻyinchilarga moʻljallangan kazinosi: 2,200+ oʻyin, MB Way/Multibanco, VIB klubi. Portugaliyada SRIJ litsenziyasiga ega va Braziliyada (.bet.br) ishlaydi; www.bacanaplay.com UKGC litsenziyasi bilan faol, MGA va Daniya versiyalari ham mavjud.",
   },
   // drueckglueck
   {
@@ -118,6 +130,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "DrückGlück (2015) ist die Online-Spielothek von SkillOnNet für Deutschland, mit TV-Werbung und GGL-Erlaubnis für virtuelle Automatenspiele (drueckglueck.de). Diese Erlaubnis besteht seit dem 29. Dezember 2022; die .com- und .co.uk-Domains sind bei der UKGC aktiv, und Varianten in nordischen Sprachen laufen unter der MGA-Lizenz.",
     uk: "DrückGlück (2015) — онлайн-Spielothek від SkillOnNet для німецької аудиторії, з рекламою на телебаченні та дозволом GGL на віртуальні слоти від 29 грудня 2022 року (drueckglueck.de). Домени .com/.co.uk активні в реєстрі UKGC; версії мовами країн Північної Європи працюють під ліцензією MGA.",
     ru: "DrückGlück (2015) — онлайн-зал игровых автоматов (Spielothek) от SkillOnNet для немецкой аудитории, рекламируется на телевидении; с 29 декабря 2022 года имеет разрешение GGL на виртуальные слоты (drueckglueck.de). Домены .com/.co.uk активны в реестре UKGC; версии на языках стран Северной Европы работают по лицензии MGA.",
+    uz: "DrückGlück (2015) — SkillOnNet kompaniyasining Germaniyaga moʻljallangan, televizorda reklama qilinadigan onlayn Spielothek (oʻyin zali); 2022-yil 29-dekabrdan beri GGL virtual slotlar ruxsatnomasiga ega (drueckglueck.de). .com/.co.uk domenlari UKGC litsenziyasi bilan faol; MGA litsenziyasi asosida Shimoliy Yevropa tillaridagi versiyalari ham mavjud.",
   },
   // turbonino
   {
@@ -127,6 +140,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "TurboNino (2021) ist der Pay N Play-Anbieter von SkillOnNet: Einzahlen ohne Registrierung per Bank-ID (Trustly/Zimpler), vermarktet von EGO für Schweden, Deutschland und Finnland. www.turbonino.com ist außerdem bei der UKGC aktiv.",
     uk: "TurboNino (2021) — казино Pay N Play від SkillOnNet: депозити без реєстрації через Trustly/Zimpler із банківською ідентифікацією; EGO просуває його для Швеції, Німеччини та Фінляндії. www.turbonino.com також активний у реєстрі UKGC.",
     ru: "TurboNino (2021) — казино SkillOnNet формата Pay N Play: депозиты без регистрации через Trustly/Zimpler с банковской идентификацией (bank ID); EGO продвигает его для Швеции, Германии и Финляндии. Сайт www.turbonino.com также активен в реестре UKGC.",
+    uz: "TurboNino (2021) — SkillOnNet kompaniyasining Pay N Play kazinosi: Trustly/Zimpler orqali bank ID bilan roʻyxatdan oʻtmasdan depozit qilish mumkin; EGO uni Shvetsiya, Germaniya va Finlyandiya uchun targʻib qiladi. www.turbonino.com ham UKGC litsenziyasi bilan faol.",
   },
   // diamond7
   {
@@ -136,6 +150,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein bekannter Anbieter von White Hat Gaming mit belegter aktiver Domain und bestätigtem Werbematerial des Partners, gebremst durch ungeklärte Länderabdeckung und lückenhafte Produktangaben pro Markt.",
     uk: "Впізнаване казино White Hat Gaming із підтвердженням активного домену та перевіреною бібліотекою партнерських рекламних матеріалів; обмеження — нез'ясоване географічне охоплення і лише часткові точні дані про продукт для конкретних регіонів.",
     ru: "Узнаваемое казино White Hat Gaming с подтверждением действующего домена и проверенной библиотекой партнёрских рекламных материалов; его ограничивают невыясненный географический охват и лишь частичные данные о продукте для конкретных регионов.",
+    uz: "Faol domen dalillari va tasdiqlangan hamkor reklama materiallari kutubxonasiga ega taniqli White Hat Gaming kazinosi; hal qilinmagan GEO qamrovi va aniq mamlakat boʻyicha mahsulot maʼlumotlarining faqat qisman mavjudligi uni cheklaydi.",
   },
   // goldenplay
   {
@@ -145,6 +160,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "GoldenPlay ist eine 2025 gestartete Marke für Online-Spielothek und Sportwetten im Portfolio von NetoPartners / Anakatech. Aktuelles Material des Partners nennt 950+ Spiele, Spielen am Desktop und mobil, sieben Sprachen, Konten in EUR, führende Spielehersteller, Krypto-Unterstützung und ein Willkommensangebot von 100% bis zu €555 plus 100 Freispiele für Book of Dead.",
     uk: "GoldenPlay — бренд казино та ставок на спорт 2025 року в портфелі NetoPartners / Anakatech. В актуальних партнерських матеріалах зазначено 950+ ігор, гру на комп'ютері та мобільних пристроях, сім мов продукту, акаунти в EUR, провідних провайдерів казино, підтримку криптовалют і вітальну пропозицію для казино: 100% до €555 плюс 100 безкоштовних обертань у Book of Dead.",
     ru: "GoldenPlay — бренд казино и ставок на спорт, запущенный в 2025 году в портфеле NetoPartners / Anakatech. В актуальных партнёрских материалах указаны 950+ игр, игра на компьютере и мобильных устройствах, семь языков продукта, счета в EUR, ведущие провайдеры казино, поддержка криптовалюты и приветственное предложение казино: 100% до €555 плюс 100 бесплатных вращений в Book of Dead.",
+    uz: "GoldenPlay — NetoPartners / Anakatech portfelidagi 2025-yilda ochilgan kazino va sport stavkalari brendi. Joriy hamkor materiallarida 950+ oʻyin, kompyuter va mobil qurilmalarda oʻynash, mahsulotning yetti tili, EUR hisoblari, yetakchi kazino provayderlari, kriptovalyuta qoʻllab-quvvatlanishi hamda 555 € gacha 100% va Book of Dead oʻyinida 100 ta bepul aylanishdan iborat kazino xush kelibsiz taklifi koʻrsatilgan.",
   },
   // regencycasino
   {
@@ -154,6 +170,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Regency Casino Online ist die digitale Marke der Regency Entertainment S.A., die seit 30 Jahren die Spielbanken Mont Parnes und Thessaloniki betreibt, gestartet mit SkillOnNet unter einer griechischen HGC-Lizenz (Type 2): 3,000+ Spiele sowie weitere Spielarten mit griechischsprachiger Betreuung. Die .com-Domain ist ein White-Label-Angebot mit UKGC-Lizenz; weitere Markteinführungen (DK, ES, SE, DE) sind angekündigt.",
     uk: "Regency Casino Online — цифровий бренд Regency Entertainment S.A. (Mont Parnes, Салоніки — 30 років наземних казино), запущений разом зі SkillOnNet за грецькою ліцензією HGC Type 2: 3,000+ ігор і лайв-казино з грекомовними дилерами. www.regencycasino.com — white-label у реєстрі UKGC; оголошено подальші запуски (DK, ES, SE, DE).",
     ru: "Regency Casino Online — цифровой бренд Regency Entertainment S.A. (Mont Parnes, Thessaloniki — 30 лет опыта в наземных казино), запущенный вместе с SkillOnNet по греческой лицензии HGC Type 2: 3,000+ игр и лайв-казино с грекоязычными дилерами. Сайт www.regencycasino.com — white label в реестре UKGC; объявлено о дальнейших запусках (DK, ES, SE, DE).",
+    uz: "Regency Casino Online — Regency Entertainment S.A. kompaniyasining raqamli brendi (Mont Parnes, Saloniki — oflayn kazinolarda 30 yillik tajriba); SkillOnNet bilan birgalikda Gretsiyaning HGC Type 2 litsenziyasi asosida ishga tushirilgan: 3,000+ oʻyin va yunon tilida soʻzlashuvchi dilerlar bilan jonli kazino. www.regencycasino.com — UKGC white-label sayti; keyingi mamlakatlarda (DK, ES, SE, DE) ishga tushirish eʼlon qilingan.",
   },
   // ahti-games
   {
@@ -163,6 +180,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "AHTI Games (2019) ist der nordisch gestaltete Anbieter von SkillOnNet (dunkles Meeresthema) mit 3,000+ Spielen, Turnieren und VIP-Programm; stark in Finnland und Schweden, Auszahlungen per Trustly. www.ahtigames.com ist bei der UKGC aktiv; nordische Varianten laufen unter der MGA- und der schwedischen Lizenz.",
     uk: "AHTI Games (2019) — казино SkillOnNet у північному стилі (темна морська тема): 3,000+ ігор, турніри та VIP-програма; сильні позиції у Фінляндії та Швеції, виведення коштів через Trustly. www.ahtigames.com активний у реєстрі UKGC; версії для країн Північної Європи працюють під ліцензією MGA та шведською ліцензією.",
     ru: "AHTI Games (2019) — казино SkillOnNet в североевропейском стиле (тёмная морская тема): 3,000+ игр, турниры и VIP-программа; сильные позиции в Финляндии и Швеции, вывод средств через Trustly. Сайт www.ahtigames.com активен в реестре UKGC; версии для стран Северной Европы работают по лицензии MGA и шведской лицензии.",
+    uz: "AHTI Games (2019) — SkillOnNet kompaniyasining Shimoliy Yevropa uslubidagi kazinosi (qorongʻi dengiz mavzusi): 3,000+ oʻyin, turnirlar va VIP dasturi; Finlyandiya va Shvetsiyada kuchli, pul yechish Trustly orqali. www.ahtigames.com UKGC litsenziyasi bilan faol; Shimoliy Yevropa versiyalari MGA va Shvetsiya litsenziyalari asosida ishlaydi.",
   },
   // eucasino
   {
@@ -172,6 +190,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "EUcasino (2009) ist eine der ältesten Marken von SkillOnNet: 20+ Sprachversionen, mehrere Währungen, VIP-Club, Slots und weitere Spielarten. Bei der UKGC aktiv (.com/.co.uk), dazu eine eigene, in Dänemark lizenzierte .dk-Seite und international Varianten mit MGA-Lizenz. Trotz des Namens nicht in jedem EU-Land verfügbar.",
     uk: "EUcasino (2009) — один із найстаріших брендів SkillOnNet: 20+ мовних версій, кілька валют, VIP-клуб, слоти/live/настільні ігри. У реєстрі UKGC активні .com/.co.uk, є окремий сайт із данською ліцензією eucasino.dk і міжнародні версії під ліцензією MGA. Попри назву, доступний не в кожній країні ЄС.",
     ru: "EUcasino (2009) — один из старейших брендов SkillOnNet: 20+ языковых версий, несколько валют, VIP-клуб, слоты/лайв/настольные игры. Активен в реестре UKGC (.com/.co.uk), есть отдельный сайт с датской лицензией eucasino.dk и международные версии по лицензии MGA. Несмотря на название, доступен не во всех странах ЕС.",
+    uz: "EUcasino (2009) — SkillOnNet kompaniyasining eng eski brendlaridan biri: 20+ til versiyasi, koʻp valyutali hisoblar, VIP klubi, slotlar, jonli va stol oʻyinlari. UKGC litsenziyasi bilan faol (.com/.co.uk), Daniya litsenziyasiga ega alohida eucasino.dk sayti va MGA litsenziyasidagi xalqaro versiyalar mavjud. Nomiga qaramay, Yevropa Ittifoqining har bir mamlakatida mavjud emas.",
   },
   // slotsmagic
   {
@@ -181,6 +200,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "SlotsMagic (2014) ist ein großer, mehrsprachiger Anbieter von SkillOnNet – Slots, Megaways und weitere Spielarten von Playtech, Pragmatic, Evolution, Games Global und 20+ Studios; 24/7-Support, Apps für iOS/Android. Bei der UKGC aktiv (.com/.co.uk), in Ontario verfügbar, dazu 20 Sprachvarianten unter der MGA-Lizenz.",
     uk: "SlotsMagic (2014) — велике багатомовне казино SkillOnNet: слоти, Megaways, джекпоти, лайв-казино від Playtech, Pragmatic, Evolution, Games Global і 20+ студій; підтримка 24/7, застосунки для iOS/Android. У реєстрі UKGC активні .com/.co.uk, працює в Онтаріо, а ще є 20 мовних версій під ліцензією MGA.",
     ru: "SlotsMagic (2014) — крупное многоязычное казино SkillOnNet: слоты, Megaways, джекпоты, лайв-казино от Playtech, Pragmatic, Evolution, Games Global и 20+ студий; поддержка 24/7, приложения для iOS/Android. Активен в реестре UKGC (.com/.co.uk), работает в Онтарио, плюс 20 языковых версий по лицензии MGA.",
+    uz: "SlotsMagic (2014) — SkillOnNet kompaniyasining koʻp tilli yirik kazinosi: Playtech, Pragmatic, Evolution, Games Global va 20+ studiyaning slotlari, Megaways, jekpotlar va jonli kazino; 24/7 qoʻllab-quvvatlash, iOS/Android ilovalari. UKGC litsenziyasi bilan faol (.com/.co.uk), Ontarioda ishlaydi, shuningdek MGA litsenziyasi asosida 20 ta til versiyasi bor.",
   },
   // casino-redkings
   {
@@ -190,6 +210,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Casino RedKings (Marke RedKings, 2011) ist ein Mehrmarkt-Anbieter von SkillOnNet mit Schwerpunkt auf Slots und weiteren Spielarten sowie 15 Sprachversionen. www.redkings.com ist bei der UKGC aktiv; andere Sprachvarianten laufen unter der MGA-Lizenz.",
     uk: "Casino RedKings (бренд RedKings, 2011) — казино SkillOnNet для кількох регіонів з акцентом на слоти з джекпотами та лайв-казино і з 15 мовними версіями. www.redkings.com активний у реєстрі UKGC; інші мовні версії працюють під ліцензією MGA.",
     ru: "Casino RedKings (бренд RedKings, 2011) — казино SkillOnNet для нескольких регионов с упором на слоты с джекпотами и лайв-казино, 15 языковых версий. Сайт www.redkings.com активен в реестре UKGC; остальные языковые версии работают по лицензии MGA.",
+    uz: "Casino RedKings (RedKings brendi, 2011) — SkillOnNet kompaniyasining bir nechta mamlakatda ishlaydigan kazinosi; asosiy eʼtibor jekpot slotlari va jonli kazinoga qaratilgan, 15 ta til versiyasi bor. www.redkings.com UKGC litsenziyasi bilan faol; boshqa til versiyalari MGA litsenziyasi asosida ishlaydi.",
   },
   // dragonbet
   {
@@ -199,6 +220,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein echter Anbieter für Großbritannien mit nützlichen genauen Angaben zu Spielkategorien und Herstellern, aber dünnen Angaben zu Zahlungen, Auszahlungen und aktuellen Angeboten im Vergleich zum Rest der Ausgabe.",
     uk: "Справжнє казино, орієнтоване на Велику Британію, з корисними точними підтвердженнями щодо категорій ігор і провайдерів, але зі скупими даними про платежі, виведення коштів та актуальні пропозиції порівняно з рештою випуску.",
     ru: "Настоящее казино, ориентированное на Великобританию, с полезными точными данными о категориях игр и провайдерах, но со скудными сведениями о платежах, выводе средств и текущих предложениях по сравнению с остальными в этом выпуске.",
+    uz: "Buyuk Britaniyaga yoʻnaltirilgan haqiqiy kazino; oʻyin toifalari va provayderlar boʻyicha foydali aniq dalillar bor, biroq nashrdagi boshqa kazinolarga nisbatan toʻlovlar, pul yechish va joriy takliflar haqidagi maʼlumotlar kam.",
   },
   // jackpotstar
   {
@@ -208,6 +230,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "JackpotStar (2020) ist die Spezialmarke von SkillOnNet mit täglichen persönlichen Empfehlungen; vermarktet von EGO für Großbritannien, Schweden und MGA-Märkte. Die .com-Domain ist bei der UKGC aktiv; es gibt 9 Sprachvarianten.",
     uk: "JackpotStar (2020) — казино SkillOnNet з акцентом на джекпоти та щоденними персональними добірками; EGO просуває його для Великої Британії, Швеції та регіонів під ліцензією MGA. jackpotstar.com активний у реєстрі UKGC; є 9 мовних версій.",
     ru: "JackpotStar (2020) — казино SkillOnNet с упором на джекпоты и ежедневными персональными подборками; EGO продвигает его для Великобритании, Швеции и регионов под лицензией MGA. Сайт jackpotstar.com активен в реестре UKGC; есть 9 языковых версий.",
+    uz: "JackpotStar (2020) — SkillOnNet kompaniyasining jekpotlarga yoʻnaltirilgan kazinosi, har kuni shaxsiy tavsiyalar beradi; EGO uni Buyuk Britaniya, Shvetsiya va MGA mamlakatlari uchun targʻib qiladi. jackpotstar.com UKGC litsenziyasi bilan faol; 9 ta til versiyasi mavjud.",
   },
   // playuzu
   {
@@ -217,6 +240,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "PlayUZU ist SkillOnNets spanischsprachige „transparente Spielothek“ (Spanien, seit 2020): umsatzfreie Boni, UZUplus-Cashback auf jeden Einsatz, 2,500–4,300+ Spiele. Lokal lizenziert in Spanien (DGOJ), Mexiko, Peru, der Stadt Buenos Aires und Brasilien (.bet.br).",
     uk: "PlayUZU — іспаномовне «прозоре казино» від SkillOnNet (в Іспанії з 2020 року): бонуси без вимог до відіграшу, повернення грошей UZUplus із кожної ставки, 2,500–4,300+ ігор, зокрема лайв-казино. Має місцеві ліцензії в Іспанії (DGOJ), Мексиці, Перу, місті Буенос-Айрес і Бразилії (.bet.br).",
     ru: "PlayUZU — испаноязычное «прозрачное казино» SkillOnNet (в Испании с 2020 года): бонусы без отыгрыша, возврат денег UZUplus с каждой ставки, 2,500–4,300+ игр, включая лайв-казино. Местные лицензии в Испании (DGOJ), Мексике, Перу, городе Буэнос-Айрес и Бразилии (.bet.br).",
+    uz: "PlayUZU — SkillOnNet kompaniyasining ispan tilidagi “shaffof kazino” loyihasi (2020-yildan beri Ispaniyada): aylantirish talabisiz bonuslar, har bir stavkadan UZUplus pul qaytarish, jonli kazino bilan birga 2,500–4,300+ oʻyin. Ispaniya (DGOJ), Meksika, Peru, Buenos-Ayres shahri va Braziliyada (.bet.br) mahalliy litsenziyalarga ega.",
   },
   // 21-prive
   {
@@ -226,6 +250,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Eine lizenzierte Marke von White Hat Gaming mit hochwertigem Partnerangebot, abgewertet wegen lückenhafter Marktangaben und früherer Auszahlungsbeschwerden, die deutlich eingeordnet werden müssen.",
     uk: "Ліцензований бренд White Hat Gaming із партнерською пропозицією на велику заявлену суму; оцінку знижено через часткові дані про регіони та давніші скарги на виведення коштів — сигнал, який потребує помітного контексту.",
     ru: "Лицензированный бренд White Hat Gaming с крупным заявленным партнёрским предложением; оценка снижена за неполные данные по регионам и за прошлые жалобы на вывод средств, которые требуют заметного пояснения.",
+    uz: "Yuqori qiymatli hamkor taklifiga ega litsenziyalangan White Hat Gaming brendi; mamlakat boʻyicha maʼlumotlarning qisman ekani va pul yechish boʻyicha ilgari kelgan shikoyatlar sababli bahosi pasaytirilgan — bu haqda koʻzga koʻrinadigan izoh berilishi kerak.",
   },
   // megawayscasino
   {
@@ -235,6 +260,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "MegawaysCasino ist der offizielle Anbieter unter der Marke Megaways™, betrieben von SkillOnNet (Start in Großbritannien, ab Mai 2026 international unter der MGA-Lizenz): Megaways-Slots stehen an erster Stelle, dazu weitere Spielarten. Die .com-Domain ist bei der UKGC aktiv.",
     uk: "MegawaysCasino — офіційне казино під брендом Megaways™, яким керує SkillOnNet (запуск у Великій Британії, далі міжнародний — під ліцензією MGA з травня 2026 року): насамперед слоти Megaways, а також лайв-казино і джекпоти. www.megawayscasino.com активний у реєстрі UKGC.",
     ru: "MegawaysCasino — официальное казино под брендом Megaways™, которым управляет SkillOnNet (запуск в Великобритании, затем международный — по лицензии MGA с мая 2026 года): в первую очередь слоты Megaways, плюс лайв-казино и джекпоты. Сайт www.megawayscasino.com активен в реестре UKGC.",
+    uz: "MegawaysCasino — SkillOnNet boshqaradigan rasmiy Megaways™ brendidagi kazino (avval Buyuk Britaniyada ishga tushgan, 2026-yil maydan esa MGA litsenziyasi asosida xalqaro miqyosda ishlaydi): birinchi navbatda Megaways slotlari, shuningdek jonli kazino va jekpotlar. www.megawayscasino.com UKGC litsenziyasi bilan faol.",
   },
   // playojo-bingo
   {
@@ -244,6 +270,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "PlayOJO Bingo ist der Bingo-Bereich von PlayOJO (Skill On Net Limited, UKGC-Lizenz Bingo Remote seit Februar 2020): 90/75-Ball-Räume, Slingo und Nebenspiele, mit den umsatzfreien Regeln von PlayOJO. Auf Großbritannien ausgerichtet; EGO stellt einen separaten Partner-Link bereit (site.playojobingo.com).",
     uk: "PlayOJO Bingo — бінго-кімната PlayOJO (Skill On Net Limited, UKGC Bingo Remote з лютого 2020 року): кімнати на 90/75 куль, Slingo та побічні ігри за правилами PlayOJO без вимог до відіграшу. Орієнтовано на Велику Британію; EGO надає окреме посилання для відстеження (site.playojobingo.com).",
     ru: "PlayOJO Bingo — бинго-зал PlayOJO (Skill On Net Limited, лицензия UKGC Bingo Remote с февраля 2020 года): комнаты на 90/75 шаров, Slingo и дополнительные игры по правилам PlayOJO без отыгрыша. Ориентирован на Великобританию; EGO предоставляет отдельную ссылку для отслеживания (site.playojobingo.com).",
+    uz: "PlayOJO Bingo — PlayOJO kazinosining bingo zali (Skill On Net Limited, 2020-yil fevraldan beri UKGC Bingo Remote litsenziyasi): 90/75 sharli xonalar, Slingo va qoʻshimcha oʻyinlar, PlayOJO kazinosining aylantirish talabisiz qoidalari amal qiladi. Buyuk Britaniyaga moʻljallangan; EGO alohida kuzatuv havolasini taqdim etadi (site.playojobingo.com).",
   },
   // slotnite
   {
@@ -253,6 +280,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein aktueller Anbieter von White Hat Gaming mit weitgehend vollständigem Partnerangebot, auf dem letzten Platz wegen dünner Produktangaben und jüngster Beschwerden über verzögerte Auszahlungen, die ein ungeklärtes Risiko bedeuten.",
     uk: "Активне казино White Hat Gaming із по суті повною партнерською пропозицією; останнє місце в рейтингу — бо точних даних про продукт мало, а нещодавні скарги на затримки виплат додають нез'ясованого ризику.",
     ru: "Действующее казино White Hat Gaming с практически полным описанием основного партнёрского предложения; занимает последнее место, потому что точных данных о продукте мало, а недавние жалобы на задержки выплат добавляют неснятый риск.",
+    uz: "Hamkor taklifi asosiy jihatlari boʻyicha toʻliq boʻlgan joriy White Hat Gaming kazinosi; aniq mahsulot maʼlumotlari kamligi va yaqinda toʻlovlar kechikishi boʻyicha kelgan shikoyatlar hal qilinmagan xavf tugʻdirgani sababli oxirgi oʻrinda.",
   },
   // 21-prive
   {
@@ -262,6 +290,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Eine lizenzierte Marke von White Hat Gaming mit breitem, von uns gesichtetem Spielangebot und hochwertigem Partnerangebot, abgewertet wegen früherer Auszahlungsbeschwerden, die deutlich eingeordnet werden müssen.",
     uk: "Ліцензований бренд White Hat Gaming із широким зафіксованим каталогом ігор і партнерською пропозицією на велику заявлену суму; оцінку знижено через давніші скарги на виведення коштів — сигнал, який потребує помітного контексту.",
     ru: "Лицензированный бренд White Hat Gaming с широким, по нашим наблюдениям, каталогом и крупным заявленным партнёрским предложением; оценка снижена за прошлые жалобы на вывод средств, которые требуют заметного пояснения.",
+    uz: "Keng katalogi kuzatilgan va yuqori qiymatli hamkor taklifiga ega litsenziyalangan White Hat Gaming brendi; pul yechish boʻyicha ilgari kelgan shikoyatlar sababli bahosi pasaytirilgan — bu haqda koʻzga koʻrinadigan izoh berilishi kerak.",
   },
   // diamond7
   {
@@ -271,6 +300,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein bekannter Anbieter von White Hat Gaming mit aktuellen Aufsichtsbelegen, ausgefülltem globalem Produktprofil und bestätigtem Partnerangebot über €100 plus 25 Freispiele.",
     uk: "Впізнаване казино White Hat Gaming з актуальними підтвердженнями від регулятора, заповненим глобальним профілем продукту та перевіреною партнерською пропозицією: €100 плюс 25 обертань.",
     ru: "Узнаваемое казино White Hat Gaming с актуальным подтверждением от регулятора, заполненным глобальным профилем продукта и подтверждённым партнёрским предложением: €100 плюс 25 вращений.",
+    uz: "Regulyator boʻyicha joriy dalillar, toʻldirilgan global mahsulot profili va tasdiqlangan 100 € hamda 25 ta aylanishdan iborat hamkor taklifiga ega taniqli White Hat Gaming kazinosi.",
   },
   // gday-casino
   {
@@ -280,6 +310,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein eigenständiger Anbieter von White Hat Gaming mit breiten Angaben zu Zahlungen und Herstellern plus aktuellem Partnerangebot über €100 und 25 Freispiele.",
     uk: "Самобутнє казино White Hat Gaming із широкими підтвердженнями щодо платежів і провайдерів та актуальною партнерською пропозицією: €100 і 25 обертань.",
     ru: "Самобытное казино White Hat Gaming с обширными подтверждениями по платежам и провайдерам и текущим партнёрским предложением: €100 и 25 вращений.",
+    uz: "Toʻlovlar va provayderlar boʻyicha keng dalillar hamda 100 € va 25 ta aylanishdan iborat joriy hamkor taklifiga ega oʻziga xos White Hat Gaming kazinosi.",
   },
   // hello-casino
   {
@@ -289,6 +320,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Eine langjährige Marke von White Hat Gaming mit breiten globalen Produktangaben und aktuellem MGA-Angebot über €300 plus 100 Freispiele, ohne veraltetes Werbematerial.",
     uk: "Давній бренд White Hat Gaming із широкими глобальними підтвердженнями щодо продукту та актуальною пропозицією під ліцензією MGA: €300 плюс 100 обертань; показано без застарілих рекламних зображень.",
     ru: "Давно работающий бренд White Hat Gaming с обширными глобальными подтверждениями по продукту и текущим предложением MGA: €300 плюс 100 вращений; показан без устаревших рекламных изображений.",
+    uz: "Keng global mahsulot dalillari va 300 € hamda 100 ta aylanishdan iborat joriy MGA taklifiga ega uzoq yillik White Hat Gaming brendi; eskirgan reklama tasvirlarisiz taqdim etilgan.",
   },
   // skol-casino
   {
@@ -298,6 +330,7 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein gut präsentierter Anbieter von White Hat Gaming: breites, mobiltaugliches Spielangebot, erfasste Zahlungsangaben, aktuelles Angebot über €300 plus 100 Freispiele.",
     uk: "Добре оформлене казино White Hat Gaming із широким каталогом, придатним для мобільних пристроїв, заповненими підтвердженнями щодо платежів та актуальною пропозицією: €300 плюс 100 обертань.",
     ru: "Хорошо оформленное казино White Hat Gaming с широким каталогом, удобным на мобильных устройствах, заполненными данными о платежах и текущим предложением: €300 плюс 100 вращений.",
+    uz: "Mobil qurilmalarga moslashgan keng katalog, toʻldirilgan toʻlov dalillari va 300 € hamda 100 ta aylanishdan iborat joriy taklifga ega, yaxshi taqdim etilgan White Hat Gaming kazinosi.",
   },
   // slotnite
   {
@@ -307,5 +340,6 @@ export const SUMMARY_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein aktueller Anbieter von White Hat Gaming mit erfassten globalen Produktangaben und inhaltlich brauchbarem Partnerangebot, auf dem letzten Platz wegen jüngster Beschwerden über verzögerte Auszahlungen, die ein ungeklärtes Risiko bedeuten.",
     uk: "Активне казино White Hat Gaming із заповненими глобальними даними про продукт і по суті корисною партнерською пропозицією; останнє місце в рейтингу — бо нещодавні скарги на затримки виплат додають нез'ясованого ризику.",
     ru: "Действующее казино White Hat Gaming с заполненными глобальными данными о продукте и по существу полезным основным партнёрским предложением; занимает последнее место, потому что недавние жалобы на задержки выплат добавляют неснятый риск.",
+    uz: "Toʻldirilgan global mahsulot maʼlumotlari va amalda foydali hamkor taklifiga ega joriy White Hat Gaming kazinosi; yaqinda toʻlovlar kechikishi boʻyicha kelgan shikoyatlar hal qilinmagan xavf tugʻdirgani sababli oxirgi oʻrinda.",
   },
 ];

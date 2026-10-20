@@ -12,6 +12,33 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Uzbek language on both sites — in review
+
+**Founder instruction, 20 October 2026:** "я хочу перевести сайты на узбекский, оба сайта,
+сделай это." Decision record: [UZBEK-LANGUAGE-2026-10-20](07_Decisions/UZBEK-LANGUAGE-2026-10-20.md).
+**Not live until the pull request is merged and deployed.**
+
+- **Twelve published languages.** `uz` (`uz-UZ`, `/uz`, "Oʻzbekcha", Latin script with U+02BB
+  and U+02BC) is `published` and `indexable` in `lib/market/registry.ts`, with a `UZ` market
+  profile that anchors the locale and grants nothing commercial. Indexable languages: `en`,
+  `de`, `sv`, `da`, `uz`.
+- **Uzbekistan opens Uzbek first** (`GEO_LANGUAGE_FIRST_MARKETS`), whatever the browser asks
+  for; elsewhere Uzbek follows the browser.
+- **Translated:** the public shell and footer, home, Casinos, Bonuses, Best Offers, Compare,
+  Learn hub UI, About, Contact, FAQ, Methodology, 10 Steps, the wagering calculator, review
+  titles, casino review text and offer terms, cookie banner, error pages, the whole Programme,
+  and the help site's own copy (`lib/site/help-copy.ts`).
+- **Not translated, by design:** the GB/SE/DK pause plans and the pages around them, the
+  control answer pages (they describe British, Swedish and Danish services), Learn guides
+  (data), and Help/Responsible Gambling (no verified Uzbek resource; `/uz` links Help to the
+  English address).
+- **Commercial:** no partner route for Uzbekistan; offers there show without a partner button
+  until one is granted.
+- **Reviews stay out of the Uzbek index** under the licence rule of 15 October 2026: no casino
+  is licensed for Uzbekistan, so `/uz/casino/…` pages are published and translated but not in
+  the sitemap, IndexNow or hreflang. `/help` hreflang lists only languages with a Help page.
+- **Production smoke** gets `/uz` only after the release is live (repository precedent).
+
 ## The Programme stays on both sites — decided 20 October 2026
 
 **Founder decision, 20 October 2026** (chat, after comparing the Programme on `b4gamble.com`

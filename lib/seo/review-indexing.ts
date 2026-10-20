@@ -25,6 +25,9 @@ export const REVIEW_INDEX_MARKETS: Readonly<Record<string, string>> = Object.fre
   sv: "SE",
   da: "DK",
   de: "DE",
+  // UZBEK-LANGUAGE-2026-10-20: Uzbek follows the same rule. No casino holds a licence for
+  // Uzbekistan in the register, so Uzbek reviews stay published and out of the index.
+  uz: "UZ",
 });
 
 export function reviewIndexable(slug: string, language: string) {

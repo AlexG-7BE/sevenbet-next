@@ -19,7 +19,7 @@ import {
 // answers; it removes no press and decides nothing the server decides.
 
 // Every cell of a catalogue row: the eleven languages on the site and the two that are hidden, not deleted.
-const CATALOGUE_LOCALES = ["en-GB", "de-DE", "es-ES", "sv-SE", "da-DK", "el-GR", "it-IT", "pt-PT", "nl-NL", "fi-FI", "nb-NO", "uk-UA", "ru-RU"] as const satisfies readonly ProgrammeLocale[];
+const CATALOGUE_LOCALES = ["en-GB", "de-DE", "es-ES", "sv-SE", "da-DK", "el-GR", "it-IT", "pt-PT", "nl-NL", "fi-FI", "nb-NO", "uk-UA", "ru-RU", "uz-UZ"] as const satisfies readonly ProgrammeLocale[];
 
 const read = (path: string) => readFileSync(path, "utf8");
 const missionExperience = read("components/programme/ProgramAiMissionExperience.tsx");
@@ -147,7 +147,7 @@ test("the lines of the question screen are presentation: written for every step 
   assert.equal(written.length, firstWritten.length + 21 + 79);
   for (const key of firstWritten) assert.ok(written.includes(key), key);
   for (const locale of PROGRAMME_LOCALES) assert.ok(CATALOGUE_LOCALES.includes(locale));
-  assert.equal(CATALOGUE_LOCALES.length, 13);
+  assert.equal(CATALOGUE_LOCALES.length, 14);
   for (const key of written) {
     assert.ok(key.length <= 60, `${key}: ${key.length} characters`);
     assert.match(key, /\.$/);
@@ -329,7 +329,7 @@ test("the end of a step: a keepsake card, the finish press without XP, the rewar
   assert.equal(programmeText("sv-SE", "{xp} XP · {done} of {total} steps", { xp: "+25", done: 2, total: 10 }), "+25 XP · 2 av 10 steg");
   for (const key of ["Complete Mission", "Step {step} done", "You built it yourself. It is yours, not ours.", "Save as image", "The image could not be saved.", "{xp} XP · {done} of {total} steps"] as const) {
     const cells = CATALOGUE_LOCALES.map((locale) => programmeText(locale, key));
-    assert.equal(new Set(cells).size, key === "Complete Mission" ? cells.length : 13, key);
+    assert.equal(new Set(cells).size, key === "Complete Mission" ? cells.length : 14, key);
     for (const cell of cells) assert.ok(cell.trim().length > 0, key);
   }
 });

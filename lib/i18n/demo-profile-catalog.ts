@@ -580,6 +580,47 @@ const ru: DemoProfileCopy = {
   },
 };
 
+const uz: DemoProfileCopy = {
+  title: "Solvane Casino sharhi",
+  summary: "Interfeysni sinash uchun xayoliy sharh maydonlari; bu operator faoliyatining dalili ham, amaldagi taklif ham emas.",
+  reviewContent: "Bu xayoliy sharh faqat interfeysni namoyish qiladi. U haqiqiy operator, litsenziya, taklif yoki faoliyat sinoviga asoslanmagan.",
+  pros: ["Pulni tez-tez yechib oladigan oʻyinchilar", "Jonli diler oʻyinlarining doimiy ishqibozlari", "Toʻlov boʻyicha bahonalardan charchaganlar"],
+  cons: ["Ayrim jonli oʻyinlar aylantirishga hisoblanmaydi", "Hamma mamlakatlarda mavjud emas", "VIP imtiyozlar haqiqiy pulga oʻynagandan keyin boshlanadi"],
+  responsibleGamblingTools: ["Depozit limitlari", "Tanaffuslar", "Oʻzini cheklash"],
+  bankTransfer: "Bank oʻtkazmasi",
+  instant: "Bir zumda",
+  liveDealer: "Jonli diler",
+  bonus: {
+    title: "€500 gacha 100% + 200 ta bepul aylanish",
+    summary: "Aniq koʻrsatilgan xush kelibsiz taklifi: muhim shartlar har qanday harakatdan oldin koʻrinib turadi.",
+    wagering: "35× aylantirish",
+    eligibility: "18+ · Yangi mijozlar · Shartlar amal qiladi",
+    conditions: ["Shartlar harakatdan oldin koʻrsatiladi", "Maksimal stavka cheklovi amal qiladi"],
+  },
+  media: { logo: "— oldindan koʻrish uchun xayoliy logotip", hero: "— {ratio} formatidagi oldindan koʻrish uchun xayoliy tasvir" },
+  editorial: {
+    title: "Toʻliq sharh",
+    summary: "Interfeysni sinash uchun xayoliy tahririy maydonlar; bu operator faoliyatining dalili emas.",
+    author: "B4GAMBLE tahririyati",
+    evidence: ["Xayoliy toʻlov dalili maydoni", "Xayoliy RTP dalili maydoni", "Xayoliy qoʻllab-quvvatlash dalili maydoni"],
+    categories: ["Toʻlovlar", "Bonus shartlari", "Oʻyinlar va jonli kazino", "Qoʻllab-quvvatlash"],
+    sections: [
+      ["payments", "Toʻlovlar", "Xayoliy operator uchun pul yechish usullari va muddatlarini koʻrsatuvchi namunaviy maydonlar. Toʻlov sinovi oʻtkazilmagan."],
+      ["games", "Oʻyinlar", "Xayoliy operator uchun oʻyinlar soni, jonli stollar va RTP boʻyicha namunaviy maydonlar. Provayderlar katalogi tekshirilmagan."],
+      ["bonuses", "Bonuslar", "Aylantirish, maksimal yutuq va oʻyinlarning hisobga olinish ulushi boʻyicha namunaviy maydonlar. Bu amaldagi yoki olish mumkin boʻlgan bonus emas."],
+      ["trust", "Qoʻllab-quvvatlash", "Xayoliy operator uchun javob berish vaqti va qoʻllab-quvvatlash sifati boʻyicha namunaviy maydonlar. Qoʻllab-quvvatlash xizmati bilan muloqot sinab koʻrilmagan."],
+      ["payments", "Bank operatsiyalari", "Xayoliy operator uchun toʻlov usullari, yigʻimlar va pul yechish boʻyicha namunaviy maydonlar."],
+    ],
+    faq: [
+      ["Solvane mening mamlakatimda mavjudmi?", "Yoʻq. Solvane — interfeysning xayoliy namunasi va u tijoriy jihatdan mavjud emas."],
+      ["Bu sharh qanchalik yangi?", "Bu interfeys uchun oʻzgarmas sinov kontenti, operatorning amaldagi sharhi emas."],
+      ["Solvane bu baho uchun pul toʻlaganmi?", "Yoʻq. Solvane xayoliy, baho namunaviy va hech qanday tijoriy munosabat mavjud emas."],
+    ],
+    seoTitle: "Solvane Casino sharhi",
+    seoDescription: "Interfeysni sinash uchun xayoliy toʻlov va bonus maydonlari; bu operator faoliyatining dalili ham, amaldagi taklif ham emas.",
+  },
+};
+
 const catalog: Record<SupportedLocale, DemoProfileCopy> = {
   "en-GB": en,
   "de-DE": de,
@@ -595,6 +636,7 @@ const catalog: Record<SupportedLocale, DemoProfileCopy> = {
   "nb-NO": nb,
   "uk-UA": uk,
   "ru-RU": ru,
+  "uz-UZ": uz,
   "en-CA": en,
   "fr-CA": en,
 };

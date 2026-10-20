@@ -30,7 +30,7 @@ test("bounded automated language QA passes every European machine-translated cat
   assert.deepEqual(committed, generated);
   assert.equal(generated.status, "PASS");
   assert.equal(generated.assurance, "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW");
-  assert.equal(generated.locales.length, 13);
+  assert.equal(generated.locales.length, 14);
   for (const locale of generated.locales) {
     assert.equal(locale.status, "PASS", locale.locale);
     assert.ok(Object.values(locale.checks).every((status) => status === "PASS"), locale.locale);
@@ -40,8 +40,8 @@ test("bounded automated language QA passes every European machine-translated cat
 
 test("review states distinguish source, machine translation, AI QA and Founder authority without human-review claims", () => {
   const source = readFileSync("lib/i18n/review-state.ts", "utf8");
-  const acceptedLocales = new Set(["de-DE", "es-ES", "es-PE", "sv-SE", "da-DK", "el-GR", "uk-UA", "ru-RU"]);
-  const coreReadyLocales = new Set(["de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "uk-UA", "ru-RU"]);
+  const acceptedLocales = new Set(["de-DE", "es-ES", "es-PE", "sv-SE", "da-DK", "el-GR", "uk-UA", "ru-RU", "uz-UZ"]);
+  const coreReadyLocales = new Set(["de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "uk-UA", "ru-RU", "uz-UZ"]);
   assert.doesNotMatch(source, /linguisticReview|HUMAN_REVIEW_REQUIRED|NATIVE_SPEAKER_REQUIRED/);
   for (const [locale, state] of Object.entries(TRANSLATION_REVIEW_STATE)) {
     if (locale === "en-GB") continue;
@@ -51,10 +51,10 @@ test("review states distinguish source, machine translation, AI QA and Founder a
     assert.equal(state.founderPublication, acceptedLocales.has(locale) ? "FOUNDER_PUBLICATION_ACCEPTED" : "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
     assert.equal(founderEditorialPublicationAccepted(locale as keyof typeof TRANSLATION_REVIEW_STATE), acceptedLocales.has(locale), locale);
     // SEO-INDEX-DE-SV-DA-2026-09-27 opened German, Swedish and Danish to search. LANGUAGES-HIDDEN-2026-10-09 withdrew Ukrainian and Russian.
-    assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), ["en-CA", "de-DE", "sv-SE", "da-DK"].includes(locale), locale);
+    assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), ["en-CA", "de-DE", "sv-SE", "da-DK", "uz-UZ"].includes(locale), locale);
   }
-  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR", "UA", "RU"]);
-  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
+  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR", "UA", "RU", "UZ"]);
+  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK", "UZ"]);
 });
 
 test("first-wave profiles contain dated detected evidence and market-specific safety resources", () => {
@@ -130,7 +130,7 @@ test("only GB and the governed safety markets receive localized Help and Respons
     assert.equal(parsePublicMarketRoute(`/${language}/responsible-gambling`).kind, "CANONICAL_LOCALE", market);
     assert.equal(parsePublicMarketRoute(`/${profile.defaultLocale.toLowerCase()}/responsible-gambling`).kind, "LEGACY_MARKET_ROUTE", market);
   }
-  for (const market of ["IT", "PT", "NL", "FI", "NO", "RU", "CA"] as const) {
+  for (const market of ["IT", "PT", "NL", "FI", "NO", "RU", "UZ", "CA"] as const) {
     const profile = marketProfileByCountry(market);
     assert.ok(profile);
     assert.equal(parsePublicMarketRoute(`/${profile.routeMarket}/help`).kind, "INVALID", market);

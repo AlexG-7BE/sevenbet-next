@@ -21,6 +21,7 @@ const baseMessages = {
   "nb-NO": { eyebrow: "Ditt neste steg", title: "Sett det ut i livet.", body: "Ti korte oppdrag gjør det du har lest til grenser som holder. Gratis å bruke." },
   "uk-UA": { eyebrow: "Твій наступний крок", title: "Застосуй це на практиці.", body: "Десять коротких місій перетворять прочитане на ліміти, які справді працюють. Безкоштовно." },
   "ru-RU": { eyebrow: "Твой следующий шаг", title: "Примени это на практике.", body: "Десять коротких миссий превратят прочитанное в лимиты, которые действительно работают. Бесплатно." },
+  "uz-UZ": { eyebrow: "Keyingi qadamingiz", title: "Buni amalda qoʻllang.", body: "Oʻnta qisqa missiya oʻqiganlaringizni chindan ishlaydigan limitlarga aylantiradi. Foydalanish bepul." },
   "fr-CA": { eyebrow: "Votre prochaine étape", title: "Passez à la pratique.", body: "Dix courtes missions transforment ce que vous avez lu en limites qui tiennent. Utilisation gratuite." },
 } as const satisfies Record<Exclude<SupportedLocale, "es-PE" | "en-CA">, NextStepMessages>;
 

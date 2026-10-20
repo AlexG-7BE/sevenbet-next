@@ -106,6 +106,13 @@ const baseMessages = {
     casinoBridgeBody: "Проверь только что прочитанное на казино из наших обзоров и их условиях.",
     casinoBridgeLead: "Сравни казино из наших обзоров по их условиям",
   },
+  "uz-UZ": {
+    offerBridgeBody: "Hozirgina oʻrganganlaringizni joriy takliflar va ularning shartlari bilan solishtirib koʻring.",
+    offerBridgeLead: "Joriy bonuslarni shartlari boʻyicha solishtiring",
+    casinoBridgeTitle: "Kazinolarni solishtirishga tayyormisiz?",
+    casinoBridgeBody: "Hozirgina oʻrganganlaringizni biz sharhlaydigan kazinolar va ularning shartlari bilan solishtirib koʻring.",
+    casinoBridgeLead: "Biz sharhlaydigan kazinolarni shartlari boʻyicha solishtiring",
+  },
 } as const satisfies Record<Exclude<SupportedLocale, "es-PE" | "en-CA" | "fr-CA">, LearnBridgeMessages>;
 
 const messages: Record<SupportedLocale, LearnBridgeMessages> = {

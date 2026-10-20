@@ -6,8 +6,8 @@ import { DEFAULT_SITE_CLASS, HELP_CANONICAL_ORIGIN, HELP_SITE_NAME, type SiteCla
  * §17, §17.1). It is one module so that the Founder, and the link guard, can read the help
  * host's whole voice in one place.
  *
- * Three languages, because the help site publishes Swedish, Danish and English (§4.1). A
- * visitor whose language is not one of the three reads the English text, as `/pause-plan` and
+ * Four languages, because the help site publishes Swedish, Danish, English and Uzbek (§4.1).
+ * A visitor whose language is not one of the four reads the English text, as `/pause-plan` and
  * the control pages already do.
  *
  * **No B4GAMBLE wordmark and no B4GAMBLE logo anywhere** (Founder, Q2, 17 October 2026): the
@@ -17,9 +17,9 @@ import { DEFAULT_SITE_CLASS, HELP_CANONICAL_ORIGIN, HELP_SITE_NAME, type SiteCla
  * exists. Neither is ever a link (§6 rule 2), and `tests/help-site-shell.test.tsx` checks
  * exactly that.
  */
-export type HelpLocale = "en-GB" | "sv-SE" | "da-DK";
+export type HelpLocale = "en-GB" | "sv-SE" | "da-DK" | "uz-UZ";
 
-export const HELP_LOCALES = ["en-GB", "sv-SE", "da-DK"] as const satisfies readonly HelpLocale[];
+export const HELP_LOCALES = ["en-GB", "sv-SE", "da-DK", "uz-UZ"] as const satisfies readonly HelpLocale[];
 
 // ---------------------------------------------------------------------------
 // The name in words (Founder, 17 October 2026: «убери B4GAMBLE из текстов»)
@@ -44,8 +44,8 @@ export function siteName(site: SiteClass = DEFAULT_SITE_CLASS) {
  * One replacement over the rendered string rather than a second set of translations: these
  * sentences exist in thirteen languages, the rest of each sentence is true on both sites, and
  * two copies of thirteen translations would drift. The grammar that is glued to the wordmark
- * travels with it, which is what Swedish, Danish and English — the three languages the help
- * site publishes — need: "B4GAMBLEs 10-stegsprogram" becomes "Pause Plans 10-stegsprogram",
+ * travels with it, which is what Swedish, Danish and English — three of the four languages the
+ * help site publishes — need: "B4GAMBLEs 10-stegsprogram" becomes "Pause Plans 10-stegsprogram",
  * "B4GAMBLE-nyheder" becomes "Pause Plan-nyheder". A language the help site does not publish
  * can read its case ending oddly (Finnish "B4GAMBLEn" becomes "Pause Plann"); where that
  * matters the string itself is rewritten without a name instead.
@@ -100,7 +100,7 @@ export function withSiteNameDeep<T>(value: T, site: SiteClass = DEFAULT_SITE_CLA
 }
 
 export function helpLocale(locale: SupportedLocale | string | null | undefined): HelpLocale {
-  if (locale === "sv-SE" || locale === "da-DK") return locale;
+  if (locale === "sv-SE" || locale === "da-DK" || locale === "uz-UZ") return locale;
   return "en-GB";
 }
 
@@ -213,6 +213,28 @@ const shell: Readonly<Record<HelpLocale, HelpShellCopy>> = {
       home: "Gå til pauseplanen",
     },
   },
+  "uz-UZ": {
+    metadataTitle: `${HELP_SITE_NAME} | Qimor oʻyinlaridan tanaffus qilish yoki ularni yana nazoratga olish uchun bepul yordam`,
+    metadataDescription: "Qimor oʻyinlarini toʻxtatish, ulardan tanaffus qilish yoki ularni yana nazoratga olishni istagan har bir kishi uchun oʻn kunlik bepul tanaffus rejasi, oʻn bosqichli dastur va sodda qoʻllanmalar. Kazinolar yoʻq, reklama yoʻq, kuzatuv yoʻq.",
+    statement: `${HELP_SITE_NAME} — qimor oʻyinlarini toʻxtatish, ulardan tanaffus qilish yoki ularni yana nazoratga olishni istagan voyaga yetganlar uchun bepul tanaffus rejasi va oʻn bosqichli dastur.`,
+    homeLabel: `${HELP_SITE_NAME} bosh sahifasi`,
+    navigation: { tenSteps: "10 bosqich", pausePlan: "Tanaffus rejasi", guides: "Qoʻllanmalar", help: "Yordam" },
+    footer: {
+      label: "Saytning pastki qismi",
+      description: "Qimor oʻyinlaridan tanaffus qilish yoki ularni yana nazoratga olish uchun bepul yordam. Bu yerda hech narsa sotilmaydi.",
+      siteLinks: "Ushbu saytda",
+      aboutThisSite: "Sayt haqida",
+      owner: "Bu saytni kim yuritadi",
+      organisations: "Tashkilotlar uchun",
+      legal: "Huquqiy maʼlumotlar",
+      noTracking: "Bu sayt kuzatuv cookie fayllarini oʻrnatmaydi va reklama koʻrsatmaydi.",
+    },
+    notFound: {
+      title: "Bu sahifa ushbu saytga tegishli emas",
+      body: "Siz ochgan manzil bizga tegishli emas. Tanaffus rejasi bosh sahifada joylashgan.",
+      home: "Tanaffus rejasiga oʻtish",
+    },
+  },
 };
 
 export function helpShellCopy(locale: SupportedLocale | string | null | undefined): HelpShellCopy {
@@ -233,6 +255,7 @@ const revenueLines: Readonly<Record<HelpLocale, string>> = {
   "en-GB": "This site is free and earns nothing: no casinos, no adverts, no affiliate links. The company behind it also runs a casino-comparison site.",
   "sv-SE": "Den här sajten är gratis och tjänar ingenting: inga casinon, ingen reklam, inga affiliatelänkar. Företaget bakom den driver också en jämförelsesajt för casinon.",
   "da-DK": "Dette websted er gratis og tjener ingenting: ingen casinoer, ingen reklamer, ingen affiliate-links. Firmaet bag driver også et sammenligningssite for casinoer.",
+  "uz-UZ": "Bu sayt bepul va hech qanday daromad olmaydi: kazinolar yoʻq, reklama yoʻq, affiliat havolalari yoʻq. Uning ortida turgan kompaniya kazinolarni solishtiruvchi saytni ham yuritadi.",
 };
 
 export function helpRevenueLine(locale: SupportedLocale | string | null | undefined) {
@@ -244,6 +267,7 @@ const revenueLinkLabels: Readonly<Record<HelpLocale, string>> = {
   "en-GB": "Who runs this site",
   "sv-SE": "Vem driver sajten",
   "da-DK": "Hvem står bag",
+  "uz-UZ": "Bu saytni kim yuritadi",
 };
 
 export function helpRevenueLinkLabel(locale: SupportedLocale | string | null | undefined) {
@@ -258,6 +282,7 @@ const ownerLinkLabels: Readonly<Record<HelpLocale, string>> = {
   "en-GB": "Who runs this site →",
   "sv-SE": "Vem driver sajten →",
   "da-DK": "Hvem står bag →",
+  "uz-UZ": "Bu saytni kim yuritadi →",
 };
 
 export function helpOwnerLinkLabel(locale: SupportedLocale | string | null | undefined) {
@@ -278,6 +303,10 @@ const controlFaq: Readonly<Record<HelpLocale, readonly [string, string]>> = {
     `Hvad er ${HELP_SITE_NAME}?`,
     `${shell["da-DK"].statement} Det er ikke et casino, det sælger ingenting, og det linker ikke til spilsider. Det drives af ${HELP_OWNER.legalName}, som også driver et sammenligningssite for casinoer; det ligger på en anden adresse, og intet herfra går derhen.`,
   ],
+  "uz-UZ": [
+    `${HELP_SITE_NAME} nima?`,
+    `${shell["uz-UZ"].statement} U kazino emas, hech narsa sotmaydi va hech qanday qimor saytiga havola bermaydi. Uni ${HELP_OWNER.legalName} yuritadi; bu kompaniya kazinolarni solishtiruvchi saytni ham yuritadi, biroq u boshqa manzilda joylashgan va bu yerdan unga hech narsa yetib bormaydi.`,
+  ],
 };
 
 export function helpControlFaqEntry(locale: SupportedLocale | string | null | undefined) {
@@ -289,6 +318,7 @@ const learnHubDescriptions: Readonly<Record<HelpLocale, string>> = {
   "en-GB": "Plain-language guides about pausing, self-exclusion and keeping gambling under control.",
   "sv-SE": "Guider på vanlig svenska om att pausa, stänga av sig och hålla spelandet under kontroll.",
   "da-DK": "Guider i almindeligt sprog om at holde pause, udelukke sig selv og holde styr på spillet.",
+  "uz-UZ": "Tanaffus qilish, oʻzini cheklash va qimor oʻyinlarini nazorat ostida saqlash haqida sodda tilda yozilgan qoʻllanmalar.",
 };
 
 export function helpLearnHubDescription(locale: SupportedLocale | string | null | undefined) {
@@ -313,6 +343,7 @@ const needHelpLines: Readonly<Record<string, string>> = {
   "sv-SE": "Behöver du hjälp med ditt spelande? Gratis pausplan och 10-stegsprogram →",
   "da-DK": "Brug for hjælp med dit spil? Gratis pauseplan og 10-trinsprogram →",
   "de-DE": "Brauchst du Hilfe mit deinem Spielverhalten? Kostenloser Pausenplan und 10-Schritte-Programm →",
+  "uz-UZ": "Qimor oʻyinlari bilan bogʻliq yordam kerakmi? Bepul tanaffus rejasi va 10 bosqichli dastur →",
 };
 
 export function needHelpLine(locale: SupportedLocale | string | null | undefined) {
@@ -323,6 +354,7 @@ export function needHelpLine(locale: SupportedLocale | string | null | undefined
 export function helpOriginPathForLocale(locale: SupportedLocale | string | null | undefined) {
   if (locale === "sv-SE") return "/sv";
   if (locale === "da-DK") return "/da";
+  if (locale === "uz-UZ") return "/uz";
   return "/";
 }
 
@@ -500,6 +532,53 @@ const ownerPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
     },
     contactLead: "Er noget forkert, mangler eller er uklart? Sig til, så retter vi det.",
     contactLabel: "Kontakt os",
+  },
+  "uz-UZ": {
+    metadataTitle: `Bu saytni kim yuritadi | ${HELP_SITE_NAME}`,
+    metadataDescription: `${HELP_SITE_NAME} kimga tegishli, kompaniya qanday daromad oladi, nega bu yerda kazino havolalari yoʻq va siz yozgan narsalar bilan nima sodir boʻladi.`,
+    eyebrow: "Ochiq javoblar",
+    title: "Bu saytni kim yuritadi",
+    intro: "Bu sayt qimor zarari haqida. Uni kim yozganini va ular qanday haq olishini bilishingiz kerak.",
+    sections: [
+      {
+        heading: "Uni kim yuritadi",
+        paragraphs: [
+          `${HELP_SITE_NAME} saytini ${HELP_OWNER.legalName} kompaniyasi yuritadi; kompaniya Amerika Qoʻshma Shtatlarida, ${HELP_OWNER.city} shahrida joylashgan. U qimor kompaniyasi ham, xayriya tashkiloti ham emas.`,
+        ],
+      },
+      {
+        heading: "Pul qayerdan keladi",
+        paragraphs: [
+          `Shu kompaniya ${HELP_OWNER.otherSite} saytini ham yuritadi — bu boshqa manzildagi kazinolarni solishtirish sayti, litsenziyalangan kazino operatorlari unga komissiya toʻlaydi. Pul ana shu yerdan keladi.`,
+          "Bu sayt sizdan hech qanday daromad olmaydi. Unda, jumladan dasturda ham, hech qayerda kazino, reklama yoki hamkor havolasi yoʻq.",
+        ],
+      },
+      {
+        heading: "Siz yozgan narsalar hech qachon kazinolar uchun ishlatilmaydi",
+        paragraphs: [
+          "Dasturda, tanaffus rejasida yoki Yordam boʻlimida yozganlaringizning hech biri kazino yoki reklamani tanlash, vaqtini belgilash yoki reytinglash uchun ishlatilmaydi va hech biri kazino operatoriga yoki hamkorga berilmaydi.",
+        ],
+      },
+      {
+        heading: "Kuzatuv yoʻq",
+        paragraphs: [
+          "Google tag kodi, reklama pikseli va analitika cookie fayli yoʻq, shuning uchun cookie banneri ham yoʻq. Nimani oʻqiyotganingizni koʻra olmaymiz. Biz faqat dasturni necha kishi boshlaganini sanaymiz, boshqa hech narsani emas.",
+        ],
+      },
+      {
+        heading: "Bu sayt nima emas",
+        paragraphs: [
+          "U tibbiy yordam, terapiya, tashxis yoki inqiroz paytidagi yordam emas va hech narsani bloklamaydi. Agar qimor oʻyinlari allaqachon pulingizga, uyqungizga yoki atrofingizdagi odamlarga zarar yetkazayotgan boʻlsa, milliy oʻzini cheklash tizimi va ishonch telefonidan boshlang. Ikkalasi ham Yordam boʻlimida.",
+        ],
+      },
+    ],
+    more: {
+      lead: "Toʻliq javoblar tashkilotlar uchun sahifada: maʼlumotlaringiz bilan ishlaydigan har bir kompaniya, ular qayerda saqlanishi va biz hali javob bera olmaydigan savollar.",
+      label: `${shell["uz-UZ"].footer.organisations} →`,
+      href: HELP_ORGANISATIONS_PATH,
+    },
+    contactLead: "Bu yerda biror narsa notoʻgʻri, yetishmayapti yoki tushunarsizmi? Bizga ayting, biz uni tuzatamiz.",
+    contactLabel: "Biz bilan bogʻlanish",
   },
 };
 
@@ -732,6 +811,75 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
     contactLead: "Vil I have dette som et dokument på én side eller svar på noget, der ikke står her?",
     contactLabel: "Kontakt os",
   },
+  "uz-UZ": {
+    metadataTitle: `Tashkilotlar uchun | ${HELP_SITE_NAME}`,
+    metadataDescription: `Yordam xizmati, klinika, bloklash dasturi yoki regulyator ${HELP_SITE_NAME} saytini tavsiya qilishdan oldin bilishi kerak boʻlgan narsalar: unga kim egalik qiladi, nima saqlanadi, qayerda, qancha muddat va biz hali nimaga javob bera olmaymiz.`,
+    eyebrow: "Tashkilotlar uchun",
+    title: "Tashkilotlar uchun",
+    intro: "Bu sahifa odamlarni bu yerga yoʻnaltirish-yoʻnaltirmaslikni hal qilayotgan yordam xizmati, klinika, bloklash dasturi, xayriya tashkiloti yoki davlat organi uchun. Unda siz bizdan soʻraydigan savollarga javob berilgan, hali javob bera olmaydigan narsalarimiz ham koʻrsatilgan. Undagi hech narsa marketing emas.",
+    sections: [
+      {
+        heading: "Siz kim bilan ishlaysiz",
+        paragraphs: [
+          `${HELP_OWNER.legalName} — AQShdagi kompaniya, 447 Broadway, 2nd Floor, 1663, ${HELP_OWNER.city}, NY 10013. U maʼlumotlar nazoratchisi hisoblanadi. Bu xayriya tashkiloti emas, tijorat kompaniyasi: u ${HELP_OWNER.otherSite} saytini ham yuritadi — bu kazinolarni solishtirish sayti; oʻquvchi uning havolalari orqali litsenziyalangan operatorlardan birida hisob ochganida, operator unga komissiya toʻlaydi. U qimor kompaniyasi emas, qimor litsenziyasiga ega emas va davlat organi ham emas. Bu saytda kazino, bonus yoki hamkor havolalari yoʻq va u hech qanday daromad olmaydi.`,
+          "Buni eng avval aytamiz, chunki aynan shu narsa sizni biz bilan ishlashdan toʻxtatishi ehtimoli eng yuqori va siz buni keyinroq oʻzingiz bilib qolishingizga toʻgʻri kelmasligi kerak.",
+        ],
+      },
+      {
+        heading: "Bu sayt nimalarni toʻplaydi",
+        paragraphs: [
+          "Tanaffus rejasi, qoʻllanmalar va ishonch telefonlari roʻyxatlarini hisobsiz oʻqish mumkin, bunda biz oddiy server soʻrovlari jurnallaridan tashqari u kishi haqida hech narsa saqlamaymiz.",
+          "Hisob faqat oʻn bosqichli dastur uchun kerak. Unda elektron pochta manzili yoki Google orqali kirish maʼlumoti, kishining bosqichlarda yozgan javoblari, uning dasturdagi natijalari hamda ixtiyoriy tanaffus sanasi va eslatma xati saqlanadi.",
+          "Dasturda yozilgan javoblarda qimor oʻyinlari, pul bilan bogʻliq tashvishlar va salomatlik haqida gap borishi mumkin. Biz ularni nozik maʼlumot deb hisoblaymiz. Sunʼiy intellekt (AI) yordamida ixtiyoriy shaxsiylashtirish sukut boʻyicha oʻchirilgan va 2026-yil 12-oktabrdan boshlab saytning ishchi versiyasida butunlay oʻchirib qoʻyilgan.",
+        ],
+      },
+      {
+        heading: "Maʼlumotlar qayerda va kim tomonidan saqlanadi",
+        paragraphs: [
+          "Prisma tomonidan yuritiladigan, AQShda joylashgan bitta PostgreSQL maʼlumotlar bazasi; ilova hostingi — Vercel, AQSh; tranzaksion elektron xatlar — Resend; xodimlar pochtasi — Google Workspace; ixtiyoriy tizimga kirish uchun — Google. Aynan shu bazada kompaniyaning kazinolarni solishtirish maʼlumotlari ham saqlanadi. Yordam maʼlumotlari uchun alohida baza yaratish mumkin, lekin hozircha u yoʻq.",
+          "Buyuk Britaniya va Yevropa Ittifoqidan tashqariga uzatish: Prighter Group — Yevropa Ittifoqi va Buyuk Britaniya uchun 27-modda boʻyicha vakilimiz. Biz hozircha har bir maʼlumotlarni qayta ishlovchi uchun uzatish mexanizmini va imzolangan maʼlumotlarni himoya qilishga taʼsirni baholash hujjatini koʻrsata olmaymiz. Bu biz yashirayotgan rasmiyatchilik emas, balki ochiq tan olingan kamchilik va buni soʻragan har kimga yozma ravishda aytamiz.",
+        ],
+      },
+      {
+        heading: "Biz hech qachon nima qilmaymiz",
+        paragraphs: [
+          "Dastur, tanaffus va Yordam boʻlimidagi maʼlumotlar hech qachon biror kazino, taklif yoki reklamani tanlash, reytinglash, vaqtini belgilash yoki shaxsiylashtirish uchun ishlatilmaydi; hech qachon sotilmaydi; va hech qachon qimor operatoriga yoki affiliat hamkorga berilmaydi.",
+          "Oʻn bosqichli dasturdagi hech bir bosqich, ekran, karta, elektron xat yoki tayyor reja kazinoga, bonusga yoki solishtirish sahifasiga havola bermaydi. 2026-yil 16-oktabrdan beri shunday va har bir oʻzgarishda avtomatik test buni tekshiradi, shuning uchun bunday havolalar tasodifan qaytib kelolmaydi.",
+          `Bitta izoh, chunki biz buni yozayotgan paytda u hali ham toʻgʻri: 2026-yil 17-oktabrdan oldin ${HELP_OWNER.otherSite} saytida hamkor havolalarining bosilishi ularni bosgan hisobga bogʻlab saqlangan. Yangi bosishlar bunday saqlanmaydi va ichki haftalik sanoq ularni endi oʻqimaydi. Eski qatorlarni tozalash — biz hali bajarmagan alohida ish.`,
+          "Agar siz odamlarni bizga yoʻnaltirsangiz, biz sizga hech qachon ularning shaxsini aniqlashga imkon beradigan hech narsa yubormaymiz. Eng koʻpi bilan umumiy sonni baham koʻrishimiz mumkin.",
+        ],
+      },
+      {
+        heading: "Kuzatuv",
+        paragraphs: [
+          "Bu saytda Google tag kodi, reklama pikseli va analitika cookie fayli yoʻq, shuning uchun cookie banneri koʻrsatilmaydi. Faqat soʻralgan sahifaga kerakli narsalar saqlanadi: tizimga kirish, til va dasturni toʻxtagan joydan davom ettirish.",
+          "Shu sababli biz oʻquvchi kimligini yoki nimani oʻqiyotganini koʻra olmaymiz. Biz faqat dasturni necha kishi boshlaganini sanaymiz, boshqa hech narsani emas.",
+        ],
+      },
+      {
+        heading: "Saqlash muddati va oʻchirish",
+        paragraphs: [
+          "Har bir toifa uchun saqlash muddatlari Maxfiylik siyosatida belgilangan. Har kim oʻz maʼlumotlarining nusxasini, ularni tuzatishni yoki oʻchirishni soʻrashi va istalgan vaqtda roziligini qaytarib olishi mumkin. Oʻchirish soʻrovlari bajariladi; zaxira nusxalar esa oʻz jadvaliga koʻra muddati tugagach oʻchib ketadi.",
+          `${HELP_OWNER.privacyMailbox} manziliga yozing.`,
+        ],
+      },
+      {
+        heading: "Xavfsizlik va yosh",
+        paragraphs: [
+          "Faqat HTTPS, shifrlangan kirish tokenlari, xodimlar kirishi uchun koʻp faktorli autentifikatsiya, zaxira nusxalar va maʼlumotlar sizib chiqqanda amal qilinadigan yozma tartib. Kirish faqat bunga ehtiyoji bor xodimlar bilan cheklangan; qaysi ichki ekranlar kishining dasturdagi javoblarini koʻrsatishi mumkinligini hali eʼlon qilmaganmiz.",
+          "Xizmat voyaga yetganlar uchun. Yoshni foydalanuvchining oʻzi 18+ deb bildiradi; shaxsni tasdiqlovchi tekshiruv yoʻq.",
+        ],
+      },
+      {
+        heading: "Biz hali nimaga javob bera olmaymiz",
+        paragraphs: [
+          "Maʼlumotlar bazasi joylashgan aniq hudud, har bir maʼlumotlarni qayta ishlovchi uchun uzatish kafolatlari, imzolangan maʼlumotlarni himoya qilishga taʼsirni baholash hujjati, Buyuk Britaniya Axborot komissari idorasida roʻyxatdan oʻtish va qaysi ichki ekranlar dastur javoblarini koʻrsatishi mumkinligi. Ularni siz oʻzingiz topib olishingizdan koʻra, oʻzimiz sanab koʻrsatganimiz maʼqul.",
+        ],
+      },
+    ],
+    contactLead: "Buni bir sahifalik hujjat sifatida olishni yoki bu yerda yoʻq savolga javob olishni xohlaysizmi?",
+    contactLabel: "Biz bilan bogʻlanish",
+  },
 };
 
 export function helpOrganisationsPage(locale: SupportedLocale | string | null | undefined): HelpTextPage {
@@ -805,6 +953,10 @@ const trustCardCopy: Readonly<Record<HelpLocale, Readonly<{ title: string; body:
   "da-DK": {
     title: "Hvem står bag, og hvem betaler for det?",
     body: "Ejeren, hvor pengene kommer fra, hvorfor der ikke er casinolinks her, og hvad der sker med det, du skriver.",
+  },
+  "uz-UZ": {
+    title: "Bu saytni kim yuritadi va u qanday moliyalashtiriladi?",
+    body: "Egasi kim, pul qayerdan keladi, nega bu yerda kazino havolalari yoʻq va siz yozgan narsalar bilan nima sodir boʻladi.",
   },
 };
 
@@ -888,6 +1040,22 @@ const homePage: Readonly<Record<HelpLocale, HelpHomeCopy>> = {
       headingLead: "Hvem står bag.",
       headingEmphasis: "Og hvem betaler.",
       body: `Dette websted er gratis og tjener ingenting: ingen casinoer, ingen reklamer, ingen affiliate-links. Det drives af ${HELP_OWNER.legalName}, som også driver et sammenligningssite for casinoer på en anden adresse, og intet af det, du skriver her, går derhen. Hvem ejeren er, hvor pengene kommer fra, og hvad der gemmes, står på én side i almindeligt sprog.`,
+    },
+  },
+  "uz-UZ": {
+    heroPausePlanLink: "Yoki oʻn kunlik tanaffus rejasidan boshlash →",
+    pausePlan: {
+      eyebrow: "Bugunoq boshlang",
+      headingLead: "Oʻn kun.",
+      headingEmphasis: "Kunma-kun.",
+      body: "Tanaffus rejasi — oʻn kun davomida har kuni bajariladigan bitta kichik ish: nimani oʻchirib qoʻyish, kimga aytish va toʻsatdan boʻsh qolgan kechqurun vaqtingizni nima bilan oʻtkazish. U bepul, roʻyxatdan oʻtish shart emas va uni darhol taqvimingizga qoʻshishingiz mumkin.",
+      cta: "Tanaffus rejasini ochish",
+    },
+    owner: {
+      eyebrow: "Ochiq javoblar",
+      headingLead: "Bu saytni kim yuritadi.",
+      headingEmphasis: "Va uni kim moliyalashtiradi.",
+      body: `Bu sayt bepul va hech qanday daromad olmaydi: kazinolar yoʻq, reklama yoʻq, affiliat havolalari yoʻq. Uni ${HELP_OWNER.legalName} yuritadi; bu kompaniya boshqa manzilda kazinolarni solishtiruvchi saytni ham yuritadi, biroq bu yerda yozgan hech bir narsangiz unga yetib bormaydi. Egasi kim, pul qayerdan keladi va nima saqlanadi — bularning barchasiga bitta sahifada sodda tilda javob berilgan.`,
     },
   },
 };
