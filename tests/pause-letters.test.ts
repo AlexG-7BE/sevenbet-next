@@ -10,6 +10,7 @@ import {
   PROGRAMME_DAY_LETTERS,
   pauseLetterDateText,
   pauseLetterLanguage,
+  pauseLetterLocalDayStart,
   pauseLetterLocalTime,
   pauseLetterPlanUrl,
   pauseLetterWindow,
@@ -66,6 +67,11 @@ test("letters leave by the clock in Sweden and Denmark, in summer and in winter 
   assert.deepEqual(window("2026-07-03T16:23:00.000Z"), [true, true]);
   assert.deepEqual(window("2026-07-03T19:23:00.000Z"), [false, false]);
   assert.deepEqual(PROGRAMME_DAY_LETTERS.map((letter) => [letter.day, letter.key]), [[3, "PROGRAMME_DAY_3"], [7, "PROGRAMME_DAY_7"], [10, "PROGRAMME_DAY_10"]]);
+  // Local midnight, the line after which a queued letter of the day before is cancelled.
+  assert.equal(pauseLetterLocalDayStart(new Date("2026-07-03T16:23:00.000Z")).toISOString(), "2026-07-02T22:00:00.000Z");
+  assert.equal(pauseLetterLocalDayStart(new Date("2026-11-03T05:23:00.000Z")).toISOString(), "2026-11-02T23:00:00.000Z");
+  assert.equal(pauseLetterLocalDayStart(new Date("2026-10-25T10:00:00.000Z")).toISOString(), "2026-10-24T22:00:00.000Z", "the day the clock goes back began in summer time");
+  assert.equal(pauseLetterLocalDayStart(new Date("2026-03-29T10:00:00.000Z")).toISOString(), "2026-03-28T23:00:00.000Z", "the day the clock goes forward began in winter time");
   assert.equal(shiftIsoDay("2026-10-31", 1), "2026-11-01");
   assert.equal(shiftIsoDay("2026-03-01", -1), "2026-02-28");
   // The provider's free plan is 100 a day; the pause letters leave room for the others.
@@ -227,9 +233,37 @@ test("the new letters need the same authority as the Programme reminder, and the
   assert.match(service, /activeEmailTemplate\(key, pauseLettersEnabled\(\) \? pauseLetterLanguage\(preferredLocale\) : "en"\)/);
   assert.match(service, /where: \{ key: "PROGRAMME_REMINDER", active: true, \.\.\.\(pauseLettersEnabled\(\) \? \{\} : \{ locale: "en" \}\) \}/);
   // Every queue and send path of the new letters starts with the switch.
-  for (const [file, guards] of [["lib/email/pause-letters/account-letters.server.ts", 3], ["lib/email/pause-letters/reminders.server.ts", 4], ["lib/email/pause-letters/cron.server.ts", 1]] as const) {
+  for (const [file, guards] of [["lib/email/pause-letters/account-letters.server.ts", 3], ["lib/email/pause-letters/reminders.server.ts", 3], ["lib/email/pause-letters/cron.server.ts", 1]] as const) {
     assert.equal((read(file).match(/pauseLettersEnabled\(/g) ?? []).length, guards, file);
   }
+});
+
+test("before the switch is turned on: letters leave on their own day, the cap cannot be gamed, the answer leaks nothing, and retention runs regardless", () => {
+  const accounts = read("lib/email/pause-letters/account-letters.server.ts");
+  const reminders = read("lib/email/pause-letters/reminders.server.ts");
+  const cron = read("lib/email/pause-letters/cron.server.ts");
+  // A queued letter of a day that has passed is cancelled at local midnight, not after a number of hours.
+  assert.match(accounts, /queuedAt: \{ lt: pauseLetterLocalDayStart\(now\) \}/);
+  assert.doesNotMatch(accounts, /PAUSE_LETTER_STALE_MS/);
+  // Outside the evening window only "your pause is over" may leave.
+  assert.match(accounts, /const purposes = window\.evening \? PAUSE_LETTER_PURPOSES : MORNING_PAUSE_LETTER_PURPOSES;/);
+  assert.match(accounts, /MORNING_PAUSE_LETTER_PURPOSES = \["PAUSE_OVER"\]/);
+  // A new date never clears the first letter, and the cap reads a counter that only goes up.
+  assert.doesNotMatch(reminders, /confirmationSentAt: null/);
+  assert.doesNotMatch(reminders, /confirmationSentAt: \{ gte/);
+  assert.match(reminders, /await countReminderLetterSent\(now\)/);
+  // The answer is given before the account check: the rest runs in after().
+  assert.match(reminders, /import \{ after \} from "next\/server";/);
+  assert.match(reminders, /const defer = overrides\.defer \?\? after;/);
+  const subscribe = reminders.slice(reminders.indexOf("export async function subscribePauseReminder"), reminders.indexOf("async function storePauseReminder"));
+  assert.doesNotMatch(subscribe, /prisma\.user|pauseReminder\.|sendReminderLetter/);
+  // The purge does not wait for the switch, and the hourly run purges while the switch is off.
+  const purge = reminders.slice(reminders.indexOf("export async function purgePauseReminders"));
+  assert.doesNotMatch(purge, /pauseLettersEnabled/);
+  assert.match(cron, /if \(!pauseLettersEnabled\(environment\)\) \{\n\s+try \{\n\s+const purgedReminders = await purgePauseReminders\(at\);/);
+  // An unsubscribed address is kept only as a keyed hash at a domain that never receives mail.
+  assert.match(reminders, /const UNSUBSCRIBED_ADDRESS_SUFFIX = "@unsubscribed\.invalid";/);
+  assert.match(reminders, /createHmac\("sha256", secret\)\.update\(`\$\{UNSUBSCRIBED_DOMAIN\}/);
 });
 
 test("the page shows the email field and carries the date only while the switch is on, with one consent line", () => {

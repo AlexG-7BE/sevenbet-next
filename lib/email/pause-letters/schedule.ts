@@ -84,6 +84,23 @@ export function pauseLetterWindow(now: Date) {
   };
 }
 
+/**
+ * The instant the local calendar day of `now` began: 00:00 in Sweden and Denmark. A pause letter
+ * queued before it belongs to a day that has passed and is never sent.
+ */
+export function pauseLetterLocalDayStart(now: Date) {
+  const { day } = pauseLetterLocalTime(now);
+  const utcMidnight = Date.parse(`${day}T00:00:00.000Z`);
+  // Local time is one hour ahead of UTC in winter and two in summer; the clock changes at night,
+  // never at midnight, so one of the two is the local midnight.
+  for (const offsetHours of [1, 2]) {
+    const candidate = new Date(utcMidnight - offsetHours * 3_600_000);
+    const local = pauseLetterLocalTime(candidate);
+    if (local.day === day && local.hour === 0) return candidate;
+  }
+  throw new Error(`No local midnight found for ${day}`);
+}
+
 /** The local calendar day an instant falls on: the Programme start day of an enrolment. */
 export function pauseLetterLocalDay(instant: Date) {
   return pauseLetterLocalTime(instant).day;
