@@ -466,8 +466,7 @@ ends it by moving those routes off the main host:
 
   | From (`b4gamble.com`) | To (`HELP_ORIGIN`) |
   | --- | --- |
-  | `/program`, `/program/*` | the same path |
-  | `/10-steps`, `/start` | the same path |
+  | `/start` | the same path |
   | `/pause-plan`, `/innan`, `/beside`, `/pause-statistics` | the same path |
   | `/gambling-control`, `/control-without-quitting`, `/gambling-control-tools` | the same path |
   | `/help`, `/help/*` | the same path |
@@ -477,6 +476,34 @@ ends it by moving those routes off the main host:
   | `/login`, `/reset-password` | the same path (§9.2) |
   | `/ig`, `/fb`, `/x`, `/threads`, `/lana`, `/ig/*`, `/fb/*`, `/x/*`, `/t/*` | straight to the final help URL, one hop, not 307 then 301 (§15) |
 
+- **The Programme and the 10 Steps page stay on BOTH hosts** (Founder decision,
+  20 October 2026, after comparing the two). They were `HELP` and were listed
+  for a 301 above; they are now `SHARED` in the manifest
+  (`lib/site/host-routes.ts`), the class `/` and `/login` already use: both
+  hosts serve them, each under its own name and shell. Nothing about the
+  missions, their order, their rewards or their screens differs between the
+  hosts — the catalogue is one — so what a reader sees differ is the frame:
+  `b4gamble.com` shows the B4GAMBLE wordmark, its own menu and its commercial
+  footer, `HELP_ORIGIN` shows the help name, the help menu and the help footer.
+  The Founder reviewed that difference and chose to keep it rather than move
+  the Programme to one host.
+  **Consequence, and the one open question for phase 3:** `/10-steps` is public
+  and indexable, so from the deployment that makes the help host indexable both
+  hosts offer a near-identical page that differs only in the site name and the
+  chrome. `/program` is not at risk in the same way: it is an account surface.
+  **DECIDED, Founder, 20 October 2026:** `/10-steps` has one canonical, the
+  help host, because that is where the help audience and the outreach land.
+  The main host keeps serving its own copy and points its canonical at
+  `HELP_ORIGIN`, so the pair is never left to Google to fold. Phase 3 builds
+  it; `/program` needs no such rule, being an account surface.
+- **The main host's `/10-steps` keeps the commercial menu** (Founder,
+  20 October 2026, asked and answered). The page sits under `app/(public)`, so
+  it wears the ordinary header with Casinos, Bonuses and Best Offers, while
+  `/program` wears the clean shell its own layout builds
+  (`researchNavigation={false}`, PR #530). He was shown the difference and
+  chose to keep it: `b4gamble.com` is the commercial site and its menu reaches
+  every page of it (decision of 17 October 2026). On `HELP_ORIGIN` the same
+  page wears the help menu.
 - **`/can-you-trust-b4gamble` stays on the main site** and is `COMMERCIAL`.
   Changed in this revision: the earlier draft had it 301 to
   `HELP_ORIGIN/who-runs-this`. A commercial site that takes affiliate
@@ -488,9 +515,10 @@ ends it by moving those routes off the main host:
   and `CONTROL_PATHS.trust` on the help host points at `/who-runs-this`
   (§6.5).
 - **The main site keeps no other help content.** After phase 3 no page,
-  section, card or menu entry of `b4gamble.com` carries the Programme, a pause
-  plan, the 10 steps, protected Help, a control page, a help guide or a
-  helpline list. The footer's "Programme and support" column
+  section, card or menu entry of `b4gamble.com` carries a pause plan,
+  protected Help, a control page, a help guide or a helpline list. The
+  Programme and the 10 Steps page are the exception above and stay, with the
+  menu entries that reach them. The footer's "Programme and support" column
   (**DETECTED**, `PublicFooter.tsx:49`: eight links — Programme, 10 Steps,
   Responsible Gambling, Help, Pause plan, Beside, Pause statistics, Gambling
   control) is replaced by the single "need help" line (§6.6). The only things
@@ -1531,7 +1559,7 @@ lines of test:
 | **0 — Decisions and accounts** (Founder) | **DONE, 17 October 2026.** The §22 answers are given and recorded in [HELP-SITE-RFC-057-APPROVED-2026-10-17](../07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md); the domain is done (`pauseplan.help` bought 16 October, DNS at Vercel). Still outstanding, and none of them gates phase 1: the Search Console Domain property and the Bing site (needed in phase 3), the Resend domain and help mailbox (Q6, between phases 2 and 4), and the second Google client (Q8 (b), before phase 4) | **MET** — answers recorded in the decision record |
 | **1 — Code, dark** | one or more PRs: host manifest (with metadata routes and `public/`), middleware gate, help shell and host-aware root not-found, help home, host-aware root metadata and the help share image, per-site origins and site-keyed caches, Better Auth two-host config (code only), auth letters accepting the request's own origin, per-host search files (robots per request, second IndexNow key), e-mail origins, Learn origin by category and the stored-canonical rule, first-party help images, help-host copy (§17.1), owner page and data statement, link guard over raw HTML, inline page data and `?_rsc=` responses, and two-host browser specs. All switches off: the main site behaves exactly as before, which tests prove | PR #530 merged (done, `774dd2f7`) and `researchNavigation={false}` still passed by the Programme layout after the menu change; the replacement step-3 lesson (decision 3) merged, so the help site never launches with a casino-comparison lesson; the Founder has seen help-host screens and copy as Production renders them (phone first, Google button shown); CI green |
 | **2 — Help host live, not indexed, not linked** | the help-host Firewall deny rule (§4.2); attach `<help-domain>` and `www` to the project; set `BETTER_AUTH_TRUSTED_ORIGINS`; add the Google origin and callback; `HELP_SITE_SERVING=true`; redeploy | checks in §20.3 pass, including e-mail sign-up and reset, the Founder's own Google sign-in on his phone and the blocker check; help pages fetched 200 from GB, SE, DK |
-| **3 — Move and index** | `HELP_SITE_REDIRECTS=true`, in one deployment: help-host pages become indexable and main-host 301s start together, so no page is indexable on both hosts; the main site drops its help links, its "Programme and support" footer column and its customer Log in, and gains the one "need help" line (§5, §6.6, §9.2); Learn origin switch, letters, short links; submit the help sitemap and IndexNow for help URLs; bios on the Founder's word; registry and `CURRENT_STATE` updated | one-hop 301s verified; help guides announced; no 404 among moved URLs; the required-notice check of §5 done for GB, SE, DK and DE; exactly one help link per main-host page |
+| **3 — Move and index** | `HELP_SITE_REDIRECTS=true`, in one deployment: help-host pages become indexable and main-host 301s start together, so no page is indexable on both hosts except the two `SHARED` Programme routes the Founder kept on both (§5), whose canonical is settled before this phase; the main site drops its help links, its "Programme and support" footer column and its customer Log in, and gains the one "need help" line (§5, §6.6, §9.2); Learn origin switch, letters, short links; submit the help sitemap and IndexNow for help URLs; bios on the Founder's word; registry and `CURRENT_STATE` updated | one-hop 301s verified; help guides announced; no 404 among moved URLs; the required-notice check of §5 done for GB, SE, DK and DE; exactly one help link per main-host page |
 | **4 — Outreach** | help organisations, blockers (category review for the new domain), directories, with the owner page and data statement | §16.3 gate |
 | **Later** | separate database; non-profit entity | Founder decision |
 

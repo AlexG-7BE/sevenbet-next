@@ -298,3 +298,31 @@ site, the Firewall rule, the route manifest or the database changes either way.
   host's home is held to a digest) and `tests/help-site-shell.test.tsx` (the help home's only
   three links are `/program`, `/pause-plan` and `/who-runs-this`), with the address-stability
   check in `tests/help-site-host.test.ts`.
+
+## Amendment, 20 October 2026 — the Programme stays on both sites
+
+The Founder compared the Programme on `b4gamble.com` and on `pauseplan.help` and asked for them
+to be the same. They already are, where it counts: the missions, their order, their questions,
+their rewards and their screens come from one catalogue and one set of components, so no step
+differs between the hosts. What differs is the frame — the wordmark, the menu and the footer —
+because each host wears its own.
+
+Shown that, he chose: **the Programme and the public 10 Steps page stay on both sites, each
+keeping its current styling**, and phase 3 does not redirect them. Recorded here and in
+RFC-057 §5 and §18; `lib/site/host-routes.ts` moves `/program` and `/10-steps` from `HELP` to
+`SHARED`, the class `/` and `/login` already use.
+
+This reverses nothing else: every other help route still moves to the help host in phase 3, and
+PR #530 still stands — the Programme shows no casino, offer, bonus, comparison or `/r/` link to
+anyone, on either host.
+
+**Settled the same day:** `/10-steps` is public and indexable on both hosts, so it gets one
+canonical — **the help host** — and the main host's copy points at it. Phase 3 builds that.
+`/program` needs no such rule, being an account surface.
+
+**Also asked and answered, 20 October 2026:** on `b4gamble.com` the `/10-steps` page keeps the
+commercial header with Casinos, Bonuses and Best Offers. It lives under `app/(public)` and
+wears the ordinary menu, unlike `/program`, whose own layout builds the clean shell of PR #530.
+The Founder was shown the difference and chose to keep it: the commercial site's menu reaches
+every page of it (his decision of 17 October 2026).
+

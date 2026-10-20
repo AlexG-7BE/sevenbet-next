@@ -12,6 +12,27 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## The Programme stays on both sites — decided 20 October 2026
+
+**Founder decision, 20 October 2026** (chat, after comparing the Programme on `b4gamble.com`
+and on `pauseplan.help`; [decision](07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md),
+amendment of 20 October). **LIVE in the manifest, nothing a visitor sees has changed.**
+
+- The missions, their order, their questions, their rewards and their screens come from one
+  catalogue and one set of components, so **no step differs between the hosts**. What differs
+  is the frame: the wordmark, the menu and the footer, each host wearing its own. He was shown
+  that and chose to keep both.
+- `lib/site/host-routes.ts`: `/program` (SUBTREE) and `/10-steps` (EXACT) move from `HELP` to
+  `SHARED`, the class `/` and `/login` already use — both hosts serve them, each with its own
+  content, and phase 3 never redirects them. Every other help route still moves in phase 3.
+- PR #530 is untouched: the Programme shows no casino, offer, bonus, comparison or `/r/` link
+  to anyone, on either host.
+- **Canonical, decided 20 October 2026:** `/10-steps` has one canonical, the help host; the
+  main host keeps its copy and points at it. Phase 3 builds it.
+- **The main host's `/10-steps` keeps the commercial menu** (Founder, 20 October 2026). It is
+  an `app/(public)` page and wears the ordinary header with Casinos, Bonuses and Best Offers;
+  only `/program` wears the clean shell of PR #530.
+
 ## The help site on a second domain is approved — phase 2 is live, not indexed
 
 **Founder decision, 17 October 2026** (chat, «ок, начинай первый этап»;
