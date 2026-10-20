@@ -1,10 +1,10 @@
 # Letters at the right moment: day letters, the pause date and the email field
 
-**Status:** ACCEPTED — built on 14 October 2026 behind a switch that is off.
-Nothing here reaches a person until migrations 0044 and 0045 are applied to
-Production, this PR is merged and deployed, and `PAUSE_LETTERS_ENABLED` is set
-to `true`. [CURRENT_STATE](../CURRENT_STATE.md) records it as live only once
-observed.
+**Status:** ACCEPTED — built on 14 October 2026 behind a switch that is off;
+merged (PR #508) with migrations 0044 and 0045 applied to Production.
+Hardened on 21 October 2026 (see "Hardening before the switch"). Nothing here
+reaches a person until `PAUSE_LETTERS_ENABLED` is set to `true`.
+[CURRENT_STATE](../CURRENT_STATE.md) records it as live only once observed.
 
 **Decision authority:** explicit Founder decisions in chat, 13 October 2026:
 
@@ -47,7 +47,9 @@ and the seeded texts are tested against a list of words that must not appear
 (`lib/email/pause-letters/schedule.ts`), off unless exactly `true`. With it off
 nothing new is queued, sent, stored or shown: the day letters, the dated
 letters, the email field and its letters, the cookie and its saving, and the
-Swedish and Danish welcome and reminder letters. The existing letters behave
+Swedish and Danish welcome and reminder letters. The one thing the hourly run
+still does with the switch off is the retention purge of the email field, so
+rows stored while it was on do not outlive their 30 days. The existing letters behave
 exactly as before; `tests/pause-letters-postgres.test.ts` proves it.
 
 ### 2. A series by Programme start
@@ -103,8 +105,18 @@ The answer never says whether an address was new, known or has an account.
 - An address that later signs up is taken over: the stand-alone letters stop
   and the account carries the date.
 - An unsubscribed address stays unsubscribed; the open form cannot lift it.
-- Rows are deleted 30 days after the pause ended, the unsubscribe or the
-  take-over.
+  The unsubscribe reduces the row at once to a keyed hash of the address
+  (HMAC with the analytics signing secret, stored as
+  `<hash>@unsubscribed.invalid`), with a fixed date and no language. Nothing
+  of the person is left, the row is never purged, and the form refuses that
+  address for good. Rotating `ANALYTICS_SIGNING_SECRET` loses these refusals.
+- Rows are deleted 30 days after the pause ended or the take-over.
+- The first letter goes once per address. A new date restarts the two dated
+  letters, never the first one.
+- The answer is the same, and takes the same path, for a new address, a known
+  one, an unsubscribed one and one with an account: after the input check and
+  the rate limits the endpoint answers, and the account check, the row and the
+  first letter run in `after()` once the response has left.
 
 ## When letters leave
 
@@ -120,13 +132,19 @@ time; the hours are plain values in `PAUSE_LETTER_SCHEDULE`:
 
 The hosting plan runs hourly jobs, so there is one hourly run
 (`/api/internal/cron/pause-letters`, minute 23) that sends only what is due at
-that local hour. A missed hour is caught by the next one the same day; a letter
-that waited more than 20 hours is cancelled, never sent late. The nightly
+that local hour. A missed hour is caught by the next one the same day. A pause
+letter queued before today's local midnight is cancelled, never sent late, and
+the evening letters (day 3, 7, 10 and "ends tomorrow") leave only inside the
+evening window, so a missed "ends tomorrow" can never go out the next morning
+beside "your pause is over". The nightly
 lifecycle run (03:47 UTC) is unchanged and never sends these letters.
 
 **Daily cap.** The mail provider's free plan allows 100 letters a day. The
 pause letters stop at 60 per UTC day (`PAUSE_LETTERS_DAILY_CAP`), which leaves
-room for sign-in, welcome and reminder letters. Above the cap: queued account
+room for sign-in, welcome and reminder letters. It counts every pause letter
+the provider accepted: account letters by their `sentAt`, email-field letters
+by a counter in the shared one-way bucket table that only goes up (a new date,
+an unsubscribe or a purge cannot lower it). Above the cap: queued account
 letters wait for the next hourly run of the same day and are cancelled when
 their day has passed; a reminder letter is tried again while its day lasts; the
 first letter after the email field is skipped and the address is kept. Nothing
@@ -172,6 +190,36 @@ refuses a Production build until both migrations are applied.
   person out of gambling advertising. These letters carry no offer and no
   casino and are sent by B4GAMBLE on the person's own request, but B4GAMBLE
   earns from licensed operators, so a lawyer's view is worth having.
+- **Bounces and complaints of email-field letters.** Those letters are not
+  `EmailMessage` rows, so the provider's bounce and complaint webhooks cannot
+  find them and do not suppress the address. A hard bounce or a complaint
+  leaves the address subscribed until the person clicks unsubscribe. Not fixed
+  in the hardening; decide before the switch whether a webhook event should
+  reduce the `PauseReminder` row as an unsubscribe does.
+
+## Hardening before the switch (21 October 2026)
+
+An independent review of PR #508 found four defects that matter once the
+switch is on. All four are fixed without a migration (branch
+`fix/pause-letters-hardening`):
+
+1. **Timing.** Queued letters were cancelled only 20 hours after queuing and
+   could leave at any hour 07–21, so an "ends tomorrow" that missed its evening
+   went out the next morning beside "your pause is over". Now a letter queued
+   before today's local midnight (`pauseLetterLocalDayStart`) is cancelled, and
+   only `PAUSE_OVER` may leave outside the evening window.
+2. **Cap.** A new date cleared `confirmationSentAt`, so the first letter could
+   go three times a day to one address while counting once, and a few sources
+   could push the provider past 100 a day and break sign-in letters. Now the
+   first letter is never resent, and the email-field letters are counted in an
+   up-only counter.
+3. **Account probing.** An address with an account answered at once, a new one
+   waited for the provider. Now both answer after the rate limits, and the rest
+   runs in `after()`.
+4. **Retention.** The purge ran only with the switch on, and deleting an
+   unsubscribed row let the form write to that address again. Now the purge
+   runs regardless (the hourly run purges alone while the switch is off), and
+   an unsubscribe keeps only a keyed hash that the form refuses.
 
 ## Rollback
 
@@ -187,13 +235,16 @@ Turn the switch off and redeploy instead.
 ## Evidence
 
 - `tests/pause-letters.test.ts` (`pause-letters:test`, in `ci:quality`): the
-  switch, the local hours in summer and winter time, the cookie format, every
+  switch, the local hours and local midnight in summer and winter time, the
+  hardening contracts, the cookie format, every
   seeded letter against the template rules and the forbidden-word list, the
   migration against the seed list, who may read the pause date, the page.
 - `tests/pause-letters-postgres.test.ts` (in `email-reliability:postgres-test`,
-  the database CI job): switch off; day letters; dated letters; the cookie into
-  the account; the email field, its three letters, unsubscribe, rate limits,
-  take-over. Test accounts and test addresses only; every letter goes to a
+  the database CI job): switch off, including the purge on the hourly run; day
+  letters; dated letters; cancellation at local midnight and evening-only
+  sending; the cookie into the account; the email field, its three letters,
+  unsubscribe to a keyed hash, rate limits, the up-only cap counter, the answer
+  before any lookup; take-over. Test accounts and test addresses only; every letter goes to a
   recording provider.
 - `scripts/ci-migrations.mjs`: a staged upgrade from 0043 that keeps an
   existing account and every existing template unchanged.

@@ -10,10 +10,13 @@ import { queuePauseDateLetters, queueProgrammeDayLetters, sendAccountPauseLetter
 import { createPauseLettersCronHandler } from "../lib/email/pause-letters/cron.server";
 import {
   PAUSE_REMINDER_REQUESTS_PER_ADDRESS_PER_DAY,
+  pauseLettersSentToday,
   pauseReminderToken,
+  purgePauseReminders,
   sendDuePauseReminders,
   subscribePauseReminder,
   takeOverPauseReminder,
+  unsubscribedPauseReminderAddress,
 } from "../lib/email/pause-letters/reminders.server";
 import { dateOfIsoDay, pauseLetterLocalTime, shiftIsoDay } from "../lib/email/pause-letters/schedule";
 import type { EmailProviderEnvelope, EmailProviderResult, LifecycleEmailProvider } from "../lib/email/provider.server";
@@ -103,6 +106,17 @@ function address() {
   return email;
 }
 
+/**
+ * The email field as the route sees it: the answer first, then the work that `after()` runs once
+ * the response has left. The tests run that work right away, so they can read what it did.
+ */
+async function subscribe(...[request, source, options = {}]: Parameters<typeof subscribePauseReminder>) {
+  const tasks: (() => Promise<void>)[] = [];
+  const answer = await subscribePauseReminder(request, source, { ...options, defer: (task) => { tasks.push(task); } });
+  for (const task of tasks) await task();
+  return answer;
+}
+
 const messagesOf = (userId: string) => prisma.emailMessage.findMany({ where: { userId }, include: { template: { select: { key: true, locale: true } } }, orderBy: { createdAt: "asc" } });
 
 test.before(async () => {
@@ -138,7 +152,7 @@ test.after(async () => {
   await prisma.consentEvent.deleteMany({ where: { userId: { in: createdUserIds } } });
   await prisma.programEnrollment.deleteMany({ where: { programId } });
   await prisma.user.deleteMany({ where: { id: { in: createdUserIds } } });
-  await prisma.pauseReminder.deleteMany({ where: { email: { in: createdAddresses } } });
+  await prisma.pauseReminder.deleteMany({ where: { email: { in: [...createdAddresses, ...createdAddresses.map((email) => unsubscribedPauseReminderAddress(email))] } } });
   if (programVersionId) await prisma.programVersion.deleteMany({ where: { id: programVersionId } });
   if (programId) await prisma.program.deleteMany({ where: { id: programId } });
   for (const name of environmentNames) {
@@ -163,7 +177,7 @@ test("with the switch off nothing new is queued, sent or stored, and the existin
     assert.deepEqual(await sendAccountPauseLetters(50, { provider, siteUrl: SITE_URL, now: evening }), { selected: 0, sent: 0, suppressed: 0, failed: 0, cancelledStale: 0 });
     assert.deepEqual(await sendDuePauseReminders(50, { provider, siteUrl: SITE_URL, now: evening }), { due: 0, sent: 0 });
     const email = address();
-    assert.deepEqual(await subscribePauseReminder({ email, register: "spelpaus", endsOn: today, locale: "sv" }, "203.0.113.10", { provider, siteUrl: SITE_URL, now: evening }), { status: "disabled" });
+    assert.deepEqual(await subscribe({ email, register: "spelpaus", endsOn: today, locale: "sv" }, "203.0.113.10", { provider, siteUrl: SITE_URL, now: evening }), { status: "disabled" });
     assert.equal(await prisma.pauseReminder.count({ where: { email } }), 0);
     assert.equal(await takeOverPauseReminder(swede, evening), false);
     assert.equal(provider.envelopes.length, 0);
@@ -191,10 +205,23 @@ test("with the switch off nothing new is queued, sent or stored, and the existin
     });
     assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: fresh.id } })).pauseEndsOn, null);
 
-    // The hourly run answers without reading anything.
-    const handler = createPauseLettersCronHandler({ environment: { CRON_SECRET: "pause-letters-cron-secret", PAUSE_LETTERS_ENABLED: "false" } });
+    // The hourly run queues and sends nothing; it only keeps the retention promise of the email
+    // field, so a row stored while the switch was on is still deleted after it is turned off.
+    const expired = address();
+    const kept = address();
+    const rowOf = (email: string, pauseEndsOn: string) => ({
+      id: randomUUID(), environment: "PRODUCTION" as const, email, locale: "sv", register: "SPELPAUS" as const,
+      pauseEndsOn: dateOfIsoDay(pauseEndsOn), tokenHash: randomUUID().replaceAll("-", "").padEnd(64, "0"),
+    });
+    await prisma.pauseReminder.create({ data: rowOf(expired, shiftIsoDay(today, -31)) });
+    await prisma.pauseReminder.create({ data: rowOf(kept, shiftIsoDay(today, -29)) });
+    const handler = createPauseLettersCronHandler({ environment: { CRON_SECRET: "pause-letters-cron-secret", PAUSE_LETTERS_ENABLED: "false" }, now: () => evening });
     const response = await handler(new Request(`${SITE_URL}/api/internal/cron/pause-letters`, { headers: { authorization: "Bearer pause-letters-cron-secret" } }));
-    assert.deepEqual(await response.json(), { ok: true, enabled: false });
+    const body = await response.json() as { ok: boolean; enabled: boolean; purgedReminders: number };
+    assert.deepEqual([body.ok, body.enabled, Object.keys(body).sort()], [true, false, ["enabled", "ok", "purgedReminders"]]);
+    assert.ok(body.purgedReminders >= 1);
+    assert.equal(await prisma.pauseReminder.count({ where: { email: expired } }), 0, "deleted with the switch off");
+    assert.equal(await prisma.pauseReminder.count({ where: { email: kept } }), 1, "its 30 days have not passed");
     assert.equal((await handler(new Request(`${SITE_URL}/api/internal/cron/pause-letters`))).status, 401);
 
     // The nightly worker never picks up a pause letter, whatever is queued.
@@ -368,7 +395,7 @@ test("the email field: one letter at once, one the evening before, one the morni
   const options = { provider, siteUrl: SITE_URL, now: evening };
   const email = address();
 
-  assert.deepEqual(await subscribePauseReminder({ email: `  ${email.toUpperCase()} `, register: "rofus", endsOn: today, locale: "da-DK" }, "203.0.113.20", options), { status: "accepted" });
+  assert.deepEqual(await subscribe({ email: `  ${email.toUpperCase()} `, register: "rofus", endsOn: today, locale: "da-DK" }, "203.0.113.20", options), { status: "accepted" });
   const stored = await prisma.pauseReminder.findFirstOrThrow({ where: { email } });
   assert.deepEqual([stored.locale, stored.register, stored.pauseEndsOn.toISOString().slice(0, 10)], ["da-DK", "ROFUS", today]);
   assert.equal(provider.envelopes.length, 1);
@@ -382,7 +409,7 @@ test("the email field: one letter at once, one the evening before, one the morni
   assert.doesNotMatch(`${confirmation.html} ${confirmation.text}`, /\/r\/|\/go\/|bonus|casino|kasino|tilbud/i);
 
   // The same address and date again sends nothing new; the evening letter follows the same day.
-  await subscribePauseReminder({ email, register: "rofus", endsOn: today, locale: "da-DK" }, "203.0.113.20", options);
+  await subscribe({ email, register: "rofus", endsOn: today, locale: "da-DK" }, "203.0.113.20", options);
   assert.equal(provider.envelopes.length, 1);
   await sendDuePauseReminders(50, { ...options, now: localInstant(today, 12) });
   assert.equal(provider.envelopes.filter((envelope) => envelope.to === email).length, 1, "not before the evening");
@@ -403,22 +430,32 @@ test("the email field: one letter at once, one the evening before, one the morni
 
   // A provider failure gives the claim back, so the next run sends it.
   const flaky = address();
-  await subscribePauseReminder({ email: flaky, register: "spelpaus", endsOn: today, locale: "sv" }, "203.0.113.21", { ...options, provider: new RecordingProvider({ status: "unavailable", code: "PROVIDER_5XX" }) });
+  await subscribe({ email: flaky, register: "spelpaus", endsOn: today, locale: "sv" }, "203.0.113.21", { ...options, provider: new RecordingProvider({ status: "unavailable", code: "PROVIDER_5XX" }) });
   assert.equal((await prisma.pauseReminder.findFirstOrThrow({ where: { email: flaky } })).confirmationSentAt, null);
 
   // One click stops the letters of that address and nothing else.
   const stopping = address();
-  await subscribePauseReminder({ email: stopping, register: "spelpaus", endsOn: today, locale: "sv" }, "203.0.113.22", options);
+  await subscribe({ email: stopping, register: "spelpaus", endsOn: today, locale: "sv" }, "203.0.113.22", options);
   const stoppingRow = await prisma.pauseReminder.findFirstOrThrow({ where: { email: stopping } });
   assert.deepEqual(await unsubscribeWithToken(pauseReminderToken(stoppingRow.id)), { status: "unsubscribed" });
   assert.deepEqual(await unsubscribeWithToken(pauseReminderToken(stoppingRow.id)), { status: "already-unsubscribed" });
   assert.deepEqual(await unsubscribeWithToken(pauseReminderToken(randomUUID())), { status: "invalid" });
   await sendDuePauseReminders(50, options);
   assert.equal(provider.envelopes.filter((envelope) => envelope.to === stopping).length, 1, "only the first letter was ever sent");
-  // The open form cannot be used to write to an address that asked us to stop.
-  await subscribePauseReminder({ email: stopping, register: "spelpaus", endsOn: shiftIsoDay(today, 5), locale: "sv" }, "203.0.113.23", options);
+  // The unsubscribe wipes the address at once: only its keyed hash is left, with no date or language.
+  assert.equal(await prisma.pauseReminder.count({ where: { email: stopping } }), 0);
+  const tombstone = await prisma.pauseReminder.findUniqueOrThrow({ where: { id: stoppingRow.id } });
+  assert.equal(tombstone.email, unsubscribedPauseReminderAddress(stopping));
+  assert.doesNotMatch(tombstone.email, new RegExp(stopping.split("@")[0] ?? "-"));
+  assert.deepEqual([tombstone.locale, tombstone.pauseEndsOn.toISOString().slice(0, 10)], ["", "1970-01-01"]);
+  assert.ok(tombstone.unsubscribedAt);
+  // The open form cannot be used to write to an address that asked us to stop, not even after the purge.
+  await subscribe({ email: stopping, register: "spelpaus", endsOn: shiftIsoDay(today, 5), locale: "sv" }, "203.0.113.23", options);
+  await purgePauseReminders(new Date(evening.getTime() + 60 * 86_400_000));
+  await subscribe({ email: stopping, register: "spelpaus", endsOn: shiftIsoDay(today, 6), locale: "sv" }, "203.0.113.24", options);
   assert.equal(provider.envelopes.filter((envelope) => envelope.to === stopping).length, 1);
-  assert.ok((await prisma.pauseReminder.findFirstOrThrow({ where: { email: stopping } })).unsubscribedAt);
+  assert.equal(await prisma.pauseReminder.count({ where: { email: stopping } }), 0);
+  assert.equal(await prisma.pauseReminder.count({ where: { id: stoppingRow.id } }), 1, "the hash outlives the purge");
 });
 
 test("the email field refuses bad input, is rate-limited per source and per address, and never stores an account's address", async () => {
@@ -435,30 +472,30 @@ test("the email field refuses bad input, is rate-limited per source and per addr
     { email: address(), register: "spelpaus" },
     {},
   ]) {
-    assert.deepEqual(await subscribePauseReminder(request, `198.51.100.${Math.floor(Math.random() * 200)}`, options), { status: "invalid" });
+    assert.deepEqual(await subscribe(request, `198.51.100.${Math.floor(Math.random() * 200)}`, options), { status: "invalid" });
   }
   assert.equal(provider.envelopes.length, 0);
 
-  // Per address: a new date each time, so each request would send a letter.
+  // Per address: a new date each time. The first letter goes once; a new date never sends it again.
   const email = address();
   const source = () => `192.0.2.${Math.floor(Math.random() * 250)}-${randomUUID()}`;
   for (let attempt = 0; attempt < PAUSE_REMINDER_REQUESTS_PER_ADDRESS_PER_DAY; attempt += 1) {
-    assert.deepEqual(await subscribePauseReminder({ email, register: "spelpaus", endsOn: shiftIsoDay(today, attempt + 1), locale: "sv" }, source(), options), { status: "accepted" });
+    assert.deepEqual(await subscribe({ email, register: "spelpaus", endsOn: shiftIsoDay(today, attempt + 1), locale: "sv" }, source(), options), { status: "accepted" });
   }
-  assert.deepEqual(await subscribePauseReminder({ email, register: "spelpaus", endsOn: shiftIsoDay(today, 9), locale: "sv" }, source(), options), { status: "rate-limited" });
-  assert.equal(provider.envelopes.filter((envelope) => envelope.to === email).length, PAUSE_REMINDER_REQUESTS_PER_ADDRESS_PER_DAY);
+  assert.deepEqual(await subscribe({ email, register: "spelpaus", endsOn: shiftIsoDay(today, 9), locale: "sv" }, source(), options), { status: "rate-limited" });
+  assert.equal(provider.envelopes.filter((envelope) => envelope.to === email).length, 1);
 
   // Per source.
   const oneSource = `203.0.113.99-${randomUUID()}`;
   const answers: string[] = [];
   for (let attempt = 0; attempt < 7; attempt += 1) {
-    answers.push((await subscribePauseReminder({ email: address(), register: "rofus", endsOn: today, locale: "da" }, oneSource, options)).status);
+    answers.push((await subscribe({ email: address(), register: "rofus", endsOn: today, locale: "da" }, oneSource, options)).status);
   }
   assert.deepEqual(answers, ["accepted", "accepted", "accepted", "accepted", "accepted", "rate-limited", "rate-limited"]);
 
   // An address that already has an account gets the same answer and no row: the account's letters are its letters.
   const account = await createAccount({ locale: "sv" });
-  assert.deepEqual(await subscribePauseReminder({ email: account.email, register: "spelpaus", endsOn: today, locale: "sv" }, source(), options), { status: "accepted" });
+  assert.deepEqual(await subscribe({ email: account.email, register: "spelpaus", endsOn: today, locale: "sv" }, source(), options), { status: "accepted" });
   assert.equal(await prisma.pauseReminder.count({ where: { email: account.email } }), 0);
   assert.equal(provider.envelopes.filter((envelope) => envelope.to === account.email).length, 0);
 });
@@ -471,7 +508,7 @@ test("an address that signs up is taken over by the account: the stand-alone let
   const provider = new RecordingProvider();
   const options = { provider, siteUrl: SITE_URL, now: evening };
   const email = address();
-  await subscribePauseReminder({ email, register: "spelpaus", endsOn, locale: "sv" }, `takeover-${randomUUID()}`, options);
+  await subscribe({ email, register: "spelpaus", endsOn, locale: "sv" }, `takeover-${randomUUID()}`, options);
 
   const suffix = randomUUID();
   const account = await prisma.user.create({ data: { id: `pause-letters-${suffix}`, name: "Take-over Fixture", email, emailVerified: true, preferredLocale: "sv" } });
@@ -488,4 +525,100 @@ test("an address that signs up is taken over by the account: the stand-alone let
 
   await sendDuePauseReminders(50, options);
   assert.deepEqual(provider.envelopes.filter((envelope) => envelope.to === email).map((envelope) => envelope.subject), ["Din paus: vi hörs dagen innan den tar slut"]);
+});
+
+test("a pause letter queued before today's local midnight is cancelled, and the evening letters leave only in the evening", async () => {
+  const evening = lastLocalHour(18);
+  const today = pauseLetterLocalTime(evening).day;
+  const tomorrow = shiftIsoDay(today, 1);
+
+  // Queued yesterday evening and not sent (cap or a provider failure): cancelled at 07:00, only
+  // eleven hours later, instead of leaving beside "your pause is over".
+  const missed = await createAccount({ locale: "sv", pauseEndsOn: today });
+  await queuePauseDateLetters(evening);
+  assert.deepEqual((await messagesOf(missed.id)).map((message) => [message.purpose, message.status]), [["PAUSE_ENDS_TOMORROW", "QUEUED"]]);
+  await prisma.emailMessage.updateMany({ where: { userId: missed.id }, data: { queuedAt: localInstant(today, 20), nextAttemptAt: localInstant(today, 20) } });
+  const morningProvider = new RecordingProvider();
+  const morning = await sendAccountPauseLetters(50, { provider: morningProvider, siteUrl: SITE_URL, now: localInstant(tomorrow, 7) });
+  assert.ok(morning.cancelledStale >= 1);
+  const cancelled = (await messagesOf(missed.id)).find((message) => message.purpose === "PAUSE_ENDS_TOMORROW");
+  assert.deepEqual([cancelled?.status, cancelled?.deliveryErrorCode], ["CANCELLED", "PAUSE_LETTER_STALE"]);
+  assert.equal(morningProvider.envelopes.filter((envelope) => /I morgon/.test(envelope.subject)).length, 0);
+
+  // Queued today: an evening letter waits through the day and leaves from 18:00, a morning one leaves at once.
+  const waiting = await createAccount({ locale: "sv", pauseEndsOn: today });
+  await queuePauseDateLetters(evening);
+  await prisma.emailMessage.updateMany({ where: { userId: waiting.id }, data: { queuedAt: localInstant(today, 8), nextAttemptAt: localInstant(today, 8) } });
+  const noonProvider = new RecordingProvider();
+  await sendAccountPauseLetters(50, { provider: noonProvider, siteUrl: SITE_URL, now: localInstant(today, 12) });
+  assert.equal(noonProvider.envelopes.filter((envelope) => envelope.to === waiting.email).length, 0, "not before the evening");
+  assert.equal((await messagesOf(waiting.id))[0]?.status, "QUEUED");
+  const eveningProvider = new RecordingProvider();
+  await sendAccountPauseLetters(50, { provider: eveningProvider, siteUrl: SITE_URL, now: evening });
+  assert.equal(eveningProvider.envelopes.filter((envelope) => envelope.to === waiting.email).length, 1);
+
+  const over = await createAccount({ locale: "da", pauseEndsOn: shiftIsoDay(today, -1) });
+  await queuePauseDateLetters(localInstant(today, 9));
+  await prisma.emailMessage.updateMany({ where: { userId: over.id }, data: { queuedAt: localInstant(today, 9), nextAttemptAt: localInstant(today, 9) } });
+  const overProvider = new RecordingProvider();
+  await sendAccountPauseLetters(50, { provider: overProvider, siteUrl: SITE_URL, now: localInstant(today, 10) });
+  assert.equal(overProvider.envelopes.filter((envelope) => envelope.to === over.email).length, 1, "the morning letter leaves in the morning");
+});
+
+test("the daily cap counts every letter from the email field handed to the provider, and a new date never resends the first letter", async () => {
+  const evening = lastLocalHour(18);
+  const today = pauseLetterLocalTime(evening).day;
+  const provider = new RecordingProvider();
+  const options = { provider, siteUrl: SITE_URL, now: evening };
+  const before = await pauseLettersSentToday(evening);
+
+  const email = address();
+  for (let attempt = 0; attempt < PAUSE_REMINDER_REQUESTS_PER_ADDRESS_PER_DAY; attempt += 1) {
+    await subscribe({ email, register: "spelpaus", endsOn: shiftIsoDay(today, attempt + 2), locale: "sv" }, `cap-${randomUUID()}`, options);
+  }
+  assert.equal(provider.envelopes.filter((envelope) => envelope.to === email).length, 1);
+  assert.equal(await pauseLettersSentToday(evening), before + provider.envelopes.length);
+
+  // A letter that reached the provider stays counted when its row is unsubscribed or deleted.
+  const other = address();
+  await subscribe({ email: other, register: "rofus", endsOn: today, locale: "da" }, `cap-${randomUUID()}`, options);
+  await sendDuePauseReminders(50, options);
+  assert.equal(provider.envelopes.filter((envelope) => envelope.to === other).length, 2);
+  // Every accepted letter counts, this test's and any other row's that fell due in the same run.
+  const counted = before + provider.envelopes.length;
+  assert.equal(await pauseLettersSentToday(evening), counted);
+  const row = await prisma.pauseReminder.findFirstOrThrow({ where: { email: other } });
+  assert.deepEqual(await unsubscribeWithToken(pauseReminderToken(row.id)), { status: "unsubscribed" });
+  await prisma.pauseReminder.deleteMany({ where: { email } });
+  assert.equal(await pauseLettersSentToday(evening), counted);
+
+  // A letter the provider refused is not counted.
+  const refused = address();
+  await subscribe({ email: refused, register: "spelpaus", endsOn: today, locale: "sv" }, `cap-${randomUUID()}`, { ...options, provider: new RecordingProvider({ status: "unavailable", code: "PROVIDER_5XX" }) });
+  assert.equal(await pauseLettersSentToday(evening), counted);
+});
+
+test("the email field answers before it looks anything up, so an address with an account cannot be told apart", async () => {
+  const evening = lastLocalHour(18);
+  const today = pauseLetterLocalTime(evening).day;
+  const provider = new RecordingProvider();
+  const account = await createAccount({ locale: "sv" });
+  const fresh = address();
+  const tasks: (() => Promise<void>)[] = [];
+  const options = { provider, siteUrl: SITE_URL, now: evening, defer: (task: () => Promise<void>) => { tasks.push(task); } };
+
+  const answers = [
+    await subscribePauseReminder({ email: account.email, register: "spelpaus", endsOn: today, locale: "sv" }, `probe-${randomUUID()}`, options),
+    await subscribePauseReminder({ email: fresh, register: "spelpaus", endsOn: today, locale: "sv" }, `probe-${randomUUID()}`, options),
+  ];
+  assert.deepEqual(answers, [{ status: "accepted" }, { status: "accepted" }]);
+  // Nothing was read, stored or sent before the answer: both paths left the same work for after it.
+  assert.equal(tasks.length, 2);
+  assert.equal(await prisma.pauseReminder.count({ where: { email: { in: [account.email, fresh] } } }), 0);
+  assert.equal(provider.envelopes.length, 0);
+
+  for (const task of tasks) await task();
+  assert.equal(await prisma.pauseReminder.count({ where: { email: fresh } }), 1);
+  assert.equal(await prisma.pauseReminder.count({ where: { email: account.email } }), 0);
+  assert.deepEqual(provider.envelopes.map((envelope) => envelope.to), [fresh]);
 });

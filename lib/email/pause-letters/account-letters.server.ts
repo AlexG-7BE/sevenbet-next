@@ -9,6 +9,7 @@ import {
   dateOfIsoDay,
   isoDayOfDate,
   pauseLetterLocalDay,
+  pauseLetterLocalDayStart,
   pauseLetterWindow,
   pauseLettersEnabled,
   shiftIsoDay,
@@ -37,8 +38,8 @@ import {
 
 const DAY_MS = 86_400_000;
 const CANDIDATE_LIMIT = 500;
-/** A queued letter that could not leave within this time is cancelled: its day has passed. */
-const PAUSE_LETTER_STALE_MS = 20 * 60 * 60_000;
+/** The one pause letter that leaves in the morning; every other one is an evening letter. */
+const MORNING_PAUSE_LETTER_PURPOSES = ["PAUSE_OVER"] as const satisfies readonly (typeof PAUSE_LETTER_PURPOSES)[number][];
 
 const mayReceiveProgrammeLetters = {
   accountState: "ACTIVE",
@@ -128,8 +129,10 @@ export async function queuePauseDateLetters(now = new Date()) {
 }
 
 /**
- * Sends what is queued, inside the local hours and up to `limit`. A letter that waited past its
- * day (the cap was reached, or the provider was down all evening) is cancelled, never sent late.
+ * Sends what is queued, inside the local hours and up to `limit`. The evening letters (day 3, 7,
+ * 10 and "ends tomorrow") leave only in the evening window. A letter queued before today's local
+ * midnight (the cap was reached, or the provider was down all evening) is cancelled, never sent
+ * the next morning beside "your pause is over".
  */
 export async function sendAccountPauseLetters(
   limit: number,
@@ -137,17 +140,19 @@ export async function sendAccountPauseLetters(
 ) {
   const now = overrides.now ?? new Date();
   const none = { selected: 0, sent: 0, suppressed: 0, failed: 0, cancelledStale: 0 };
-  if (!pauseLettersEnabled() || !pauseLetterWindow(now).morning) return none;
+  const window = pauseLetterWindow(now);
+  if (!pauseLettersEnabled() || !window.morning) return none;
   const stale = await prisma.emailMessage.updateMany({
     where: {
       environment: analyticsEnvironment(),
       purpose: { in: [...PAUSE_LETTER_PURPOSES] },
       status: { in: ["QUEUED", "FAILED"] },
-      queuedAt: { lt: new Date(now.getTime() - PAUSE_LETTER_STALE_MS) },
+      queuedAt: { lt: pauseLetterLocalDayStart(now) },
     },
     data: { status: "CANCELLED", nextAttemptAt: null, deliveryErrorCode: "PAUSE_LETTER_STALE" },
   });
   if (limit < 1) return { ...none, cancelledStale: stale.count };
-  const delivery = await processQueuedEmailBatch(limit, { ...overrides, purposes: PAUSE_LETTER_PURPOSES });
+  const purposes = window.evening ? PAUSE_LETTER_PURPOSES : MORNING_PAUSE_LETTER_PURPOSES;
+  const delivery = await processQueuedEmailBatch(limit, { ...overrides, purposes });
   return { selected: delivery.selected, sent: delivery.sent, suppressed: delivery.suppressed, failed: delivery.failed, cancelledStale: stale.count };
 }

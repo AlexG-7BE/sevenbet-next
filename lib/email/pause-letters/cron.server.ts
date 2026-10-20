@@ -18,8 +18,9 @@ function exactBearer(request: Request, secret: string) {
  * in Sweden and Denmark, "your pause is over" from 07:00, the day letters and "ends tomorrow" from
  * 18:00. A missed hour is caught by the next one the same day; a missed day is skipped.
  *
- * With the switch off it answers at once and reads nothing. The nightly lifecycle run is
- * untouched and never sends these letters.
+ * With the switch off it sends and queues nothing; it only deletes the email-field rows whose
+ * 30 days have passed, so turning the switch off after use does not keep them longer. The nightly
+ * lifecycle run is untouched and never sends these letters.
  */
 export function createPauseLettersCronHandler({
   environment = process.env as Readonly<Record<string, string | undefined>>,
@@ -33,8 +34,16 @@ export function createPauseLettersCronHandler({
     const secret = environment.CRON_SECRET?.trim();
     if (!secret) return Response.json({ code: "CRON_UNAVAILABLE" }, { status: 503, headers: noStore });
     if (!exactBearer(request, secret)) return Response.json({ code: "UNAUTHORIZED" }, { status: 401, headers: noStore });
-    if (!pauseLettersEnabled(environment)) return Response.json({ ok: true, enabled: false }, { headers: noStore });
     const at = now();
+    if (!pauseLettersEnabled(environment)) {
+      try {
+        const purgedReminders = await purgePauseReminders(at);
+        return Response.json({ ok: true, enabled: false, purgedReminders }, { headers: noStore });
+      } catch {
+        console.error("[pause-letters] retention run failed", { cron_result: "failed" });
+        return Response.json({ code: "PAUSE_LETTERS_CRON_FAILED" }, { status: 500, headers: noStore });
+      }
+    }
     const window = pauseLetterWindow(at);
     if (!window.morning) return Response.json({ ok: true, enabled: true, quietHours: true }, { headers: noStore });
     try {

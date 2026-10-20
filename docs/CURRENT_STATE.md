@@ -1953,21 +1953,20 @@ personalisation stay off. Tests: `tests/google-analytics.test.ts`.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
-## Letters at the right moment — in review, switched off
+## Letters at the right moment — merged, switched off
 
 **Founder decisions, 13 October 2026**
 ([PAUSE-LETTERS-2026-10-14](07_Decisions/PAUSE-LETTERS-2026-10-14.md)): more
 letters, on day 3, 7 and 10; the pause date from the tool on `/pause-plan`
 travels into the account; an email field in the tool for a person without an
-account. Branch `feat/pause-letters`. **Not merged by the night run: the PR
-carries migrations 0044 and 0045 and waits for review.** Nothing reaches a
-person until the migrations are applied to Production (DB-first: the build
-preflight refuses a Production build without them), the PR is merged and
-`PAUSE_LETTERS_ENABLED` is exactly `true`.
+account. PR #508 merged on 14 October 2026 with migrations 0044 and 0045
+applied to Production first. Nothing reaches a person until
+`PAUSE_LETTERS_ENABLED` is exactly `true`; it is off.
 
 - **Switch.** `PAUSE_LETTERS_ENABLED`, read only in
   `lib/email/pause-letters/schedule.ts`. Off: nothing new is queued, sent,
-  stored or shown, and the welcome and reminder letters stay English.
+  stored or shown, and the welcome and reminder letters stay English. The
+  hourly run still deletes email-field rows whose 30 days have passed.
 - **Day letters.** `PROGRAMME_DAY_3`, `PROGRAMME_DAY_7`, `PROGRAMME_DAY_10`,
   once per enrolment, 3, 7 and 10 local days after the Programme start, while
   the Programme is unfinished; the same authority and unsubscribe link as
@@ -1984,20 +1983,34 @@ preflight refuses a Production build without them), the PR is merged and
   once, the evening before, the morning after), each with a one-click
   unsubscribe on the existing `/unsubscribe` page; an account's address is not
   stored; an address that signs up is taken over by the account; rows are
-  deleted after 30 days.
+  deleted 30 days after the pause ended or the take-over. The answer comes
+  before any lookup: the account check, the row and the first letter run in
+  `after()`. The first letter goes once per address; a new date never resends
+  it. An unsubscribe reduces the row to a keyed hash of the address (no plain
+  address, date or language), which the form refuses for good.
 - **Hours.** Local time in Sweden and Denmark, summer and winter: day letters
   and "ends tomorrow" from 18:00, "ends today" from 07:00, nothing between
   21:00 and 07:00. One hourly run, `/api/internal/cron/pause-letters`; the
   nightly lifecycle run is unchanged and never sends these letters.
-- **Cap.** 60 pause letters per UTC day (the provider's free plan is 100);
-  above it nothing is sent late: a letter whose day has passed is cancelled.
+- **Cap.** 60 pause letters per UTC day (the provider's free plan is 100),
+  counted from the account letters' `sentAt` and, for the email field, a
+  counter that only goes up. Above it nothing is sent late: a pause letter
+  queued before today's local midnight is cancelled, and the evening letters
+  leave only in the evening window.
 - **Purpose.** The pause date and the address time these letters and nothing
   else: never offers, rankings, routes, advertising, analytics or the CRM.
   Letters link only to the Programme, the pause plan and their unsubscribe
   address. Founder authority is recorded in the decision note.
 - **Open before switching on:** the Privacy Notice must name the new data; no
   double opt-in yet; native review of the Swedish and Danish letters; a
-  lawyer's view on writing to people who are in a national exclusion register.
+  lawyer's view on writing to people who are in a national exclusion register;
+  bounces and complaints of email-field letters do not suppress the address
+  (they are not `EmailMessage` rows).
+- **Hardening before switching on (21 October 2026, branch
+  `fix/pause-letters-hardening`):** the four review findings — late letters
+  the next morning, the cap gamed by date changes, account probing by
+  response time, retention tied to the switch — are fixed and tested as
+  described above.
 
 Tests: `tests/pause-letters.test.ts` (`pause-letters:test`, in `ci:quality`),
 `tests/pause-letters-postgres.test.ts` (`email-reliability:postgres-test`), and
