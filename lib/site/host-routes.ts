@@ -173,6 +173,9 @@ export const SITE_ROUTE_MANIFEST = [
   // The commercial site's own trust page. It stays here and is never redirected (§5); the
   // help site has its own /who-runs-this for a different reader.
   { path: "/can-you-trust-b4gamble", match: "EXACT", siteClass: "COMMERCIAL" },
+  // The Uzbek licence register page names gambling operators, so it is the main site's only;
+  // the help site names none (Founder, 20 October 2026).
+  { path: "/uzbekistan-licensed-operators", match: "EXACT", siteClass: "COMMERCIAL" },
   { path: "/for-creators", match: "SUBTREE", siteClass: "COMMERCIAL" },
   { path: "/llms-full.txt", match: "EXACT", siteClass: "COMMERCIAL" },
   // Its text reads "Reviews, bonus terms side by side…"; the help host has its own image (§8).

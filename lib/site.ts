@@ -90,6 +90,8 @@ export const coreRoutes = [
   "/control-without-quitting",
   "/gambling-control-tools",
   "/can-you-trust-b4gamble",
+  // English and Uzbek only: the sitemap lists a language where the route is localizable.
+  "/uzbekistan-licensed-operators",
 ];
 
 export function absoluteUrl(path: string, site: SiteClass = "main") {

@@ -11,6 +11,7 @@ import {
   marketProfileByRouteMarket,
   publicMarketPath,
   type LanguageRouteProfile,
+  type MarketCode,
   type MarketProfile,
   type SupportedLanguage,
   type SupportedLocale,
@@ -24,10 +25,26 @@ export type PublicRoutePolicy =
   | "LOCALIZABLE_PUBLIC"
   | "LOCALIZABLE_DYNAMIC"
   | "FIRST_WAVE_SAFETY"
+  | "MARKET_SCOPED_PUBLIC"
   | "UNPREFIXED_ONLY"
   | "PROTECTED"
   | "INTERNAL"
   | "LEGAL_REVIEW_GATED";
+
+/**
+ * Reference pages written for one market's readers. A `MARKET_SCOPED_PUBLIC` route has the
+ * English page (the canonical fallback, `x-default`) and the language of each market named
+ * here, and no other language version: like Help in a market without verified safety
+ * evidence, the route is simply not localizable there, so the sitemap, hreflang, the language
+ * menu and the middleware all leave the other languages out instead of serving English under
+ * their prefix.
+ *
+ * `uzbekistan-licensed-operators`: the NAPP licence register and how to tell the licensed site
+ * and app from copies (Founder, 20 October 2026; docs/07_Decisions/UZ-LICENSED-OPERATORS-2026-10-20.md).
+ */
+export const MARKET_SCOPED_PUBLIC_ROUTES: Readonly<Record<string, readonly MarketCode[]>> = {
+  "uzbekistan-licensed-operators": ["UZ"],
+};
 
 export type PublicRouteManifestEntry = Readonly<{
   root: string;
@@ -68,6 +85,8 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   { root: "control-without-quitting", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "gambling-control-tools", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "can-you-trust-b4gamble", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
+  // English and Uzbek only (MARKET_SCOPED_PUBLIC_ROUTES above).
+  { root: "uzbekistan-licensed-operators", match: "EXACT", policy: "MARKET_SCOPED_PUBLIC" },
   // The help site's owner disclosure and data statement (RFC-057 §17, §16.3). They are
   // written in English, Swedish and Danish, so they carry a language prefix like the other
   // help pages; the sitemap leaves them out while they are noindex.
@@ -129,6 +148,10 @@ export function isLocalizedPublicDestination(pathname: string, profile: MarketPr
     || (policy === "FIRST_WAVE_SAFETY" && (
       profile.countryCode === "GB"
       || (FIRST_WAVE_EVIDENCE_MARKET_CODES as readonly string[]).includes(profile.countryCode)
+    ))
+    || (policy === "MARKET_SCOPED_PUBLIC" && (
+      profile.countryCode === "GB"
+      || (MARKET_SCOPED_PUBLIC_ROUTES[routeSegments(pathname)[0] ?? ""] ?? []).includes(profile.countryCode)
     ));
 }
 

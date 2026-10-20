@@ -12,6 +12,18 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Uzbek licensed-operator reference page — in review, 20 October 2026
+
+**Founder pick «Страница о лицензиатах», 20 October 2026** ([decision](07_Decisions/UZ-LICENSED-OPERATORS-2026-10-20.md)).
+Branch `feat/uz-licensed-operators`, **not merged**. `/uz/uzbekistan-licensed-operators` and
+`/en/uzbekistan-licensed-operators` on b4gamble.com only: the NAPP licence register (**DETECTED
+20 October 2026:** “Olimpbet” MChJ, www.olimpbet.uz, and “Aurum Vale” MChJ, www.oltinbet.uz, each an
+online-games (ITO) and a bookmaking (BF) licence, issued 31.07.2026, valid to 30.07.2031; no other
+entry), how to recognise the licensed site and app, the legal player protections and a way to Help.
+No offer, partner button, `/r/` route or operator link; outbound links only to napp.uz's register and
+lex.uz. New route policy `MARKET_SCOPED_PUBLIC`: the page exists in English and Uzbek only, and the
+sitemap and hreflang list only those two.
+
 ## Uzbek language on both sites — live since 20 October 2026
 
 **Founder instruction, 20 October 2026:** "я хочу перевести сайты на узбекский, оба сайта,

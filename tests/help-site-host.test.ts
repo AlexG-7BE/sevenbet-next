@@ -535,6 +535,7 @@ test("COMMERCIAL and INTERNAL routes answer 404 on the help host, under every pr
     "/about",
     "/affiliate-disclosure",
     "/can-you-trust-b4gamble",
+    "/uzbekistan-licensed-operators",
     "/for-creators",
     "/for-creators/someone",
     "/outbound/x",
