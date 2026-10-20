@@ -128,7 +128,7 @@ test("the page starts below the fixed header, with room to breathe, on both host
 
 test("the page is the same on both hosts, word for word", async () => {
   const { HelpTextPageBody } = await import("../app/(public)/_help-pages/HelpTextPageView");
-  const routeLanguage = { "en-GB": "en", "sv-SE": "sv", "da-DK": "da" } as const;
+  const routeLanguage = { "en-GB": "en", "sv-SE": "sv", "da-DK": "da", "uz-UZ": "uz" } as const;
   for (const locale of HELP_LOCALES) {
     const presentation = resolvePresentationContext({ routeLanguage: routeLanguage[locale] });
     for (const copy of [helpOwnerPage(locale), helpOrganisationsPage(locale)]) {

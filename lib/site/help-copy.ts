@@ -538,55 +538,45 @@ const ownerPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
     metadataDescription: `${HELP_SITE_NAME} kimga tegishli, kompaniya qanday daromad oladi, nega bu yerda kazino havolalari yoʻq va siz yozgan narsalar bilan nima sodir boʻladi.`,
     eyebrow: "Ochiq javoblar",
     title: "Bu saytni kim yuritadi",
-    intro: "Siz qimor zarari haqidagi saytni oʻqiyapsiz. Undagi biror soʻzga ishonishdan oldin uni kim yozganini va ular qanday haq olishini bilishingiz kerak. Mana hammasi, sodda tilda.",
+    intro: "Bu sayt qimor zarari haqida. Uni kim yozganini va ular qanday haq olishini bilishingiz kerak.",
     sections: [
       {
-        heading: "Bu saytni kim yuritadi",
+        heading: "Uni kim yuritadi",
         paragraphs: [
-          `${HELP_SITE_NAME} saytini Amerika Qoʻshma Shtatlarida roʻyxatdan oʻtgan ${HELP_OWNER.legalName} kompaniyasi yuritadi. Manzili: 447 Broadway, 2nd Floor, 1663, ${HELP_OWNER.city}, NY 10013.`,
-          "U qimor kompaniyasi emas, qimor oʻyinlari litsenziyasiga ega emas, xayriya tashkiloti yoki davlat organi ham emas.",
+          `${HELP_SITE_NAME} saytini ${HELP_OWNER.legalName} kompaniyasi yuritadi; kompaniya Amerika Qoʻshma Shtatlarida, ${HELP_OWNER.city} shahrida joylashgan. U qimor kompaniyasi ham, xayriya tashkiloti ham emas.`,
         ],
       },
       {
-        heading: "Kompaniya qanday daromad oladi",
+        heading: "Pul qayerdan keladi",
         paragraphs: [
-          `${HELP_OWNER.legalName} ${HELP_OWNER.otherSite} saytini ham yuritadi — bu litsenziyalangan onlayn kazinolarni solishtiradigan alohida sayt. Oʻquvchi uning havolalaridan biri orqali operatorda hisob ochganida, oʻsha sayt komissiya oladi. Pul ana shu yerdan keladi.`,
-          "Bu sayt oʻsha faoliyatning bir qismi emas. Unda hech qayerda kazino, bonus, solishtirish yoki hamkor havolasi yoʻq va u hech qanday daromad olmaydi. Biz bu yerdan sizni oʻsha saytga yoʻnaltirmaymiz; uning borligini aytayotganimizning sababi shuki, bu sayt ortida kim turganini bilishga haqqingiz bor.",
+          `Shu kompaniya ${HELP_OWNER.otherSite} saytini ham yuritadi — bu boshqa manzildagi kazinolarni solishtirish sayti, litsenziyalangan kazino operatorlari unga komissiya toʻlaydi. Pul ana shu yerdan keladi.`,
+          "Bu sayt sizdan hech qanday daromad olmaydi. Unda, jumladan dasturda ham, hech qayerda kazino, reklama yoki hamkor havolasi yoʻq.",
         ],
       },
       {
-        heading: "Dasturda kazino havolalari yoʻq",
+        heading: "Siz yozgan narsalar hech qachon kazinolar uchun ishlatilmaydi",
         paragraphs: [
-          "Oʻn bosqichli dasturdagi hech bir bosqich, ekran, karta, elektron xat yoki tayyor reja kazinoga, bonusga yoki solishtirish sahifasiga havola bermaydi. 2026-yil 16-oktabrdan beri shunday va bu har bir oʻzgarishda avtomatik test bilan tekshiriladi, shuning uchun bunday havolalar tasodifan qaytib kelolmaydi.",
+          "Dasturda, tanaffus rejasida yoki Yordam boʻlimida yozganlaringizning hech biri kazino yoki reklamani tanlash, vaqtini belgilash yoki reytinglash uchun ishlatilmaydi va hech biri kazino operatoriga yoki hamkorga berilmaydi.",
         ],
       },
       {
-        heading: "Siz yozgan narsalar hech qachon kazino tomoniga yetib bormaydi",
+        heading: "Kuzatuv yoʻq",
         paragraphs: [
-          "Dasturda, tanaffus rejasida yoki Yordam boʻlimida yozganlaringiz hech qachon biror kazino, taklif yoki reklamani tanlash, reytinglash, vaqtini belgilash yoki shaxsiylashtirish uchun ishlatilmaydi va hech qachon operatorga yoki affiliat hamkorga berilmaydi.",
-          `Hali tugallanmagan bir masala haqida ochiq aytamiz: 2026-yil 17-oktabrgacha tizimga kirgan foydalanuvchi ${HELP_OWNER.otherSite} saytida hamkor havolasini bosganida, bu bosish uning hisobiga bogʻlab saqlangan, ichki haftalik sanoq esa bu bosishlarni dastur bosqichlari bilan yonma-yon qoʻygan. Yangi bosishlarda endi hisob saqlanmaydi va sanoqqa ular endi kiritilmaydi. Bu oʻzgarishdan oldin yozilgan qatorlar biz ularni tozalamagunimizcha hisob bilan bogʻliqligicha qoladi va bu ish bajarilgan kungacha ushbu sahifa bu haqda aytib turadi.`,
-        ],
-      },
-      {
-        heading: "Nima saqlanadi va qayerda",
-        paragraphs: [
-          "Hisoblar, dasturdagi javoblar va tanaffus eslatmalari AQShdagi bitta maʼlumotlar bazasida saqlanadi — kompaniyaning boshqa sayti ham aynan shu bazadan foydalanadi. Tashkilotlar uchun toʻliq javob — har bir maʼlumotlarni qayta ishlovchi, maʼlumotlar saqlanadigan har bir joy va har bir ochiq savol bilan — tashkilotlar uchun sahifada berilgan, huquqiy tafsilotlar esa Maxfiylik siyosatida keltirilgan.",
-        ],
-      },
-      {
-        heading: "Bu sayt kuzatuv cookie fayllarini oʻrnatmaydi",
-        paragraphs: [
-          "Bu saytda Google tag kodi, reklama pikseli va analitika cookie fayli yoʻq, shuning uchun cookie banneri ham yoʻq. Faqat siz ochgan sahifaga kerakli narsalar saqlanadi: tizimga kirish, tilingiz va dasturda qayerda toʻxtaganingiz.",
-          "Shu sababli biz sizning kimligingizni yoki nimani oʻqiyotganingizni koʻra olmaymiz. Biz faqat dasturni necha kishi boshlaganini sanaymiz, boshqa hech narsani emas.",
+          "Google tag kodi, reklama pikseli va analitika cookie fayli yoʻq, shuning uchun cookie banneri ham yoʻq. Nimani oʻqiyotganingizni koʻra olmaymiz. Biz faqat dasturni necha kishi boshlaganini sanaymiz, boshqa hech narsani emas.",
         ],
       },
       {
         heading: "Bu sayt nima emas",
         paragraphs: [
-          "U tibbiy yordam, terapiya, tashxis yoki inqiroz paytidagi yordam emas va hech narsani bloklamaydi. Agar qimor oʻyinlari allaqachon pulingizga, uyqungizga yoki atrofingizdagi odamlarga zarar yetkazayotgan boʻlsa, toʻgʻri birinchi qadam — milliy oʻzini cheklash reyestri va ishonch telefoni; ikkalasi ham Yordam boʻlimida keltirilgan.",
+          "U tibbiy yordam, terapiya, tashxis yoki inqiroz paytidagi yordam emas va hech narsani bloklamaydi. Agar qimor oʻyinlari allaqachon pulingizga, uyqungizga yoki atrofingizdagi odamlarga zarar yetkazayotgan boʻlsa, milliy oʻzini cheklash tizimi va ishonch telefonidan boshlang. Ikkalasi ham Yordam boʻlimida.",
         ],
       },
     ],
+    more: {
+      lead: "Toʻliq javoblar tashkilotlar uchun sahifada: maʼlumotlaringiz bilan ishlaydigan har bir kompaniya, ular qayerda saqlanishi va biz hali javob bera olmaydigan savollar.",
+      label: `${shell["uz-UZ"].footer.organisations} →`,
+      href: HELP_ORGANISATIONS_PATH,
+    },
     contactLead: "Bu yerda biror narsa notoʻgʻri, yetishmayapti yoki tushunarsizmi? Bizga ayting, biz uni tuzatamiz.",
     contactLabel: "Biz bilan bogʻlanish",
   },
@@ -831,7 +821,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
       {
         heading: "Siz kim bilan ishlaysiz",
         paragraphs: [
-          `${HELP_OWNER.legalName} — AQShdagi kompaniya, 447 Broadway, 2nd Floor, 1663, ${HELP_OWNER.city}, NY 10013. U maʼlumotlar nazoratchisi hisoblanadi. Bu xayriya tashkiloti emas, tijorat kompaniyasi: u ${HELP_OWNER.otherSite} saytini ham yuritadi — bu litsenziyalangan operatorlardan komissiya oladigan kazinolarni solishtirish sayti. Bu saytda kazino, bonus yoki hamkor havolalari yoʻq va u hech qanday daromad olmaydi.`,
+          `${HELP_OWNER.legalName} — AQShdagi kompaniya, 447 Broadway, 2nd Floor, 1663, ${HELP_OWNER.city}, NY 10013. U maʼlumotlar nazoratchisi hisoblanadi. Bu xayriya tashkiloti emas, tijorat kompaniyasi: u ${HELP_OWNER.otherSite} saytini ham yuritadi — bu kazinolarni solishtirish sayti; oʻquvchi uning havolalari orqali litsenziyalangan operatorlardan birida hisob ochganida, operator unga komissiya toʻlaydi. U qimor kompaniyasi emas, qimor litsenziyasiga ega emas va davlat organi ham emas. Bu saytda kazino, bonus yoki hamkor havolalari yoʻq va u hech qanday daromad olmaydi.`,
           "Buni eng avval aytamiz, chunki aynan shu narsa sizni biz bilan ishlashdan toʻxtatishi ehtimoli eng yuqori va siz buni keyinroq oʻzingiz bilib qolishingizga toʻgʻri kelmasligi kerak.",
         ],
       },
@@ -854,6 +844,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
         heading: "Biz hech qachon nima qilmaymiz",
         paragraphs: [
           "Dastur, tanaffus va Yordam boʻlimidagi maʼlumotlar hech qachon biror kazino, taklif yoki reklamani tanlash, reytinglash, vaqtini belgilash yoki shaxsiylashtirish uchun ishlatilmaydi; hech qachon sotilmaydi; va hech qachon qimor operatoriga yoki affiliat hamkorga berilmaydi.",
+          "Oʻn bosqichli dasturdagi hech bir bosqich, ekran, karta, elektron xat yoki tayyor reja kazinoga, bonusga yoki solishtirish sahifasiga havola bermaydi. 2026-yil 16-oktabrdan beri shunday va har bir oʻzgarishda avtomatik test buni tekshiradi, shuning uchun bunday havolalar tasodifan qaytib kelolmaydi.",
           `Bitta izoh, chunki biz buni yozayotgan paytda u hali ham toʻgʻri: 2026-yil 17-oktabrdan oldin ${HELP_OWNER.otherSite} saytida hamkor havolalarining bosilishi ularni bosgan hisobga bogʻlab saqlangan. Yangi bosishlar bunday saqlanmaydi va ichki haftalik sanoq ularni endi oʻqimaydi. Eski qatorlarni tozalash — biz hali bajarmagan alohida ish.`,
           "Agar siz odamlarni bizga yoʻnaltirsangiz, biz sizga hech qachon ularning shaxsini aniqlashga imkon beradigan hech narsa yubormaymiz. Eng koʻpi bilan umumiy sonni baham koʻrishimiz mumkin.",
         ],
@@ -862,6 +853,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
         heading: "Kuzatuv",
         paragraphs: [
           "Bu saytda Google tag kodi, reklama pikseli va analitika cookie fayli yoʻq, shuning uchun cookie banneri koʻrsatilmaydi. Faqat soʻralgan sahifaga kerakli narsalar saqlanadi: tizimga kirish, til va dasturni toʻxtagan joydan davom ettirish.",
+          "Shu sababli biz oʻquvchi kimligini yoki nimani oʻqiyotganini koʻra olmaymiz. Biz faqat dasturni necha kishi boshlaganini sanaymiz, boshqa hech narsani emas.",
         ],
       },
       {
