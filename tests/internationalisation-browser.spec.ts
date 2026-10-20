@@ -43,8 +43,8 @@ const founderPublicationSmoke = [
 ] as const;
 
 // SEO-INDEX-DE-SV-DA-2026-09-27: the launch markets are open to search; other translations stay noindex.
-const indexedMarkets = new Set(["GB", "DE", "SE", "DK"]);
-const indexedLocales = new Set(["en-GB", "de-DE", "sv-SE", "da-DK"]);
+const indexedMarkets = new Set(["GB", "DE", "SE", "DK", "UZ"]);
+const indexedLocales = new Set(["en-GB", "de-DE", "sv-SE", "da-DK", "uz-UZ"]);
 
 const knownEnglishLeakage = /Compare casinos|Best offers|How we test|Online Casino Basics|Open protected Help|Source status|Direct answer/;
 

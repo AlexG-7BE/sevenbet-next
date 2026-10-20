@@ -485,8 +485,82 @@ const ru: WageringCalculatorMessages = {
   breadcrumbLabel: "Калькулятор отыгрыша",
 };
 
+const uz: WageringCalculatorMessages = {
+  metadataTitle: "Aylantirish talabi kalkulyatori – bonus aylanmasini hisoblash | B4GAMBLE",
+  metadataDescription: "Bepul aylantirish talabi kalkulyatori. Depozit, bonus, koʻpaytuvchi va oʻyin hissasini kiriting va kazino bonusini yechib olishdan oldin qancha stavka qilishingiz kerakligini bilib oling.",
+  eyebrow: "Bepul vosita",
+  titleLead: "Aylantirish talabi",
+  titleEmphasis: "kalkulyatori.",
+  intro: "Bonus shartlaridagi raqamlarni kiriting va bonus pulini yechib olishdan oldin qancha stavka qilishingiz kerakligini hamda bu stavkalar odatda qanchaga tushishini koʻring.",
+  widget: {
+    deposit: "Depozitingiz",
+    bonus: "Bonus miqdori",
+    multiplier: "Aylantirish talabi (x)",
+    base: "Aylantirish nimadan hisoblanadi",
+    bonusOnly: "Faqat bonus",
+    depositAndBonus: "Depozit + bonus",
+    contribution: "Oʻyiningiz qanday hisobga olinadi",
+    slots: "Slotlar · 100%",
+    tableGames: "Stol oʻyinlari · 50%",
+    roulette: "Ruletka · 20%",
+    blackjack: "Blekjek · 10%",
+    rtp: "Oʻyin RTP koʻrsatkichi, %",
+    result: "Natijangiz",
+    requiredTurnover: "Aylantirish talabi pulda",
+    actualTurnover: "Bu oʻyinda qancha stavka qilishingiz kerak",
+    expectedLoss: "Bu stavkalarning odatiy narxi",
+    netValue: "Bonus minus odatiy narx",
+    negative: "Bu raqamlar bilan stavkalar, ehtimol, bonus qiymatidan qimmatga tushadi.",
+    positive: "Bu raqamlar bilan bonus qiymati stavkalarning odatiy narxidan yuqori.",
+    caveat: "Bu bashorat emas, RTP asosidagi oʻrtacha qiymat. Haqiqiy natijalar keskin farq qiladi va har doim kazinoning oʻz shartlari amal qiladi.",
+  },
+  sections: [
+    { id: "how-it-works", title: "Aylantirish qanday hisoblanadi", paragraphs: [
+      "Aylantirish talabi bonus pulini va u bilan yutilgan har qanday summani yechib olishdan oldin maʼlum summani necha marta stavka qilish kerakligini koʻrsatadi. Hisob uch qismdan iborat: talab hisoblanadigan summa, koʻpaytuvchi va tanlagan oʻyiningiz qanchalik hisobga olinishi.",
+      "Talab qilinadigan aylanma = aylantirish asosi × koʻpaytuvchi. Soʻngra natijani oʻyiningiz hissasiga boʻling: hissa 100% boʻlsa, hech narsa oʻzgarmaydi, 10% boʻlsa esa oʻn baravar koʻp stavka qilishingiz kerak boʻladi.",
+    ] },
+    { id: "same-multiplier", title: "Nega 35x talabli ikki bonus juda turli aylanmani talab qilishi mumkin", paragraphs: [
+      "100 € depozit, 100 € bonus va 35x talabni olaylik. Agar 35x faqat bonusdan hisoblansa, 3 500 € stavka qilishingiz kerak. Agar depozit va bonusdan birga hisoblansa, 7 000 € stavka qilishingiz kerak: sarlavha bir xil boʻlsa ham, ikki baravar koʻp.",
+      "Asos odatda sarlavha yonida emas, toʻliq shartlarda koʻrsatiladi, shuning uchun takliflarni solishtirishdan oldin “bonus miqdori” yoki “depozit + bonus” kabi iboralarni qidiring.",
+    ] },
+    { id: "game-contribution", title: "Oʻyin hissasi: yashirin koʻpaytuvchi", paragraphs: [
+      "Kazinolar oʻyinlarni turlicha hisobga oladi. Slotlar odatda 100% hisoblanadi, stol oʻyinlari va jonli kazino esa koʻpincha atigi 10–20% hisoblanadi yoki umuman hisobga olinmaydi. Agar blekjek 10% hisoblansa, bonusdan 35x talab 350x kabi ishlaydi.",
+      "Qaysi oʻyinlar va qanchalik hisobga olinishi kazino shartlarida yozilgan. 0% hisoblanadigan oʻyinlar sizni talabni bajarishga umuman yaqinlashtirmaydi.",
+    ] },
+    { id: "turnover-is-not-loss", title: "Aylanma yoʻqotganingiz bilan bir xil emas", paragraphs: [
+      "Aylanma — bu barcha stavkalaringiz yigʻindisi, yoʻqotadigan pulingiz emas. Uning katta qismi oʻyin davomida yutuq sifatida qaytadi. Oʻrtacha yoʻqotish aylanmaning kazino ustunligiga koʻpaytmasiga teng: RTP 96% boʻlganda bu aylanmadan taxminan 4%.",
+      "RTP 96% boʻlgan slotlarda 7 000 € miqdoridagi stavkalar oʻrtacha taxminan 280 € turadi. Bonus 100 € boʻlsa, stavkalar, ehtimol, bonus qiymatidan qimmatga tushadi. Pastroq talab vaziyatni oʻzgartiradi: bonusdan 10x talab bilan 100 € — bu 1 000 € aylanma va taxminan 40 € odatiy narx.",
+    ] },
+    { id: "great-britain", title: "Taqqoslash uchun: Buyuk Britaniyadagi 10x limit", paragraphs: [
+      "2026-yil 19-yanvardan boshlab UK Gambling Commission litsenziyasiga ega kazinolar bonus summasining 10 baravaridan yuqori aylantirish talablarini belgilay olmaydi (LCCP, ijtimoiy masʼuliyat kodeksining 5.1.1-qoidasi). Buyuk Britaniya uchun bundan koʻproq talab qiladigan taklif ushbu qoidani buzadi, shuning uchun oʻynashdan oldin litsenziya va shartlarni tekshiring.",
+    ] },
+  ],
+  checklistTitle: "Bonusni qabul qilishdan oldin tekshiring",
+  checklist: [
+    "Aylantirish bonusdan yoki depozit + bonusdan hisoblanishini",
+    "Oʻyinlaringiz aylantirishda qanday hisobga olinishini",
+    "Aylantirish davomida ruxsat etilgan maksimal stavkani",
+    "Uni bajarish uchun necha kun berilishini",
+    "Bonusdan yutish yoki yechib olish mumkin boʻlgan summaga cheklov bor-yoʻqligini",
+  ],
+  faqTitle: "Aylantirish talablari haqida savollar",
+  faq: [
+    ["Aylantirish talabini qanday hisoblash mumkin?", "Talab hisoblanadigan summani koʻpaytuvchiga koʻpaytiring. Bonusdan 10x talab bilan 50 € bonus — bu 500 € stavka degani. Agar talab depozit + bonusga tegishli boʻlsa, avval depozitni qoʻshing. Soʻngra natijani oʻyiningiz hissasiga boʻling."],
+    ["35x aylantirish nimani anglatadi?", "Bonusni yechib olishdan oldin aylantirish asosidan 35 baravar koʻp summani stavka qilishingiz kerak. 100 € bonusda bu 3 500 €; 100 € depozit va 100 € bonusda esa 7 000 €."],
+    ["Bepul aylanishlar (free spins) uchun aylantirish talablari bormi?", "Koʻpincha bepul aylanishlardan olingan yutuqlarga talab qoʻyiladi. Bunda koʻpaytuvchi aylanishlarning qiymatiga emas, ular bilan yutganingizga qoʻllaniladi. Aniq taklif shartlarini tekshiring."],
+    ["Aylantirishsiz bonus yaxshiroqmi?", "Aylantirish talabi boʻlmasa, yutuqlarni odatda darhol yechib olish mumkin, demak qoʻshimcha stavka xarajati yoʻq. Aylantirishsiz kichikroq bonus yuqori talabli kattaroq bonusdan qimmatliroq boʻlishi mumkin."],
+    ["Kalkulyator kazinoning haqiqiy shartlaridan foydalanadimi?", "Yoʻq. U faqat siz kiritgan raqamlardan foydalanadi. Koʻrib chiqayotgan taklifingizning amaldagi shartlaridagi raqamlarni kiriting; hal qiluvchi har doim kazino shartlaridir."],
+  ],
+  offersTitle: "Bonuslarni shartlari boʻyicha solishtiring",
+  offersCopy: "Taklifni tanlang, uning raqamlarini kalkulyatorga kiriting va bonus sizdan aslida nimani talab qilishini koʻring.",
+  offersAction: "Amaldagi bonuslarni koʻrish",
+  homeLabel: "Bosh sahifa",
+  breadcrumbLabel: "Aylantirish kalkulyatori",
+};
+
 /**
- * Written for the six indexable languages. Every other published language is
+ * Written for the indexable languages (English, German, Swedish, Danish, Uzbek) and the
+ * hidden Ukrainian and Russian. Every other published language is
  * noindex (productMetadata), so it reads the English page rather than a machine draft.
  */
 const catalog: Partial<Record<SupportedLocale, WageringCalculatorMessages>> = {
@@ -496,6 +570,7 @@ const catalog: Partial<Record<SupportedLocale, WageringCalculatorMessages>> = {
   "da-DK": da,
   "uk-UA": uk,
   "ru-RU": ru,
+  "uz-UZ": uz,
 };
 
 const defaults: Partial<Record<SupportedLocale, WageringCalculatorDefaults>> = {
@@ -508,6 +583,7 @@ const defaults: Partial<Record<SupportedLocale, WageringCalculatorDefaults>> = {
   "uk-UA": { currency: "UAH", deposit: 1000, bonus: 1000, multiplier: 35, base: "bonus" },
   // Russian is read across many countries, so its examples use euros like the German page.
   "ru-RU": { currency: "EUR", deposit: 100, bonus: 100, multiplier: 35, base: "bonus" },
+  "uz-UZ": { currency: "EUR", deposit: 100, bonus: 100, multiplier: 35, base: "bonus" },
 };
 
 export function wageringCalculatorLocale(locale: SupportedLocale): SupportedLocale {

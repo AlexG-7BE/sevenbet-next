@@ -1,4 +1,4 @@
-export type MarketCode = "GB" | "DE" | "IT" | "ES" | "PE" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO" | "UA" | "RU" | "CA";
+export type MarketCode = "GB" | "DE" | "IT" | "ES" | "PE" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO" | "UA" | "RU" | "UZ" | "CA";
 
 export type SupportedLocale =
   | "en-GB"
@@ -15,10 +15,11 @@ export type SupportedLocale =
   | "nb-NO"
   | "uk-UA"
   | "ru-RU"
+  | "uz-UZ"
   | "en-CA"
   | "fr-CA";
 
-export type SupportedLanguage = "en" | "de" | "es" | "el" | "sv" | "da" | "it" | "pt" | "nl" | "fi" | "nb" | "uk" | "ru" | "fr";
+export type SupportedLanguage = "en" | "de" | "es" | "el" | "sv" | "da" | "it" | "pt" | "nl" | "fi" | "nb" | "uk" | "ru" | "uz" | "fr";
 
 export type LanguageRouteProfile = Readonly<{
   language: SupportedLanguage;
@@ -59,6 +60,7 @@ export const MARKET_PUBLICATION_POLICY = {
   // LANGUAGES-HIDDEN-2026-10-09: Ukrainian and Russian are withdrawn from the public site; the profiles stay so the translations can return.
   UA: { routable: true, published: false, indexable: false, indexabilityBlocker: "LANGUAGE_WITHDRAWN_BY_FOUNDER", reviewedAt: "2026-10-09" },
   RU: { routable: true, published: false, indexable: false, indexabilityBlocker: "LANGUAGE_WITHDRAWN_BY_FOUNDER", reviewedAt: "2026-10-09" },
+  UZ: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-10-20" },
   CA: { routable: false, published: false, indexable: false, indexabilityBlocker: "ROUTE_AND_PUBLICATION_NOT_ENABLED", reviewedAt: "2026-09-03" },
 } as const satisfies Record<MarketCode, MarketPublicationPolicy>;
 
@@ -297,6 +299,21 @@ const profiles = [
     partnerReadinessNotes: "Russian language release (Founder, 7 Oct 2026), withdrawn from the public site on 9 Oct 2026; the profile anchors the language. Offers stay withheld in Russia (OFFER_PRESENTATION_PROHIBITED_MARKETS).",
   },
   {
+    countryCode: "UZ",
+    publication: MARKET_PUBLICATION_POLICY.UZ,
+    routeMarket: "uz",
+    seoDisplayName: "Oʻzbekiston",
+    defaultLocale: "uz-UZ",
+    supportedLocales: ["uz-UZ"],
+    localeRoutes: [{ locale: "uz-UZ", publicSlug: "uz-uz", enabled: true, defaultForMarket: true }],
+    currencyHints: ["UZS"],
+    editorialState: "LIVE_LOCALIZED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "uz",
+    partnerReadinessNotes: "Uzbek language release (Founder, 20 Oct 2026), Latin script; commercial authority remains separate.",
+  },
+  {
     countryCode: "CA",
     publication: MARKET_PUBLICATION_POLICY.CA,
     routeMarket: "ca",
@@ -335,6 +352,8 @@ export const LANGUAGE_ROUTE_PROFILES = [
   { language: "nl", publicSlug: "nl", defaultLocale: "nl-NL", localeVariants: ["nl-NL"], label: "Nederlands", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "fi", publicSlug: "fi", defaultLocale: "fi-FI", localeVariants: ["fi-FI"], label: "Suomi", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "nb", publicSlug: "nb", defaultLocale: "nb-NO", localeVariants: ["nb-NO"], label: "Norsk bokmål", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  // UZBEK-LANGUAGE-2026-10-20: Uzbek in the official Latin alphabet, with the modifier letters oʻ, gʻ and the tutuq belgisi ʼ.
+  { language: "uz", publicSlug: "uz", defaultLocale: "uz-UZ", localeVariants: ["uz-UZ"], label: "Oʻzbekcha", published: true, indexable: true, publicationBlocker: null },
   // LANGUAGES-HIDDEN-2026-10-09: hidden from every visitor (no route, selector entry, redirect, sitemap or hreflang). The catalogs remain.
   { language: "uk", publicSlug: "uk", defaultLocale: "uk-UA", localeVariants: ["uk-UA"], label: "Українська", published: false, indexable: false, publicationBlocker: "WITHDRAWN_BY_FOUNDER" },
   { language: "ru", publicSlug: "ru", defaultLocale: "ru-RU", localeVariants: ["ru-RU"], label: "Русский", published: false, indexable: false, publicationBlocker: "WITHDRAWN_BY_FOUNDER" },
@@ -356,12 +375,13 @@ export const INITIAL_EUROPEAN_MARKET_CODES = [
   "DK",
   "FI",
   "NO",
+  "UZ",
 ] as const satisfies readonly MarketCode[];
 
 export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR", "PE", "UA"] as const satisfies readonly MarketCode[];
 export type FirstWaveEvidenceMarketCode = typeof FIRST_WAVE_EVIDENCE_MARKET_CODES[number];
 
-export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "PE", "SE", "DK", "GR", "UA", "RU"] as const satisfies readonly MarketCode[];
+export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "PE", "SE", "DK", "GR", "UA", "RU", "UZ"] as const satisfies readonly MarketCode[];
 export type FounderPublicationAcceptedMarketCode = typeof FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES[number];
 
 const initialEuropeanMarketCodes = new Set<MarketCode>(INITIAL_EUROPEAN_MARKET_CODES);

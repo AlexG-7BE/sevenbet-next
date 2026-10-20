@@ -334,7 +334,7 @@ test("a guide missing in the visitor's language opens in English instead of a 40
 
 test("a review is indexed only in the languages whose market licenses the casino", () => {
   // Founder, 15 October 2026: remove the ballast. 62 of 108 reviews led their readers to no offer.
-  assert.deepEqual(REVIEW_INDEX_MARKETS, { en: "GB", sv: "SE", da: "DK", de: "DE" });
+  assert.deepEqual(REVIEW_INDEX_MARKETS, { en: "GB", sv: "SE", da: "DK", de: "DE", uz: "UZ" });
   assert.equal(reviewIndexable("turbonino", "de"), true);
   assert.equal(reviewIndexable("betsson", "en"), false, "no UKGC licence");
   assert.equal(reviewIndexable("betsson", "sv"), true);
@@ -375,7 +375,7 @@ test("the Programme is indexed only in the languages open to search", () => {
   assert.equal(spanish.alternates?.languages, undefined);
   const german = programmeSearchMetadata("de-DE", copy);
   assert.equal(german.robots, undefined);
-  assert.deepEqual(Object.keys(german.alternates?.languages ?? {}).sort(), ["da-DK", "de-DE", "en-GB", "sv-SE", "x-default"]);
+  assert.deepEqual(Object.keys(german.alternates?.languages ?? {}).sort(), ["da-DK", "de-DE", "en-GB", "sv-SE", "uz-UZ", "x-default"]);
 });
 
 test("German and Danish product titles use the terms people search, stay country-free and short", () => {

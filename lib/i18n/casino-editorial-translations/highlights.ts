@@ -10,6 +10,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in Peru, die eine von MINCETUR zugelassene Seite suchen – ein lokal lizenzierter Anbieter, keine Offshore-Marke, die Spieler aus Peru annimmt.",
     uk: "Гравцям у Перу, які хочуть сайт із дозволом MINCETUR, — це оператор із місцевою ліцензією, а не офшорний бренд, що приймає гравців із Перу.",
     ru: "Игрокам из Перу, которые хотят сайт с разрешением MINCETUR: это оператор с местной лицензией, а не офшорный бренд, принимающий перуанских игроков.",
+    uz: "MINCETUR ruxsatiga ega saytni xohlaydigan Perudagi oʻyinchilar uchun — bu Peru oʻyinchilarini qabul qiladigan offshor brend emas, balki mahalliy litsenziyaga ega operator.",
   },
   // inkabet
   {
@@ -19,6 +20,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die über lokale Zahlungswege in Soles ein- und auszahlen wollen: 11 Zahlungsmethoden sind erfasst.",
     uk: "Гравцям, які хочуть вносити депозити й виводити кошти в soles через місцеві платіжні системи: у наших даних — 11 способів оплати.",
     ru: "Игрокам, которые хотят вносить и выводить деньги в soles через местные платёжные системы: в наших данных 11 способов оплаты.",
+    uz: "Mahalliy toʻlov tizimlari orqali soles valyutasida depozit qilish va pul yechishni xohlaydigan oʻyinchilar uchun: 11 ta toʻlov usuli qayd etilgan.",
   },
   // inkabet
   {
@@ -28,6 +30,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Bonusbedingungen vor der Einzahlung kennen wollen – Umsatzbedingungen, Mindesteinzahlung und weitere Bedingungen sind erfasst.",
     uk: "Гравцям, які хочуть бачити умови пропозиції чітко викладеними ще до депозиту, — відіграш, мінімальний депозит та інші умови тут зафіксовано.",
     ru: "Игрокам, которые хотят видеть чётко прописанные условия предложения до депозита, — отыгрыш, минимальный депозит и прочие условия здесь указаны.",
+    uz: "Depozit qilishdan oldin taklif shartlarini aniq bilishni xohlaydigan oʻyinchilar uchun — aylantirish talabi, minimal depozit va boshqa shartlar shu yerda toʻliq qayd etilgan.",
   },
   // betsafe
   {
@@ -37,6 +40,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in Estland oder Lettland, die eine Lizenz ihrer nationalen Aufsichtsbehörde statt einer Offshore-Lizenz wollen.",
     uk: "Гравцям в Естонії чи Латвії, які хочуть сайт із ліцензією власного національного регулятора, а не офшорною.",
     ru: "Игрокам из Эстонии или Латвии, которые хотят сайт с лицензией своего национального регулятора, а не офшорной.",
+    uz: "Offshor emas, balki oʻz mamlakatining milliy regulyatori litsenziyasiga ega saytni xohlaydigan Estoniya yoki Latviyadagi oʻyinchilar uchun.",
   },
   // betsafe
   {
@@ -46,6 +50,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die ein wirklich umfangreiches Spielangebot vergleichen – 13 Spielehersteller für Slots und weitere Spielarten.",
     uk: "Гравцям, які порівнюють справді багатий каталог, — 13 провайдерів у слотах і лайв-казино.",
     ru: "Игрокам, которые сравнивают действительно глубокие каталоги, — 13 провайдеров в слотах и лайв-казино.",
+    uz: "Haqiqatan ham boy katalogni solishtirayotgan oʻyinchilar uchun — slotlar va jonli kazino boʻyicha 13 ta provayder.",
   },
   // betsafe
   {
@@ -55,6 +60,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Mehrsprachige Spieler im Baltikum, die Seite und Kundenservice in einer Landessprache nutzen wollen.",
     uk: "Багатомовним гравцям із країн Балтії, які хочуть сайт і підтримку місцевою мовою.",
     ru: "Многоязычным игрокам из стран Балтии, которые хотят сайт и поддержку на местном языке.",
+    uz: "Sayt va qoʻllab-quvvatlash xizmatini mahalliy tilda xohlaydigan koʻp tilli Boltiqboʻyi oʻyinchilari uchun.",
   },
   // betsson
   {
@@ -64,6 +70,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die einen der ältesten Anbieter der Branche suchen – Betsson gibt es seit 1963.",
     uk: "Гравцям, які хочуть мати справу з одним із найстаріших операторів галузі, — Betsson веде історію з 1963 року.",
     ru: "Игрокам, которые хотят одного из старейших операторов отрасли, — история Betsson начинается в 1963 году.",
+    uz: "Sohadagi eng qadimiy operatorlardan birini xohlaydigan oʻyinchilar uchun — Betsson tarixi 1963-yildan boshlanadi.",
   },
   // betsson
   {
@@ -73,6 +80,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in Peru oder Schweden, den beiden Märkten, für die wir die verlässlichsten lokalen Informationen haben.",
     uk: "Гравцям у Перу чи Швеції — двох регіонах, де наші місцеві підтвердження найповніші.",
     ru: "Игрокам из Перу или Швеции — двух регионов, по которым у нас больше всего подтверждённых местных данных.",
+    uz: "Peru yoki Shvetsiyadagi oʻyinchilar uchun — aynan shu ikki mamlakat boʻyicha mahalliy dalillarimiz eng kuchli.",
   },
   // betsson
   {
@@ -82,6 +90,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die lokale Zahlungswege statt internationaler Karten bevorzugen: 22 Methoden sind erfasst.",
     uk: "Гравцям, які хочуть місцеві платіжні системи замість міжнародних карток: у наших даних — 22 способи оплати.",
     ru: "Игрокам, которые хотят местные платёжные системы, а не международные карты: в наших данных 22 способа оплаты.",
+    uz: "Xalqaro kartalar oʻrniga mahalliy toʻlov tizimlarini xohlaydigan oʻyinchilar uchun: 22 ta usul qayd etilgan.",
   },
   // starcasino
   {
@@ -91,6 +100,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in Italien, die eine Seite mit ADM-Lizenz wollen – Konzession 16026, staatliche italienische Lizenz, nicht offshore.",
     uk: "Гравцям в Італії, які хочуть сайт із ліцензією ADM, — концесія 16026, італійська державна ліцензія, а не офшорна.",
     ru: "Игрокам из Италии, которые хотят сайт с лицензией ADM, — концессия 16026, итальянская государственная лицензия, а не офшорная.",
+    uz: "ADM litsenziyasiga ega saytni xohlaydigan Italiyadagi oʻyinchilar uchun — 16026-sonli konsessiya: bu offshor litsenziya emas, balki Italiya davlat litsenziyasi.",
   },
   // starcasino
   {
@@ -100,6 +110,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die viele Zahlungsoptionen wollen: 15 erfasste Zahlungsmethoden, mehr als bei jedem anderen Anbieter bei uns.",
     uk: "Гравцям, які хочуть широкий вибір у касі: у наших даних — 15 способів оплати, найбільше серед усіх казино, які ми публікуємо.",
     ru: "Игрокам, которые хотят широкий выбор в кассе: в наших данных 15 способов оплаты — максимум среди всех казино, которые мы публикуем.",
+    uz: "Kassada keng tanlovni xohlaydigan oʻyinchilar uchun: 15 ta toʻlov usuli qayd etilgan — biz sharhini eʼlon qilgan barcha kazinolar orasida eng koʻpi.",
   },
   // starcasino
   {
@@ -109,6 +120,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die ein großes Spielangebot suchen, unter anderem mit Spielen von Evolution.",
     uk: "Гравцям, які хочуть великий каталог із лайв-казино від Evolution.",
     ru: "Игрокам, которые хотят большой каталог с лайв-казино от Evolution.",
+    uz: "Katta katalog va Evolution jonli kazinosini xohlaydigan oʻyinchilar uchun.",
   },
   // supercasino
   {
@@ -118,6 +130,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die vor dem Annehmen genau wissen wollen, was ein Bonus kostet – hier sind die Willkommensbedingungen so klar erfasst wie nirgends sonst bei uns.",
     uk: "Гравцям, які хочуть точно знати, скільки коштує бонус, перш ніж його брати, — у цьому записі механіку вітальної пропозиції описано найчіткіше в усьому каталозі.",
     ru: "Игрокам, которые хотят точно знать, во что обойдётся бонус, прежде чем его брать, — здесь самые понятные условия приветственного предложения во всём каталоге.",
+    uz: "Bonusni olishdan oldin u aslida qanchaga tushishini aniq bilishni xohlaydigan oʻyinchilar uchun — bu profilda katalogdagi eng tushunarli xush kelibsiz bonusi mexanikasi qayd etilgan.",
   },
   // supercasino
   {
@@ -127,6 +140,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Neuseeland, die ein belegtes Profil statt einer Werbeseite vergleichen wollen.",
     uk: "Гравцям із Нової Зеландії, які порівнюють задокументований профіль, а не рекламну сторінку.",
     ru: "Игрокам из Новой Зеландии, которым для сравнения нужен задокументированный профиль, а не рекламная страница.",
+    uz: "Marketing sahifasi oʻrniga hujjatlashtirilgan profilni solishtirayotgan Yangi Zelandiyadagi oʻyinchilar uchun.",
   },
   // supercasino
   {
@@ -136,6 +150,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Abwechslung suchen: Das erfasste Spielangebot reicht über Slots hinaus.",
     uk: "Гравцям у лайв-казино: зафіксований каталог охоплює столи з живими дилерами поряд зі слотами.",
     ru: "Игрокам в лайв-казино: каталог в наших данных включает лайв-столы наряду со слотами.",
+    uz: "Jonli kazino oʻyinchilari uchun: qayd etilgan katalog slotlar bilan birga jonli stollarni ham qamrab oladi.",
   },
   // nordicbet
   {
@@ -145,6 +160,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Schweden, die Swish und Trustly statt Karten wollen – der Kassenbereich ist auf den lokalen Markt zugeschnitten, mit 10 erfassten Methoden.",
     uk: "Гравцям зі Швеції, які хочуть Swish і Trustly замість карток, — касу побудовано під місцевий ринок, а в наших даних є 10 способів оплати.",
     ru: "Игрокам из Швеции, которые хотят Swish и Trustly, а не карты, — касса рассчитана на местный рынок, в наших данных 10 способов оплаты.",
+    uz: "Kartalar oʻrniga Swish va Trustly orqali toʻlashni xohlaydigan Shvetsiyadagi oʻyinchilar uchun — kassa mahalliy bozorga moslashtirilgan, 10 ta usul qayd etilgan.",
   },
   // nordicbet
   {
@@ -154,6 +170,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die mehrere Spielbereiche bei einem Anbieter wollen – in unserer Übersicht eine seltene Kombination.",
     uk: "Гравцям, які хочуть казино й покер в одного оператора, а таке в цьому каталозі трапляється нечасто.",
     ru: "Игрокам, которые хотят казино и покер у одного оператора, — в этом каталоге это редкость.",
+    uz: "Kazino va pokerni bitta operatordan xohlaydigan oʻyinchilar uchun — bu katalogda bunday holat kam uchraydi.",
   },
   // nordicbet
   {
@@ -163,6 +180,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eine Seite mit Lizenz von Spelinspektionen wollen: eine schwedische Lizenz, keine Offshore-Lizenz.",
     uk: "Гравцям, які хочуть сайт із ліцензією Spelinspektionen: це шведська ліцензія, а не офшорна.",
     ru: "Игрокам, которые хотят сайт с лицензией Spelinspektionen: это шведская лицензия, а не офшорная.",
+    uz: "Spelinspektionen litsenziyasiga ega saytni xohlaydigan oʻyinchilar uchun: bu offshor litsenziya emas, balki Shvetsiya litsenziyasi.",
   },
   // rizk
   {
@@ -172,6 +190,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, denen ein großes Spielangebot über alles geht: 18 Spielehersteller, mehr als bei jedem anderen Anbieter bei uns.",
     uk: "Гравцям, які понад усе хочуть багатий каталог: 18 провайдерів, найбільше серед усіх казино, які ми публікуємо.",
     ru: "Игрокам, которые прежде всего хотят глубокий каталог: 18 провайдеров — максимум среди всех казино, которые мы публикуем.",
+    uz: "Eng avvalo katalog boyligini xohlaydigan oʻyinchilar uchun: 18 ta provayder — biz sharhini eʼlon qilgan barcha kazinolar orasida eng koʻpi.",
   },
   // rizk
   {
@@ -181,6 +200,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in Serbien, wo unsere Angaben zu lokalen Zahlungsmethoden für diese Marke am ausführlichsten sind.",
     uk: "Гравцям у Сербії, де наші підтвердження щодо місцевих платежів найдокладніші з усіх, що ми маємо для цього бренду.",
     ru: "Игрокам из Сербии, где подтверждённые данные о местных платежах — самые подробные из всех, что у нас есть по этому бренду.",
+    uz: "Serbiyadagi oʻyinchilar uchun — bu brend boʻyicha bizdagi eng batafsil mahalliy toʻlov dalillari aynan shu mamlakatga tegishli.",
   },
   // rizk
   {
@@ -190,6 +210,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in Kanada, die eher die Auswahl an Zahlungsmethoden als die lokale Lizenzierung vergleichen.",
     uk: "Гравцям у Канаді, які порівнюють вибір способів оплати в касі, а не місцеве ліцензування.",
     ru: "Игрокам из Канады, которые сравнивают выбор способов оплаты в кассе, а не наличие местной лицензии.",
+    uz: "Mahalliy litsenziyadan koʻra kassa tanlovining kengligini solishtirayotgan Kanadadagi oʻyinchilar uchun.",
   },
   // skol-casino
   {
@@ -199,6 +220,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die ein modernes Slot-Angebot suchen – rund 2,500 Spiele von Herstellern wie Play'n GO, NetEnt, Games Global, Red Tiger, Blueprint und Push.",
     uk: "Гравцям, які хочуть сучасний каталог слотів, — близько 2,500 ігор від постачальників, серед яких Play'n GO, NetEnt, Games Global, Red Tiger, Blueprint і Push.",
     ru: "Игрокам, которые хотят современный каталог слотов, — около 2,500 игр от поставщиков, среди которых Play'n GO, NetEnt, Games Global, Red Tiger, Blueprint и Push.",
+    uz: "Zamonaviy slot katalogini xohlaydigan oʻyinchilar uchun — Play'n GO, NetEnt, Games Global, Red Tiger, Blueprint va Push kabi yetkazib beruvchilardan 2,500 ga yaqin oʻyin.",
   },
   // skol-casino
   {
@@ -208,6 +230,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die niedrig einsteigen wollen: EUR 10 Mindesteinzahlung, gegenüber EUR 20 bei mehreren Schwestermarken.",
     uk: "Гравцям, які хочуть низький поріг входу: мінімальний депозит EUR 10 проти EUR 20 у кількох споріднених брендів.",
     ru: "Игрокам, которые хотят низкий порог входа: минимальный депозит EUR 10 против EUR 20 у нескольких родственных брендов.",
+    uz: "Past kirish chegarasini xohlaydigan oʻyinchilar uchun: minimal depozit EUR 10, bir nechta qardosh brendlarida esa EUR 20.",
   },
   // skol-casino
   {
@@ -217,6 +240,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die überwiegend im Browser auf dem Smartphone spielen.",
     uk: "Гравцям, які здебільшого грають у браузері телефона.",
     ru: "Игрокам, которые в основном играют в браузере телефона.",
+    uz: "Asosan telefon brauzerida oʻynaydigan oʻyinchilar uchun.",
   },
   // hello-casino
   {
@@ -226,6 +250,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die die größte Spielauswahl auf der Plattform von White Hat Gaming suchen – 17 Hersteller, die meisten der sechs Marken bei uns.",
     uk: "Гравцям, які хочуть найширший вибір ігор на платформі White Hat Gaming, — 17 провайдерів, найбільше серед шести брендів, які ми оглядаємо.",
     ru: "Игрокам, которые хотят самый широкий выбор игр на платформе White Hat Gaming, — 17 провайдеров, максимум среди шести брендов, о которых мы пишем.",
+    uz: "White Hat Gaming platformasidagi eng keng oʻyin tanlovini xohlaydigan oʻyinchilar uchun — 17 ta provayder, biz sharhlaydigan oltita brend orasida eng koʻpi.",
   },
   // hello-casino
   {
@@ -235,6 +260,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die klare Bonusbedingungen wollen: Umsatzbedingungen, Mindesteinzahlung und maximaler Einsatz sind hier erfasst.",
     uk: "Гравцям, які хочуть умови пропозиції простими словами: відіграш, мінімальний депозит і максимальну ставку тут зафіксовано.",
     ru: "Игрокам, которые хотят ясно изложенные условия предложения: отыгрыш, минимальный депозит и максимальная ставка — всё это есть в наших данных.",
+    uz: "Taklif shartlari aniq yozilishini xohlaydigan oʻyinchilar uchun: aylantirish talabi, minimal depozit va maksimal stavka shu yerda qayd etilgan.",
   },
   // hello-casino
   {
@@ -244,6 +270,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eine langjährige Marke mit Lizenz aus Großbritannien suchen, online seit 2014.",
     uk: "Гравцям, які хочуть давній бренд із британською ліцензією, що працює з 2014 року.",
     ru: "Игрокам, которые хотят давно существующий бренд с британской лицензией, работающий с 2014 года.",
+    uz: "2014-yildan beri ishlab kelayotgan, Buyuk Britaniya litsenziyasiga ega uzoq yillik brendni xohlaydigan oʻyinchilar uchun.",
   },
   // playojo
   {
@@ -253,6 +280,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Alle, die sich schon an Umsatzbedingungen die Finger verbrannt haben – PlayOJO verzichtet bei allen Aktionen darauf, und genau das ist das Konzept der Marke.",
     uk: "Усім, хто вже обпікався на вимогах до відіграшу, — PlayOJO не застосовує їх до жодної акції, і в цьому вся ідея бренду.",
     ru: "Всем, кто обжигался на требованиях по отыгрышу, — PlayOJO не применяет их ни к одной акции, и в этом вся идея бренда.",
+    uz: "Aylantirish talablari sabab koʻngli qolgan har bir kishi uchun — PlayOJO hech bir aksiyaga aylantirish talabini qoʻllamaydi, brendning butun gʻoyasi ham shunda.",
   },
   // playojo
   {
@@ -262,6 +290,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Geld für verlorene Einsätze als feste Regel statt als gelegentliche Aktion zurückbekommen wollen: OJOplus zahlt bei jedem Einsatz.",
     uk: "Гравцям, які хочуть повернення грошей за програшні ставки як постійне правило, а не разову акцію: OJOplus нараховує гроші за кожну ставку.",
     ru: "Игрокам, которые хотят возврат денег с проигранных ставок как постоянное правило, а не разовую акцию: OJOplus платит за каждую ставку.",
+    uz: "Yutqazilgan stavkalar uchun pul qaytishini vaqti-vaqti bilan boʻladigan aksiya emas, doimiy qoida sifatida xohlaydigan oʻyinchilar uchun: OJOplus har bir stavka uchun toʻlaydi.",
   },
   // playojo
   {
@@ -271,6 +300,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in regulierten Märkten – lokale Lizenzen in Großbritannien, Schweden, Spanien, Dänemark und Ontario statt Offshore-Betrieb.",
     uk: "Гравцям на регульованому ринку — бренд має місцеві ліцензії у Великій Британії, Швеції, Іспанії, Данії та Онтаріо, а не обслуговує їх з офшору.",
     ru: "Игрокам из регионов с регулируемым рынком: у бренда местные лицензии в Великобритании, Швеции, Испании, Дании и Онтарио, он не обслуживает их из офшора.",
+    uz: "Tartibga solingan bozordagi oʻyinchilar uchun — brend Buyuk Britaniya, Shvetsiya, Ispaniya, Daniya va Ontarioda offshordan xizmat koʻrsatmaydi, balki mahalliy litsenziyalarga ega.",
   },
   // gday-casino
   {
@@ -280,6 +310,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die einen Anbieter mit eigenem Charakter statt einer austauschbaren Plattform-Kopie suchen.",
     uk: "Гравцям, які хочуть казино з власним характером, а не типову платформу в новій обгортці.",
     ru: "Игрокам, которые хотят казино с собственным характером, а не типовую оболочку платформы.",
+    uz: "Platformaning andoza dizayni emas, oʻziga xos xarakterga ega kazinoni xohlaydigan oʻyinchilar uchun.",
   },
   // gday-casino
   {
@@ -289,6 +320,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, denen Auswahl beim Bezahlen wichtig ist: 12 erfasste Zahlungsmethoden, überdurchschnittlich viele für diese Gruppe.",
     uk: "Гравцям, які цінують вибір у касі: у наших даних — 12 способів оплати, більше за середнє в цій групі.",
     ru: "Игрокам, которые ценят выбор в кассе: в наших данных 12 способов оплаты — выше среднего для этой группы.",
+    uz: "Kassa tanlovini qadrlaydigan oʻyinchilar uchun: 12 ta toʻlov usuli qayd etilgan, bu guruh uchun oʻrtachadan yuqori.",
   },
   // gday-casino
   {
@@ -298,6 +330,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eine Marke mit Lizenz aus Großbritannien und langer Geschichte suchen – online seit 2013.",
     uk: "Гравцям, які хочуть бренд із британською ліцензією та довгою історією, — працює з 2013 року.",
     ru: "Игрокам, которые хотят бренд с британской лицензией и долгой историей за плечами, — он работает с 2013 года.",
+    uz: "Uzoq tarixga ega, Buyuk Britaniya litsenziyasiga ega brendni xohlaydigan oʻyinchilar uchun — 2013-yildan beri ishlaydi.",
   },
   // bacanaplay
   {
@@ -307,6 +340,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in Portugal, die MB WAY und Multibanco statt internationaler Kartenzahlungen brauchen.",
     uk: "Гравцям у Португалії, яким потрібні MB WAY і Multibanco, а не міжнародні карткові системи.",
     ru: "Игрокам из Португалии, которым нужны MB WAY и Multibanco, а не международные карточные системы.",
+    uz: "Xalqaro karta tizimlari oʻrniga MB WAY va Multibanco kerak boʻlgan Portugaliyadagi oʻyinchilar uchun.",
   },
   // bacanaplay
   {
@@ -316,6 +350,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Portugiesischsprachige Spieler, die eine lokal lizenzierte Seite wollen: SRIJ-Lizenz statt Offshore-Marke für Portugal.",
     uk: "Тим, хто говорить португальською і хоче сайт із місцевою ліцензією: це ліцензіат SRIJ, а не офшорний бренд, що обслуговує Португалію.",
     ru: "Тем, кто говорит по-португальски и хочет сайт с местной лицензией: это оператор с лицензией SRIJ, а не офшорный бренд, обслуживающий Португалию.",
+    uz: "Mahalliy litsenziyali saytni xohlaydigan portugal tilida soʻzlashuvchilar uchun: bu Portugaliyaga xizmat koʻrsatadigan offshor brend emas, balki SRIJ litsenziyasiga ega operator.",
   },
   // bacanaplay
   {
@@ -325,6 +360,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Leser, die denselben Anbieter in Portugal und Brasilien vergleichen, wo er unter einer .bet.br-Domain läuft.",
     uk: "Читачам, які порівнюють одного й того самого оператора в Португалії та Бразилії, де він працює на домені .bet.br.",
     ru: "Читателям, которые сравнивают одного и того же оператора в Португалии и Бразилии, где он работает на домене .bet.br.",
+    uz: "Bir xil operatorni Portugaliya va Braziliyada solishtirayotgan oʻquvchilar uchun — Braziliyada u .bet.br domenida ishlaydi.",
   },
   // drueckglueck
   {
@@ -334,6 +370,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Deutschland, die eine Seite mit echter GGL-Erlaubnis statt eines Offshore-Anbieters für deutsche Spieler wollen.",
     uk: "Гравцям із Німеччини, які хочуть сайт зі справжнім дозволом GGL, а не такий, що приймає німецьких гравців з офшору.",
     ru: "Игрокам из Германии, которые хотят сайт с настоящим разрешением GGL, а не такой, что принимает немецких игроков из офшора.",
+    uz: "Germaniya oʻyinchilarini offshordan qabul qiladigan sayt emas, balki haqiqiy GGL ruxsatnomasiga ega saytni xohlaydigan Germaniyadagi oʻyinchilar uchun.",
   },
   // drueckglueck
   {
@@ -343,6 +380,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die deutsche Slot-Studios suchen – Merkur, Novomatic und Gamomat gibt es neben den internationalen Herstellern nur hier, bei keiner anderen Marke dieser Gruppe.",
     uk: "Гравцям, які хочуть німецькі студії слотів, — Merkur, Novomatic і Gamomat представлені тут поряд із міжнародними постачальниками, і в жодного іншого бренду цієї групи їх немає.",
     ru: "Игрокам, которые хотят немецкие студии слотов, — Merkur, Novomatic и Gamomat представлены здесь рядом с международными поставщиками, и больше ни у одного бренда в этой группе их нет.",
+    uz: "Nemis slot studiyalarini xohlaydigan oʻyinchilar uchun — bu yerda Merkur, Novomatic va Gamomat xalqaro yetkazib beruvchilar bilan birga mavjud, bu guruhdagi boshqa hech bir brendda esa ular yoʻq.",
   },
   // drueckglueck
   {
@@ -352,6 +390,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die lieber mit paysafecard, Sofort/Klarna oder per Banküberweisung statt mit Karte bezahlen.",
     uk: "Гравцям, які платять через paysafecard, Sofort/Klarna або прямим банківським переказом, а не картками.",
     ru: "Игрокам, которые платят через paysafecard, Sofort/Klarna или прямым банковским переводом, а не картами.",
+    uz: "Kartalar oʻrniga paysafecard, Sofort/Klarna yoki toʻgʻridan-toʻgʻri bank oʻtkazmasidan foydalanadigan oʻyinchilar uchun.",
   },
   // turbonino
   {
@@ -361,6 +400,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Schweden, die ohne Kontoeröffnung einzahlen und spielen wollen – das ist ein Pay N Play-Anbieter, die Anmeldung läuft komplett über BankID mit Trustly oder Zimpler.",
     uk: "Гравцям зі Швеції, які хочуть внести депозит і грати без створення акаунта, — це казино Pay N Play, тож BankID через Trustly або Zimpler і є всією реєстрацією.",
     ru: "Игрокам из Швеции, которые хотят вносить депозит и играть без создания аккаунта: это казино Pay N Play, поэтому вся регистрация сводится к BankID через Trustly или Zimpler.",
+    uz: "Hisob yaratmasdan depozit qilib oʻynashni xohlaydigan Shvetsiyadagi oʻyinchilar uchun — bu Pay N Play kazinosi, shuning uchun butun roʻyxatdan oʻtish Trustly yoki Zimpler orqali BankID bilan amalga oshadi.",
   },
   // turbonino
   {
@@ -370,6 +410,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Auszahlungen auf dasselbe Bankkonto wollen, von dem sie eingezahlt haben, ohne separaten Verifizierungsschritt.",
     uk: "Гравцям, які хочуть виводити кошти на той самий банківський рахунок, з якого вносили депозит, без окремого кроку верифікації.",
     ru: "Игрокам, которые хотят получать вывод средств на тот же банковский счёт, с которого вносили депозит, без отдельного этапа верификации.",
+    uz: "Pulni depozit qilingan bank hisobining oʻziga, alohida tasdiqlash jarayonisiz yechib olishni xohlaydigan oʻyinchilar uchun.",
   },
   // turbonino
   {
@@ -379,6 +420,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, denen ein schneller Einstieg wichtiger ist als ein Willkommenspaket.",
     uk: "Гравцям, які цінують швидкий початок більше, ніж отримання вітального пакета.",
     ru: "Игрокам, которые ценят быстрый старт больше, чем приветственный пакет.",
+    uz: "Xush kelibsiz paketini olishdan koʻra tez boshlashni qadrlaydigan oʻyinchilar uchun.",
   },
   // diamond7
   {
@@ -388,6 +430,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Slot-Spieler, die ein vertrautes, unkompliziertes Format statt eines ausufernden Spielangebots suchen.",
     uk: "Гравцям у слоти, які хочуть знайомий і простий формат, а не розлогий каталог.",
     ru: "Игрокам в слоты, которые хотят знакомый и простой формат, а не разросшийся каталог.",
+    uz: "Haddan tashqari katta katalog oʻrniga tanish va sodda formatni xohlaydigan slot oʻyinchilari uchun.",
   },
   // diamond7
   {
@@ -397,6 +440,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eine Marke von White Hat Gaming mit Lizenz aus Großbritannien und zehn Jahren Betriebsgeschichte suchen.",
     uk: "Гравцям, які хочуть бренд White Hat Gaming із британською ліцензією та десятирічною історією роботи.",
     ru: "Игрокам, которые хотят бренд White Hat Gaming с британской лицензией и десятилетней историей работы.",
+    uz: "Oʻn yillik faoliyat tarixiga ega, Buyuk Britaniya litsenziyali White Hat Gaming brendini xohlaydigan oʻyinchilar uchun.",
   },
   // diamond7
   {
@@ -406,6 +450,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die ein mittelgroßes Willkommenspaket statt eines auf Schlagzeilen getrimmten Angebots vergleichen.",
     uk: "Гравцям, які порівнюють вітальний пакет середнього розміру, а не такий, що женеться за гучним заголовком.",
     ru: "Игрокам, которые сравнивают приветственные пакеты среднего размера, а не те, что гонятся за громкими цифрами.",
+    uz: "Shov-shuvli raqamga intiladigan emas, oʻrtacha hajmdagi xush kelibsiz paketini solishtirayotgan oʻyinchilar uchun.",
   },
   // goldenplay
   {
@@ -415,6 +460,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Online-Spielothek und Sportwetten unter einem Konto statt zwei wollen.",
     uk: "Гравцям, які хочуть казино і ставки на спорт в одному акаунті, а не у двох.",
     ru: "Игрокам, которые хотят казино и ставки на спорт в одном аккаунте, а не в двух.",
+    uz: "Kazino va sport stavkalarini ikkita emas, bitta hisobda xohlaydigan oʻyinchilar uchun.",
   },
   // goldenplay
   {
@@ -424,6 +470,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die mit Krypto einzahlen wollen – BTC, ETH, USDT und USDC sind neben Karten und E-Wallets erfasst.",
     uk: "Гравцям, які хочуть вносити депозит у криптовалюті, — у наших даних є BTC, ETH, USDT і USDC поряд із картками та електронними гаманцями.",
     ru: "Игрокам, которые хотят вносить депозит в криптовалюте, — в наших данных есть BTC, ETH, USDT и USDC наряду с картами и электронными кошельками.",
+    uz: "Kriptovalyutada depozit qilishni xohlaydigan oʻyinchilar uchun — kartalar va elektron hamyonlar bilan bir qatorda BTC, ETH, USDT va USDC qayd etilgan.",
   },
   // goldenplay
   {
@@ -433,6 +480,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in einem der vielen Märkte, die diese Marke bedient: 22 sind erfasst, weit mehr als bei allen anderen hier.",
     uk: "Гравцям в одному з багатьох регіонів, які обслуговує цей бренд: профілі є для 22, значно більше, ніж у будь-якого іншого бренду тут.",
     ru: "Игрокам из одного из многих регионов, где работает этот бренд: профили есть для 22 регионов — намного больше, чем у любого другого бренда здесь.",
+    uz: "Bu brend xizmat koʻrsatadigan koʻplab mamlakatlardan biridagi oʻyinchilar uchun: 22 ta mamlakat profili tuzilgan — bu yerdagi boshqa brendlardan ancha koʻp.",
   },
   // regencycasino
   {
@@ -442,6 +490,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Griechenland, die eine in Griechenland lizenzierte Seite eines Betreibers mit Präsenz vor Ort suchen – Regency Entertainment betreibt die Spielbanken Mont Parnes und Thessaloniki seit rund 30 Jahren.",
     uk: "Гравцям із Греції, які хочуть сайт із грецькою ліцензією від оператора з фізичною присутністю, — Regency Entertainment керує казино Mont Parnes і Thessaloniki близько 30 років.",
     ru: "Игрокам из Греции, которые хотят сайт с греческой лицензией от оператора с наземными казино, — Regency Entertainment около 30 лет управляет казино Mont Parnes и Thessaloniki.",
+    uz: "Jismoniy kazinolarga ega operatorning Gretsiya litsenziyali saytini xohlaydigan Gretsiyadagi oʻyinchilar uchun — Regency Entertainment Mont Parnes va Thessaloniki kazinolarini qariyb 30 yildan beri boshqarib keladi.",
   },
   // regencycasino
   {
@@ -451,6 +500,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler in Griechenland, die in ihrer eigenen Sprache spielen wollen: Das Angebot ist auf Griechisch.",
     uk: "Гравцям із Греції, які грають у лайв-казино: ігри за столами ведуть грецькою мовою.",
     ru: "Игрокам в лайв-казино из Греции: игру за столами ведут на греческом языке.",
+    uz: "Gretsiyadagi jonli kazino oʻyinchilari uchun: stollarda dilerlar grek tilida ishlaydi.",
   },
   // regencycasino
   {
@@ -460,6 +510,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die das Online-Angebot eines Spielbankbetreibers einer reinen Online-Marke vorziehen.",
     uk: "Гравцям, які віддають перевагу онлайн-підрозділу наземного оператора перед суто онлайновим брендом.",
     ru: "Игрокам, которые предпочитают онлайн-подразделение наземного оператора чисто онлайновому бренду.",
+    uz: "Faqat onlayn ishlaydigan brend oʻrniga quruqlikdagi kazino operatorining onlayn boʻlinmasini afzal koʻradigan oʻyinchilar uchun.",
   },
   // ahti-games
   {
@@ -469,6 +520,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus den nordischen Ländern, die einen Anbieter suchen, der auf Trustly und BankID statt auf Karten setzt.",
     uk: "Гравцям із країн Північної Європи, які хочуть казино, побудоване довкола Trustly і BankID, а не карток.",
     ru: "Игрокам из стран Северной Европы, которые хотят казино, построенное вокруг Trustly и BankID, а не карт.",
+    uz: "Kartalar oʻrniga Trustly va BankID asosida qurilgan kazinoni xohlaydigan Shimoliy Yevropa oʻyinchilari uchun.",
   },
   // ahti-games
   {
@@ -478,6 +530,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eher Turniere und ein VIP-Stufensystem als einmalige Boni nutzen.",
     uk: "Гравцям, які користуються турнірами та VIP-рівнями, а не разовими бонусами.",
     ru: "Игрокам, которые пользуются турнирами и VIP-лестницей, а не разовыми бонусами.",
+    uz: "Bir martalik bonuslar oʻrniga turnirlar va VIP darajalari tizimidan foydalanadigan oʻyinchilar uchun.",
   },
   // ahti-games
   {
@@ -487,6 +540,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Leser, die ein großes Spielangebot vergleichen – rund 3,000 Spiele von zehn Studios wie Evolution, NetEnt und Play'n GO.",
     uk: "Читачам, які порівнюють великий каталог, — близько 3,000 ігор від десяти студій, серед яких Evolution, NetEnt і Play'n GO.",
     ru: "Читателям, которые сравнивают большие каталоги, — около 3,000 игр от десяти студий, включая Evolution, NetEnt и Play'n GO.",
+    uz: "Katta katalogni solishtirayotgan oʻquvchilar uchun — Evolution, NetEnt va Play'n GO kabi oʻnta studiyadan 3,000 ga yaqin oʻyin.",
   },
   // eucasino
   {
@@ -496,6 +550,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eine etablierte Marke suchen: EUcasino ist seit 2009 aktiv und damit die älteste in dieser Gruppe.",
     uk: "Гравцям, які хочуть усталений бренд: EUcasino працює з 2009 року, найдовше в цій групі.",
     ru: "Игрокам, которые хотят бренд с историей: EUcasino работает с 2009 года — дольше всех в этой группе.",
+    uz: "Tanilgan brendni xohlaydigan oʻyinchilar uchun: EUcasino 2009-yildan beri ishlaydi — bu guruhdagi eng eskisi.",
   },
   // eucasino
   {
@@ -505,6 +560,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Dänemark, die eine eigene, lokal lizenzierte .dk-Seite statt einer übersetzten internationalen Seite bekommen.",
     uk: "Гравцям із Данії, для яких є окремий сайт із місцевою ліцензією на eucasino.dk, а не перекладений міжнародний.",
     ru: "Игрокам из Дании: для них есть отдельный сайт с местной лицензией на eucasino.dk, а не перевод международного.",
+    uz: "Daniyadagi oʻyinchilar uchun — ular uchun tarjima qilingan xalqaro sayt emas, eucasino.dk manzilida mahalliy litsenziyaga ega alohida sayt mavjud.",
   },
   // eucasino
   {
@@ -514,6 +570,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die mehrere Sprachen und Währungen nutzen – 20+ Sprachversionen und die größte Währungsauswahl aller Marken hier.",
     uk: "Гравцям, які користуються кількома мовами та валютами, — 20+ мовних версій і найдовший список валют серед усіх брендів тут.",
     ru: "Игрокам, которым нужны разные языки и валюты, — 20+ языковых версий и самый широкий список валют среди всех брендов здесь.",
+    uz: "Koʻp tilli va turli valyutalardan foydalanadigan oʻyinchilar uchun — 20+ til versiyasi va bu yerdagi brendlar orasida eng keng valyutalar roʻyxati.",
   },
   // slotsmagic
   {
@@ -523,6 +580,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, denen Vielfalt über alles geht – 25 erfasste Studios, mit Abstand das größte Spielangebot in dieser Gruppe.",
     uk: "Гравцям, які понад усе хочуть широкий вибір, — у наших даних 25 студій, це з великим відривом найбільший каталог у цій групі.",
     ru: "Игрокам, которые прежде всего хотят широкий выбор, — в наших данных 25 студий, с большим отрывом самый крупный каталог в этой группе.",
+    uz: "Hamma narsadan koʻra keng tanlovni xohlaydigan oʻyinchilar uchun — 25 ta studiya qayd etilgan, bu guruhdagi eng katta katalog, boshqalardan ancha oldinda.",
   },
   // slotsmagic
   {
@@ -532,6 +590,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Studios abseits der großen Marken suchen: Hacksaw Gaming, Peter & Sons, Octoplay, Amusnet und Lightning Box sind alle dabei.",
     uk: "Гравцям, які хочуть студії, що їх оминають великі бренди: тут є Hacksaw Gaming, Peter & Sons, Octoplay, Amusnet і Lightning Box.",
     ru: "Игрокам, которые хотят студии, обычно отсутствующие у массовых брендов: здесь есть Hacksaw Gaming, Peter & Sons, Octoplay, Amusnet и Lightning Box.",
+    uz: "Yirik brendlar eʼtibor bermaydigan studiyalarni xohlaydigan oʻyinchilar uchun: bu yerda Hacksaw Gaming, Peter & Sons, Octoplay, Amusnet va Lightning Box bor.",
   },
   // slotsmagic
   {
@@ -541,6 +600,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Mobile Spieler – native Apps für iOS und Android sind erfasst, was die meisten Marken hier nicht bieten.",
     uk: "Гравцям, які грають з мобільного, — у наших даних є нативні застосунки для iOS та Android, яких більшість брендів тут не має.",
     ru: "Мобильным игрокам — в наших данных есть собственные приложения для iOS и Android, которых нет у большинства брендов здесь.",
+    uz: "Mobil oʻyinchilar uchun — alohida iOS va Android ilovalari qayd etilgan, bu yerdagi aksariyat brendlarda esa ular yoʻq.",
   },
   // casino-redkings
   {
@@ -550,6 +610,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die einen Anbieter mit klarem Schwerpunkt suchen – die Spezialisierung ist Kern der Marke, keine Nebenkategorie.",
     uk: "Гравцям, яких цікавлять джекпоти, — прогресивні джекпоти та слоти з джекпотом є заявленою спеціалізацією бренду, а не побічною категорією.",
     ru: "Игрокам, которых интересуют джекпоты, — бренд называет прогрессивные джекпоты и джекпот-слоты своей основной специализацией, а не побочной категорией.",
+    uz: "Jekpot oʻyinchilari uchun — progressiv jekpotlar va jekpot slotlari brendning yon boʻlimi emas, balki eʼlon qilingan asosiy yoʻnalishi.",
   },
   // casino-redkings
   {
@@ -559,6 +620,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eine langjährige Marke suchen: RedKings ist seit 2011 aktiv.",
     uk: "Гравцям, які хочуть давній бренд: RedKings працює з 2011 року.",
     ru: "Игрокам, которые хотят бренд с долгой историей: RedKings работает с 2011 года.",
+    uz: "Uzoq yillik brendni xohlaydigan oʻyinchilar uchun: RedKings 2011-yildan beri faoliyat yuritadi.",
   },
   // casino-redkings
   {
@@ -568,6 +630,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Leser, die eine Seite in ihrer eigenen Sprache brauchen; 15 Sprachversionen sind veröffentlicht.",
     uk: "Читачам, яким потрібен сайт рідною мовою; опубліковано 15 мовних версій.",
     ru: "Читателям, которым нужен сайт на родном языке; опубликовано 15 языковых версий.",
+    uz: "Saytni oʻz tilida oʻqishi kerak boʻlgan oʻquvchilar uchun; 15 ta til versiyasi eʼlon qilingan.",
   },
   // dragonbet
   {
@@ -577,6 +640,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Großbritannien, die Sportwetten und Online-Spielothek beim selben Anbieter und mit demselben Konto wollen.",
     uk: "Гравцям із Великої Британії, які хочуть ставки на спорт і казино в одного оператора та в одному акаунті.",
     ru: "Игрокам из Великобритании, которые хотят ставки на спорт и казино у одного оператора и в одном аккаунте.",
+    uz: "Sport stavkalari va kazinoni bitta operator va bitta hisobdan xohlaydigan Buyuk Britaniyadagi oʻyinchilar uchun.",
   },
   // dragonbet
   {
@@ -586,6 +650,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die einen wirklich britischen Anbieter suchen: DragonBet Ltd ist in Großbritannien eingetragen, keine Offshore-Firma für den britischen Markt.",
     uk: "Гравцям, які хочуть справді британського оператора: DragonBet Ltd — компанія, зареєстрована у Великій Британії, а не офшорна структура, що обслуговує цю країну.",
     ru: "Игрокам, которые хотят по-настоящему британского оператора: DragonBet Ltd — компания, зарегистрированная в Великобритании, а не офшорная структура, обслуживающая Великобританию.",
+    uz: "Haqiqiy britaniyalik operatorni xohlaydigan oʻyinchilar uchun: DragonBet Ltd — Buyuk Britaniyaga xizmat koʻrsatadigan offshor tuzilma emas, balki Buyuk Britaniyada roʻyxatdan oʻtgan kompaniya.",
   },
   // dragonbet
   {
@@ -595,6 +660,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eher Spielkategorien als Details zu Zahlungen vergleichen – darin ist dieses Profil am stärksten.",
     uk: "Гравцям, які порівнюють категорії ігор, а не подробиці каси, — саме тут наш запис найповніший.",
     ru: "Игрокам, которые сравнивают категории игр, а не детали кассы, — именно в этом наши данные о бренде полнее всего.",
+    uz: "Kassa tafsilotlaridan koʻra oʻyin toifalarini solishtirayotgan oʻyinchilar uchun — bu profilning eng kuchli tomoni aynan shu.",
   },
   // jackpotstar
   {
@@ -604,6 +670,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die gezielt wegen des Schwerpunkts der Marke kommen – das Angebot ist bewusst schmal und darauf ausgerichtet.",
     uk: "Гравцям, які приходять саме заради прогресивних джекпотів, — каталог навмисно вузький і побудований довкола них.",
     ru: "Игрокам, которые приходят именно за прогрессивными джекпотами, — каталог намеренно узкий и построен вокруг них.",
+    uz: "Aynan progressiv jekpotlarni izlab keladigan oʻyinchilar uchun — katalog ataylab tor va ular atrofida qurilgan.",
   },
   // jackpotstar
   {
@@ -613,6 +680,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die sich Spiele vorschlagen lassen wollen; tägliche persönliche Empfehlungen sind das Hauptmerkmal von JackpotStar.",
     uk: "Гравцям, які хочуть, щоб сайт обирав за них; щоденні персональні добірки JackpotStar — його головна особливість.",
     ru: "Игрокам, которые хотят, чтобы сайт выбирал за них; ежедневные персональные подборки — главная особенность JackpotStar.",
+    uz: "Oʻyinni sayt oʻzi tanlab berishini xohlaydigan oʻyinchilar uchun; JackpotStar saytining asosiy xususiyati — har kungi shaxsiylashtirilgan tanlovlar.",
   },
   // jackpotstar
   {
@@ -622,6 +690,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Leser, die eine gezielte Auswahl einem riesigen Sortiment vorziehen.",
     uk: "Читачам, які віддають перевагу вузькій добірці перед вичерпною.",
     ru: "Читателям, которые предпочитают узкую подборку игр исчерпывающей.",
+    uz: "Toʻliq qamrovli roʻyxat oʻrniga saralangan tanlovni afzal koʻradigan oʻquvchilar uchun.",
   },
   // playuzu
   {
@@ -631,6 +700,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spanischsprachige Spieler in Spanien, Mexiko, Peru oder Argentinien, die eine lokale Lizenz statt einer Offshore-Seite wollen.",
     uk: "Іспаномовним гравцям в Іспанії, Мексиці, Перу чи Аргентині, які хочуть сайт із місцевою ліцензією, а не офшорний.",
     ru: "Испаноязычным игрокам из Испании, Мексики, Перу или Аргентины, которые хотят сайт с местной лицензией, а не офшорный.",
+    uz: "Offshor sayt emas, balki mahalliy litsenziyali saytni xohlaydigan Ispaniya, Meksika, Peru yoki Argentinadagi ispan tilida soʻzlashuvchi oʻyinchilar uchun.",
   },
   // playuzu
   {
@@ -640,6 +710,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Umsatzbedingungen nicht mögen – PlayUZU verzichtet darauf, und UZUplus gibt bei jedem Einsatz Geld zurück.",
     uk: "Гравцям, яким не подобаються вимоги до відіграшу, — PlayUZU їх не застосовує, а UZUplus повертає гроші за кожну ставку.",
     ru: "Игрокам, которым не нравятся требования по отыгрышу, — у PlayUZU их нет, а UZUplus возвращает деньги с каждой ставки.",
+    uz: "Aylantirish talablarini yoqtirmaydigan oʻyinchilar uchun — PlayUZU hech qanday aylantirish talabini qoʻllamaydi, UZUplus esa har bir stavkadan pul qaytaradi.",
   },
   // playuzu
   {
@@ -649,6 +720,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Spanien, die mit Bizum bezahlen – hier im Kassenbereich verfügbar, bei Konkurrenten nur selten.",
     uk: "Гравцям з Іспанії, які платять через Bizum: він є в касі тут і мало в кого з конкурентів.",
     ru: "Игрокам из Испании, которые платят через Bizum: он есть в кассе здесь и мало у кого из конкурентов.",
+    uz: "Bizum orqali toʻlaydigan Ispaniyadagi oʻyinchilar uchun — u bu saytning kassasida bor, raqobatchilarning esa faqat ozchiligida mavjud.",
   },
   // 21-prive
   {
@@ -658,6 +730,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Auszahlungsbedingungen vor der Einzahlung genau lesen – bei dieser Marke nötiger als bei den meisten hier.",
     uk: "Гравцям, які уважно читають умови виведення коштів перед депозитом, — цей бренд потребує цього більше, ніж більшість тут.",
     ru: "Игрокам, которые внимательно читают условия вывода средств до депозита, — с этим брендом это нужнее, чем с большинством других здесь.",
+    uz: "Depozit qilishdan oldin pul yechish shartlarini diqqat bilan oʻqiydigan oʻyinchilar uchun — bu yerdagi koʻpchilik brendlardan farqli oʻlaroq, bu brendda bu ayniqsa muhim.",
   },
   // 21-prive
   {
@@ -667,6 +740,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Leser, die das größte beworbene Bonusangebot der von uns abgedeckten Marken von White Hat Gaming vergleichen wollen.",
     uk: "Читачам, які порівнюють найбільшу суму бонусу в заголовку серед оглянутих нами брендів White Hat Gaming.",
     ru: "Читателям, которые сравнивают самую крупную заявленную сумму бонуса среди брендов White Hat Gaming, о которых мы пишем.",
+    uz: "Biz sharhlaydigan White Hat Gaming brendlari orasidagi eng katta eʼlon qilingan bonusni solishtirayotgan oʻquvchilar uchun.",
   },
   // 21-prive
   {
@@ -676,6 +750,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eine Seite mit Lizenz aus Großbritannien und langer Betriebsgeschichte suchen.",
     uk: "Гравцям, які хочуть сайт із британською ліцензією та довгою історією роботи.",
     ru: "Игрокам, которые хотят сайт с британской лицензией и долгой историей работы.",
+    uz: "Uzoq faoliyat tarixiga ega, Buyuk Britaniya litsenziyali saytni xohlaydigan oʻyinchilar uchun.",
   },
   // megawayscasino
   {
@@ -685,6 +760,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die gezielt Megaways suchen – der offiziell lizenzierte Anbieter unter der Marke Megaways, direkt beliefert von Big Time Gaming, dem Erfinder der Mechanik.",
     uk: "Саме гравцям у Megaways — це офіційно ліцензоване казино під брендом Megaways, а ігри напряму постачає Big Time Gaming, яка створила цю механіку.",
     ru: "Именно игрокам в Megaways: это официально лицензированное казино под брендом Megaways, а Big Time Gaming, создавшая эту механику, поставляет игры напрямую.",
+    uz: "Aynan Megaways oʻyinchilari uchun — bu rasmiy litsenziyalangan Megaways brendli kazino, oʻyinlarni esa mexanikani yaratgan Big Time Gaming toʻgʻridan-toʻgʻri yetkazib beradi.",
   },
   // megawayscasino
   {
@@ -694,6 +770,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler aus Großbritannien: Großbritannien ist der einzige Markt mit veröffentlichtem Profil.",
     uk: "Гравцям із Великої Британії: це єдиний регіон з опублікованим профілем.",
     ru: "Игрокам из Великобритании: Великобритания — единственный регион с опубликованным профилем.",
+    uz: "Buyuk Britaniyadagi oʻyinchilar uchun: profili eʼlon qilingan yagona mamlakat — Buyuk Britaniya.",
   },
   // megawayscasino
   {
@@ -703,6 +780,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die eine kleine, bewusst gewählte Auswahl statt Tausender Titel wollen.",
     uk: "Гравцям, які хочуть невелику продуману добірку, а не тисячі ігор.",
     ru: "Игрокам, которые хотят небольшую продуманную подборку игр, а не тысячи наименований.",
+    uz: "Minglab oʻyinlar emas, kichik va puxta tanlangan toʻplamni xohlaydigan oʻyinchilar uchun.",
   },
   // playojo-bingo
   {
@@ -712,6 +790,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Bingo-Spieler aus Großbritannien, die die umsatzfreien Regeln von PlayOJO beim Bingo statt bei Slots nutzen wollen.",
     uk: "Гравцям у бінго з Великої Британії, які хочуть правила PlayOJO без відіграшу саме для бінго, а не для слотів.",
     ru: "Игрокам в бинго из Великобритании, которые хотят правила PlayOJO без отыгрыша применительно к бинго, а не к слотам.",
+    uz: "PlayOJO saytidagi aylantirish talabisiz qoidalar slotlarda emas, bingoda amal qilishini xohlaydigan Buyuk Britaniyadagi bingo oʻyinchilari uchun.",
   },
   // playojo-bingo
   {
@@ -721,6 +800,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die 90-Ball- und 75-Ball-Räume zusammen mit Slingo und Nebenspielen an einem Ort wollen.",
     uk: "Гравцям, які хочуть кімнати бінго на 90 і на 75 куль разом зі Slingo та додатковими іграми в одному місці.",
     ru: "Игрокам, которые хотят залы бинго на 90 и 75 шаров вместе со Slingo и дополнительными играми в одном месте.",
+    uz: "90 sharli va 75 sharli xonalar, Slingo va qoʻshimcha oʻyinlarni bir joyda xohlaydigan oʻyinchilar uchun.",
   },
   // playojo-bingo
   {
@@ -730,6 +810,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Bestehende PlayOJO-Spieler – gleicher Betreiber, gleiches Regelwerk.",
     uk: "Гравцям, які вже грають у PlayOJO, — це той самий оператор і ті самі правила.",
     ru: "Нынешним игрокам PlayOJO: это тот же оператор и те же правила.",
+    uz: "Hozirgi PlayOJO oʻyinchilari uchun — bu oʻsha operator va oʻsha qoidalar toʻplami.",
   },
   // slotnite
   {
@@ -739,6 +820,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Slot-Spieler, die ein mittelgroßes Willkommenspaket mit klar genannten Bedingungen statt einer Schlagzeilen-Zahl wollen.",
     uk: "Гравцям у слоти, які хочуть вітальний пакет середнього розміру з чітко зазначеними умовами, а не велику цифру в заголовку.",
     ru: "Игрокам в слоты, которые хотят приветственный пакет среднего размера с чётко указанными условиями, а не громкую цифру в заголовке.",
+    uz: "Shov-shuvli raqam emas, shartlari aniq yozilgan oʻrtacha hajmdagi xush kelibsiz paketini xohlaydigan slot oʻyinchilari uchun.",
   },
   // slotnite
   {
@@ -748,6 +830,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die Auswahl beim Bezahlen wollen: 14 erfasste Zahlungsmethoden, geteilter Spitzenwert der White-Hat-Marken hier.",
     uk: "Гравцям, які хочуть вибір у касі: у наших даних — 14 способів оплати, це спільний найвищий показник серед брендів White Hat тут.",
     ru: "Игрокам, которые хотят выбор в кассе: в наших данных 14 способов оплаты — бренд делит первое место среди брендов White Hat здесь.",
+    uz: "Kassa tanlovini xohlaydigan oʻyinchilar uchun: 14 ta toʻlov usuli qayd etilgan — bu yerdagi White Hat brendlari orasida eng yuqori koʻrsatkich (boshqa bir brend bilan teng).",
   },
   // slotnite
   {
@@ -757,6 +840,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Spieler, die vor der Einzahlung prüfen wollen, wie Auszahlungen abgewickelt werden – bei dieser Marke ausdrücklich nötig.",
     uk: "Гравцям, які готові перед депозитом перевірити, як зараз відбувається виведення коштів, — а саме цей бренд цього потребує.",
     ru: "Игрокам, готовым до депозита проверить, как сейчас обрабатывается вывод средств, — с этим брендом это действительно необходимо.",
+    uz: "Depozit qilishdan oldin pul yechish qanday amalga oshirilayotganini tekshirishga tayyor oʻyinchilar uchun — bu brend aynan shuni talab qiladi.",
   },
   // inkabet
   {
@@ -766,6 +850,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Peru ist der einzige Markt. Wenn du das von woanders aus liest, dient dieses Profil nur zur Information, und die Seite nimmt dich möglicherweise nicht an.",
     uk: "Перу — єдиний регіон. Якщо ти читаєш це з іншої країни, цей профіль має лише інформаційний характер, а сайт може тебе не прийняти.",
     ru: "Перу — единственный регион. Если ты читаешь это из другой страны, этот профиль — только информация, и сайт может тебя не принять.",
+    uz: "Yagona mamlakat — Peru. Agar siz boshqa joydan oʻqiyotgan boʻlsangiz, bu profil faqat maʼlumot uchun va sayt sizni qabul qilmasligi mumkin.",
   },
   // inkabet
   {
@@ -775,6 +860,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Welche Zahlungsmethoden du tatsächlich siehst, kann von Konto und Verifizierungsstatus abhängen, auch wenn 11 erfasst sind.",
     uk: "Те, які способи оплати ти насправді побачиш у касі, може залежати від акаунта та статусу верифікації, хоча в наших даних їх 11.",
     ru: "Какие способы оплаты ты на самом деле увидишь в кассе, зависит от аккаунта и статуса верификации, хотя в наших данных их 11.",
+    uz: "11 ta usul qayd etilgan boʻlsa-da, kassada aslida qaysi usullarni koʻrishingiz hisobingiz va tasdiqlash holatiga qarab farq qilishi mumkin.",
   },
   // inkabet
   {
@@ -784,6 +870,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Einige Zahlungslimits bei uns stammen aus Partnerunterlagen, nicht aus den veröffentlichten Bedingungen des Betreibers.",
     uk: "Деякі платіжні ліміти в наших даних узято з партнерських матеріалів, а не з опублікованих умов самого оператора.",
     ru: "Часть платёжных лимитов в наших данных взята из партнёрских материалов, а не из опубликованных условий самого оператора.",
+    uz: "Bizdagi ayrim toʻlov limitlari operatorning oʻzi eʼlon qilgan shartlardan emas, balki hamkor materiallaridan olingan.",
   },
   // betsafe
   {
@@ -793,6 +880,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Der estnische Kassenbereich ist unsere Lücke: Der Markt ist lizenziert und aktiv, aber welche Zahlungsmethoden es dort gibt, wissen wir nicht.",
     uk: "Естонська каса — прогалина в наших даних: ми знаємо, що в цьому регіоні є ліцензія і сайт працює, але не знаємо, які способи оплати там справді доступні.",
     ru: "Касса для Эстонии — пробел в наших данных: мы знаем, что регион лицензирован и работает, но не знаем, какие способы оплаты там действительно доступны.",
+    uz: "Maʼlumotlarimizdagi boʻshliq — Estoniya kassasi: bu mamlakatda litsenziya borligi va sayt ishlayotganini bilamiz, lekin aynan qaysi toʻlov usullari taklif qilinishini bilmaymiz.",
   },
   // betsafe
   {
@@ -802,6 +890,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Details des lettischen Willkommensangebots sind bei uns lückenhaft – lies vor der Teilnahme die aktuellen Bedingungen.",
     uk: "Механіка латвійської вітальної пропозиції в нас описана неповно — прочитай актуальні умови на сайті, перш ніж погоджуватися.",
     ru: "Условия приветственного предложения для Латвии у нас неполные — прочитай актуальные условия на сайте, прежде чем соглашаться.",
+    uz: "Latviyadagi xush kelibsiz taklifining mexanikasi boʻyicha bizdagi maʼlumotlar toʻliq emas — taklifga qoʻshilishdan oldin saytdagi amaldagi shartlarni oʻqing.",
   },
   // betsafe
   {
@@ -811,6 +900,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur Estland und Lettland sind erfasst. Betsafe ist in weiteren Märkten aktiv, und nichts hier beschreibt diese.",
     uk: "Профілі є лише для Естонії та Латвії. Betsafe працює і в інших регіонах, але тут про них нічого немає.",
     ru: "Профили есть только для Эстонии и Латвии. Betsafe работает и в других регионах, но здесь о них ничего нет.",
+    uz: "Faqat Estoniya va Latviya boʻyicha profil tuzilgan. Betsafe boshqa mamlakatlarda ham ishlaydi, ammo bu yerda ular haqida hech narsa yozilmagan.",
   },
   // betsson
   {
@@ -820,6 +910,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Schwedens Aufsichtsbehörde verwarnte Betsson Nordic Ltd wegen schwerer Geldwäschemängel und verhängte SEK 6.5 Millionen Strafe. Eine Lizenz ist kein Unbedenklichkeitszeugnis, und das ist das deutlichste Beispiel in unserer Übersicht.",
     uk: "Шведський регулятор виніс Betsson Nordic Ltd попередження й оштрафував компанію на SEK 6.5 мільйона за серйозні недоліки у протидії відмиванню грошей. Ліцензія ще не означає, що все бездоганно, і це найпоказовіший приклад у нашому каталозі.",
     ru: "Шведский регулятор вынес Betsson Nordic Ltd предупреждение и оштрафовал компанию на SEK 6.5 млн за серьёзные нарушения в противодействии отмыванию денег. Лицензия — не гарантия безупречности, и это самый наглядный пример в нашем каталоге.",
+    uz: "Shvetsiya regulyatori Betsson Nordic Ltd kompaniyasiga ogohlantirish berdi va pul yuvishga qarshi kurash boʻyicha jiddiy kamchiliklar uchun uni SEK 6.5 million jarimaga tortdi. Litsenziya benuqsonlik kafolati emas va bu katalogimizdagi eng yaqqol misol.",
   },
   // betsson
   {
@@ -829,6 +920,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Details des aktuellen Willkommensangebots für Peru und Schweden sind bei uns lückenhaft, das auf der Seite beworbene Angebot haben wir also nicht geprüft.",
     uk: "Механіка чинної вітальної пропозиції в наших даних неповна і для Перу, і для Швеції, тож пропозицію із заголовка, яку ти бачиш на сайті, ми не перевіряли.",
     ru: "Условия текущего приветственного предложения в наших данных неполные и для Перу, и для Швеции, поэтому заявленное на сайте предложение мы не проверяли.",
+    uz: "Hozirgi xush kelibsiz taklifining mexanikasi Peru va Shvetsiya uchun bizdagi maʼlumotlarda toʻliq emas, shuning uchun saytda koʻradigan asosiy taklif raqamini biz tekshirmaganmiz.",
   },
   // betsson
   {
@@ -838,6 +930,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Für diese Marke ist keine Herstellerliste erfasst – hier ungewöhnlich –, daher haben wir den Umfang des Spielangebots nicht überprüft.",
     uk: "Для цього бренду не зафіксовано списку провайдерів ігор, що тут незвично й означає: наповненість каталогу ми не перевірили.",
     ru: "Списка провайдеров игр для этого бренда в наших данных нет — здесь это редкость, и это значит, что глубину каталога мы не проверили.",
+    uz: "Bu brend uchun oʻyin provayderlari roʻyxati qayd etilmagan — bu yerda bu kam uchraydigan holat va katalog qanchalik boyligini biz tasdiqlay olmaganimizni bildiradi.",
   },
   // starcasino
   {
@@ -847,6 +940,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Italien schränkt Glücksspielwerbung stark ein, daher veröffentlichen wir diesen Testbericht nur zur Information. Du findest hier keinen Werbelink, und das ist Absicht, kein Versehen.",
     uk: "Італія суворо обмежує рекламу азартних ігор, тому цей огляд опубліковано лише як інформацію. Рекламного посилання тут немає, і це свідоме рішення, а не недогляд.",
     ru: "Италия жёстко ограничивает рекламу азартных игр, поэтому этот обзор опубликован только как информация. Рекламной ссылки здесь нет, и это сделано намеренно, а не по недосмотру.",
+    uz: "Italiya qimor oʻyinlari reklamasini qatʼiy cheklaydi, shuning uchun bu sharh faqat maʼlumot sifatida eʼlon qilingan. Bu yerda reklama havolasini topmaysiz va bu eʼtiborsizlik emas, ataylab shunday qilingan.",
   },
   // starcasino
   {
@@ -856,6 +950,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Es gibt ein italienisches Willkommensangebot, aber seine Bedingungen – Umsatzbedingungen, Mindesteinzahlung, maximaler Einsatz – sind bei uns nicht belegt.",
     uk: "Італійська вітальна пропозиція існує, але її фактичну механіку — відіграш, мінімальний депозит, максимальну ставку — у наших даних не встановлено.",
     ru: "Приветственное предложение для Италии существует, но его фактические условия — отыгрыш, минимальный депозит, максимальная ставка — в наших данных не установлены.",
+    uz: "Italiya uchun xush kelibsiz taklifi mavjud, ammo uning aniq mexanikasi — aylantirish talabi, minimal depozit, maksimal stavka — bizdagi maʼlumotlarda aniqlanmagan.",
   },
   // starcasino
   {
@@ -865,6 +960,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Es gibt ältere, veraltete Angaben zur Konzession 15230; die aktuelle Konzession ist 16026, und diese Nummer solltest du im ADM-Register prüfen.",
     uk: "Існують давніші підтвердження, пов'язані з концесією 15230, але вони застаріли; чинна концесія — 16026, і саме цей номер слід звіряти з реєстром ADM.",
     ru: "Есть более старые данные, привязанные к концессии 15230, но они устарели; действующая концессия — 16026, и именно этот номер нужно сверять с реестром ADM.",
+    uz: "15230-sonli konsessiyaga bogʻliq eski dalillar bor, ammo ular eskirgan; amaldagi konsessiya — 16026, ADM reyestrida aynan shu raqamni tekshiring.",
   },
   // supercasino
   {
@@ -874,6 +970,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Lizenz aus Malta ist keine neuseeländische Lizenz. Keine neuseeländische Aufsichtsbehörde überwacht diesen Anbieter, und keine kann dir bei einem Streitfall helfen.",
     uk: "Мальтійська ліцензія — це не ліцензія Нової Зеландії. Жоден новозеландський регулятор не наглядає за цим оператором, і жоден не зможе допомогти тобі в разі спору.",
     ru: "Лицензия Мальты — не новозеландская лицензия. Ни один регулятор Новой Зеландии не контролирует этого оператора, и ни один не сможет помочь тебе в споре.",
+    uz: "Malta litsenziyasi Yangi Zelandiya litsenziyasi emas. Bu operatorni hech bir Yangi Zelandiya regulyatori nazorat qilmaydi va nizo chiqqanda hech biri sizga yordam bera olmaydi.",
   },
   // supercasino
   {
@@ -883,6 +980,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das neue neuseeländische Gesetz über Online-Glücksspiel gilt seit Mai 2026, und nur Anbieter, die ab Dezember 2026 von der DIA lizenziert sind, dürfen dort werben. Prüfe die aktuelle Lage, bevor du aufgrund dieser Angaben handelst.",
     uk: "Новозеландський закон Online Casino Gambling Act чинний із травня 2026 року, а з грудня 2026 року рекламуватися там можуть лише оператори з ліцензією DIA. Перевір актуальний стан справ, перш ніж діяти на підставі будь-чого, що тут написано.",
     ru: "Закон Новой Зеландии Online Casino Gambling Act действует с мая 2026 года, и с декабря 2026 года рекламироваться там могут только операторы с лицензией DIA. Проверь, как обстоят дела сейчас, прежде чем опираться на что-либо из написанного здесь.",
+    uz: "Yangi Zelandiyada Online Casino Gambling Act qonuni 2026-yil maydan beri amalda va 2026-yil dekabridan boshlab u yerda faqat DIA litsenziyasiga ega operatorlar reklama qilishi mumkin. Bu yerdagi biror maʼlumotga tayanib harakat qilishdan oldin hozirgi holatni tekshiring.",
   },
   // supercasino
   {
@@ -892,6 +990,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Limits je Zahlungsmethode sind bei uns lückenhaft, die Höchstbeträge für Ein- und Auszahlungen pro Methode sind also ungeprüft.",
     uk: "Ліміти каси для окремих способів оплати в наших даних неповні, тож максимальні суми депозиту й виведення коштів для кожного способу оплати не перевірено.",
     ru: "Лимиты кассы по отдельным способам оплаты в наших данных неполные, поэтому максимальные суммы депозита и вывода средств для каждого способа не проверены.",
+    uz: "Toʻlov usullari kesimidagi kassa limitlari bizdagi maʼlumotlarda toʻliq emas, shuning uchun har bir toʻlov usuli boʻyicha depozit va pul yechishning yuqori chegaralari tasdiqlanmagan.",
   },
   // nordicbet
   {
@@ -901,6 +1000,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Details des Willkommensangebots sind bei uns lückenhaft – bekannt ist das beworbene Angebot, nicht aber Umsatzbedingungen oder Mindesteinzahlung.",
     uk: "Механіка вітальної пропозиції в наших даних неповна — ми знаємо, що обіцяє заголовок, але не знаємо ні відіграшу, ні мінімального депозиту.",
     ru: "Условия приветственного предложения в наших данных неполные — мы знаем заявленное предложение, но не знаем ни отыгрыша, ни минимального депозита.",
+    uz: "Xush kelibsiz taklifining mexanikasi bizdagi maʼlumotlarda toʻliq emas — asosiy taklifni bilamiz, lekin aylantirish talabi va minimal depozitni bilmaymiz.",
   },
   // nordicbet
   {
@@ -910,6 +1010,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Für diese Marke kursieren allgemeine Angaben zu einer Lizenz aus Malta, die dem schwedischen Profil widersprechen. Wir lassen sie weg, statt sie abzugleichen, also betrachte jede MGA-Angabe, die du anderswo siehst, mit Vorsicht.",
     uk: "Про цей бренд поширюються загальні матеріали щодо мальтійської ліцензії, які суперечать шведському профілю. Ми вилучаємо їх, а не намагаємося узгодити, тож до будь-яких тверджень про MGA, які ти бачиш деінде, стався обережно.",
     ru: "По этому бренду ходят общие материалы о мальтийской лицензии, которые противоречат шведскому профилю. Мы их исключаем, а не пытаемся согласовать, поэтому к любым упоминаниям MGA в других местах относись с осторожностью.",
+    uz: "Bu brend haqida Shvetsiya profiliga zid keladigan umumiy Malta litsenziyasi materiallari tarqalgan. Biz ularni moslashtirishga urinmay, chiqarib tashlaymiz, shuning uchun boshqa joylarda koʻrgan har qanday MGA daʼvosiga ehtiyotkorlik bilan qarang.",
   },
   // nordicbet
   {
@@ -919,6 +1020,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur Dänemark und Schweden sind erfasst. NordicBet ist breiter aufgestellt, und nichts hier deckt das ab.",
     uk: "Профілі є лише для Данії та Швеції. NordicBet працює ширше, але тут про це нічого немає.",
     ru: "Профили есть только для Дании и Швеции. NordicBet работает шире, но здесь об этом ничего нет.",
+    uz: "Faqat Daniya va Shvetsiya boʻyicha profil tuzilgan. NordicBet kengroq hududda ishlaydi, ammo bu yerda bu qamrab olinmagan.",
   },
   // rizk
   {
@@ -928,6 +1030,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Es gibt hier keine kanadische Lizenz. Glücksspiel wird in Kanada auf Provinzebene reguliert, und unsere Angaben belegen keine Zulassung durch eine Provinz, daher ist dies in Kanada ein Offshore-Anbieter.",
     uk: "Канадської ліцензії тут немає. У Канаді азартні ігри регулюють на рівні провінцій, а наші дані не підтверджують жодного провінційного дозволу, тож у Канаді це офшорний оператор.",
     ru: "Канадской лицензии здесь нет. Азартные игры в Канаде регулируются на уровне провинций, и в наших данных нет разрешения ни от одной провинции, поэтому в Канаде это офшорный оператор.",
+    uz: "Bu yerda Kanada litsenziyasi yoʻq. Kanadada qimor oʻyinlari provinsiyalar darajasida tartibga solinadi va bizdagi maʼlumotlarda hech qanday provinsiya ruxsati aniqlanmagan, shuning uchun Kanadada bu offshor operator.",
   },
   // rizk
   {
@@ -937,6 +1040,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Wir haben ein Profil für Neuseeland recherchiert und bewusst nicht veröffentlicht: Die rechtlichen Angaben der Seite dort widersprechen sich, und wir zeigen lieber nichts als etwas Ungeklärtes.",
     uk: "Ми підготували профіль для Нової Зеландії та свідомо його не опублікували: юридичні твердження самого сайту там суперечать одне одному, і ми воліємо не показати нічого, ніж показати щось нез'ясоване.",
     ru: "Мы подготовили профиль для Новой Зеландии и намеренно не стали его публиковать: юридические заявления самого сайта там противоречат друг другу, и мы считаем, что лучше не показать ничего, чем показать что-то невыясненное.",
+    uz: "Biz Yangi Zelandiya profilini oʻrganib chiqdik va uni ataylab eʼlon qilmadik: saytning u yerdagi oʻz huquqiy bayonotlari bir-biriga zid, biz esa hal qilinmagan narsani koʻrsatgandan koʻra hech narsa koʻrsatmaslikni afzal bilamiz.",
   },
   // rizk
   {
@@ -946,6 +1050,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Betreibergesellschaft ist je nach Markt eine andere – Zecure Gaming Ltd in einem Markt, Top Slots d.o.o. Beograd in einem anderen –, es steht also nicht überall dasselbe Unternehmen hinter der Marke.",
     uk: "Компанія-оператор залежить від регіону — Zecure Gaming Ltd в одному, Top Slots d.o.o. Beograd в іншому, — тож немає єдиної юридичної особи, яка стояла б за брендом усюди.",
     ru: "Компания-оператор зависит от региона — в одном это Zecure Gaming Ltd, в другом Top Slots d.o.o. Beograd, — поэтому единого юридического лица, которое стояло бы за брендом везде, нет.",
+    uz: "Faoliyat yurituvchi kompaniya mamlakatga qarab farq qiladi — birida Zecure Gaming Ltd, boshqasida Top Slots d.o.o. Beograd — shuning uchun brend ortida hamma joyda turgan yagona yuridik shaxs yoʻq.",
   },
   // skol-casino
   {
@@ -955,6 +1060,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Marke ist seit 2021 online, die jüngste von White Hat Gaming bei uns, und hat weniger Betriebsgeschichte als ihre Schwestermarken.",
     uk: "Це найновіший з оглянутих нами брендів White Hat Gaming, він працює з 2021 року, тож історія роботи в нього коротша, ніж у споріднених брендів.",
     ru: "Это самый новый из брендов White Hat Gaming, о которых мы пишем: он работает с 2021 года, поэтому история работы у него короче, чем у родственных брендов.",
+    uz: "Bu biz sharhlaydigan White Hat Gaming brendlarining eng yangisi, 2021-yildan beri ishlaydi, shuning uchun uning faoliyat tarixi qardosh brendlarnikidan qisqaroq.",
   },
   // skol-casino
   {
@@ -964,6 +1070,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Welche Länder die Marke über das erfasste Profil für Großbritannien hinaus bedient, ist bei uns ungeklärt.",
     uk: "Які країни бренд обслуговує, крім збереженого профілю Великої Британії, для нас лишається нез'ясованим.",
     ru: "Какие страны бренд обслуживает помимо сохранённого у нас профиля для Великобритании, мы пока не выяснили.",
+    uz: "Saqlangan Buyuk Britaniya profilidan tashqari qaysi mamlakatlarga xizmat koʻrsatishi biz tomondan aniqlanmagan.",
   },
   // skol-casino
   {
@@ -973,6 +1080,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Genaue Angaben zu Auszahlungen und Kundenservice fehlen bei uns noch teilweise, obwohl eine Auszahlungsdauer von ein bis zwei Tagen erfasst ist.",
     uk: "Точні відомості про виведення коштів і підтримку в наших даних досі неповні, хоча строк виплати від одного до двох днів у нас зафіксовано.",
     ru: "Точные сведения о выводе средств и поддержке в наших данных всё ещё неполные, хотя срок выплаты в один–два дня у нас записан.",
+    uz: "Bir-ikki kunlik toʻlov muddati qayd etilgan boʻlsa-da, pul yechish va qoʻllab-quvvatlash boʻyicha aniq tafsilotlar bizdagi maʼlumotlarda hamon toʻliq emas.",
   },
   // hello-casino
   {
@@ -982,6 +1090,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die erfasste Auszahlungsdauer liegt bei drei Tagen oder mehr, der langsamste Wert, den wir für diese Plattform haben. Wenn dir schnelle Auszahlungen wichtig sind, schneiden die Schwestermarken besser ab.",
     uk: "Зафіксований строк виведення коштів — три дні або більше, і це найповільніший показник у наших даних для цієї платформи. Якщо швидкість виплат важлива, споріднені бренди показують кращі результати.",
     ru: "Срок вывода средств в наших данных — три дня и более, это самый медленный показатель для этой платформы. Если скорость выплат важна, у родственных брендов с этим лучше.",
+    uz: "Qayd etilgan pul yechish muddati uch kun yoki undan koʻp — bu platforma boʻyicha bizdagi eng sekin koʻrsatkich. Agar toʻlov tezligi siz uchun muhim boʻlsa, qardosh brendlari bu borada yaxshiroq.",
   },
   // hello-casino
   {
@@ -991,6 +1100,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Wo die Marke über das erfasste Profil für Großbritannien hinaus genau verfügbar ist, ist bei uns nicht belegt.",
     uk: "У яких саме країнах бренд доступний, крім збереженого профілю Великої Британії, ми не встановили.",
     ru: "Точный список стран, где бренд доступен помимо сохранённого у нас профиля для Великобритании, мы не установили.",
+    uz: "Saqlangan Buyuk Britaniya profilidan tashqari aniq qaysi mamlakatlarda mavjudligi biz tomondan aniqlanmagan.",
   },
   // hello-casino
   {
@@ -1000,6 +1110,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das uns vorliegende Angebot gilt für die übrige Welt; was du in deinem Markt siehst, kann abweichen.",
     uk: "Пропозиція в наших даних призначена для решти світу; те, що ти бачиш у своєму регіоні, може відрізнятися.",
     ru: "Предложение в наших данных — для остального мира; то, что ты увидишь в своём регионе, может отличаться.",
+    uz: "Bizdagi taklif qolgan barcha mamlakatlar uchun moʻljallangan umumiy taklif; oʻz mamlakatingizda koʻradiganingiz farq qilishi mumkin.",
   },
   // playojo
   {
@@ -1009,6 +1120,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Keine Umsatzbedingungen heißt nicht keine Bedingungen. Spielgewichtung, maximale Einsätze und Teilnahmevoraussetzungen gelten trotzdem, und du solltest die aktuellen Bedingungen in deinem Markt lesen.",
     uk: "Відсутність відіграшу не означає відсутності умов. Вагові коефіцієнти ігор, максимальні ставки й правила щодо того, хто може скористатися, діють і далі, тож прочитай актуальні умови для свого регіону.",
     ru: "Отсутствие отыгрыша не означает отсутствия условий. Вес игр, максимальные ставки и правила о том, кто может воспользоваться предложением, по-прежнему действуют, поэтому прочитай актуальные условия для своего региона.",
+    uz: "Aylantirish talabi yoʻqligi shartlar yoʻq degani emas. Oʻyinlarning hisobga olinish ulushi, maksimal stavkalar va qatnashish shartlari baribir amal qiladi, shuning uchun oʻz mamlakatingizdagi amaldagi shartlarni oʻqing.",
   },
   // playojo
   {
@@ -1018,6 +1130,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Registrierung in Ontario ist nur als gemeldet erfasst; wir haben sie nicht mit dem AGCO-Register abgeglichen, und sie fließt nicht in den Vertrauensanteil der Bewertung ein.",
     uk: "Реєстрацію в Онтаріо зафіксовано лише як заявлену; ми не звіряли її з реєстром AGCO, і вона не враховується в складнику довіри в оцінці.",
     ru: "Регистрация в Онтарио отмечена только как заявленная; мы не сверяли её с реестром AGCO, и на ту часть оценки, которая отвечает за доверие, она не влияет.",
+    uz: "Ontario boʻyicha roʻyxatdan oʻtish faqat “xabar qilingan” sifatida qayd etilgan; biz uni AGCO reyestri bilan solishtirmaganmiz va u bahoning ishonch qismida hisobga olinmaydi.",
   },
   // playojo
   {
@@ -1027,6 +1140,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das einzige erfasste Angebot ist ein Freispiel-Angebot für Großbritannien, und es ist nicht als aktiv veröffentlicht.",
     uk: "Єдина пропозиція в наших даних — британська пропозиція з безкоштовними обертаннями, і її не опубліковано як активну.",
     ru: "Единственное предложение в наших данных — британское предложение с бесплатными вращениями, и оно не опубликовано как действующее.",
+    uz: "Qayd etilgan yagona taklif — Buyuk Britaniya uchun bepul aylanishlar (free spins) taklifi va u faol sifatida eʼlon qilinmagan.",
   },
   // gday-casino
   {
@@ -1036,6 +1150,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das Australien-Thema ist reine Aufmachung. Die Marke hat eine Lizenz aus Großbritannien und ist für Großbritannien, Irland und Malta veröffentlicht; sie ist kein australischer Anbieter, und Australien ist hier kein Markt.",
     uk: "Австралійська тематика — лише оформлення. Бренд має британську ліцензію та опублікований для Великої Британії, Ірландії та Мальти; це не австралійський оператор, і Австралії серед регіонів тут немає.",
     ru: "Австралийская тематика — только оформление. У бренда британская лицензия, и он опубликован для Великобритании, Ирландии и Мальты; это не австралийский оператор, и Австралии среди регионов здесь нет.",
+    uz: "Avstraliya mavzusi faqat tashqi bezak. Brend Buyuk Britaniya litsenziyasiga ega va Buyuk Britaniya, Irlandiya va Malta uchun eʼlon qilingan; u Avstraliya operatori emas va Avstraliya bu yerda koʻrib chiqiladigan mamlakatlar qatorida yoʻq.",
   },
   // gday-casino
   {
@@ -1045,6 +1160,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Genaue Angaben zu Zahlungen und Auszahlungen pro Markt fehlen noch teilweise, daher sind die Bearbeitungszeiten ungeprüft.",
     uk: "Точні дані про платежі та виведення коштів для окремих регіонів досі неповні, тож строки в касі не перевірено.",
     ru: "Точные сведения о платежах и выводе средств по регионам всё ещё неполные, поэтому сроки в кассе не проверены.",
+    uz: "Har bir mamlakat boʻyicha aniq toʻlov va pul yechish maʼlumotlari hamon toʻliq emas, shuning uchun kassa muddatlari tasdiqlanmagan.",
   },
   // gday-casino
   {
@@ -1054,6 +1170,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Marke läuft auf derselben Plattform von White Hat Gaming wie fünf andere bei uns, die Spiele sind also weitgehend dieselben, nur anders verpackt.",
     uk: "Бренд працює на тій самій платформі White Hat Gaming, що й п'ять інших оглянутих нами брендів, тож ігри тут здебільшого ті самі, лише в іншому оформленні.",
     ru: "Бренд работает на той же платформе White Hat Gaming, что и пять других брендов, о которых мы пишем, поэтому игры здесь — в основном та же подборка в другом оформлении.",
+    uz: "U biz sharhlaydigan yana beshta brend bilan bir xil White Hat Gaming platformasida ishlaydi, shuning uchun oʻyinlar asosan boshqacha bezatilgan oʻsha bir toʻplam.",
   },
   // bacanaplay
   {
@@ -1063,6 +1180,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Auszahlungen in Portugal sollen nach der Verifizierung schnell oder sofort sein – das stammt aber vom Betreiber selbst, nicht aus einer prüfbaren Quelle.",
     uk: "Виведення коштів у Португалії описують як швидке або миттєве після верифікації, але це відомо з матеріалів самого оператора, а не з джерела, яке ми могли б перевірити.",
     ru: "Вывод средств в Португалии заявлен как быстрый или мгновенный после верификации, но это сведения из материалов самого оператора, а не из источника, который мы могли проверить.",
+    uz: "Portugaliyada tasdiqlashdan keyin pul yechish tez yoki bir zumda amalga oshishi xabar qilinadi, ammo bu biz tekshira olgan manbadan emas, operatorning oʻz materiallaridan olingan.",
   },
   // bacanaplay
   {
@@ -1072,6 +1190,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die brasilianische Gesellschaft hinter der .bet.br-Seite wird in keiner unserer Quellen genannt, das Profil für Brasilien ist also dünner als das für Portugal.",
     uk: "Бразильську юридичну особу, що стоїть за сайтом .bet.br, не названо в жодному з наших записів, тож профіль Бразилії бідніший за португальський.",
     ru: "Бразильское юридическое лицо, стоящее за сайтом .bet.br, не названо нигде в наших данных, поэтому профиль для Бразилии беднее португальского.",
+    uz: "Braziliyadagi .bet.br sayti ortidagi yuridik shaxs bizdagi hech bir maʼlumotda nomlanmagan, shuning uchun Braziliya profilida Portugaliyanikidan kamroq maʼlumot bor.",
   },
   // bacanaplay
   {
@@ -1081,6 +1200,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das erfasste portugiesische Willkommensangebot – 100% bis €150 plus 50 Freispiele bei 30× – ist nicht als aktiv veröffentlicht.",
     uk: "Вітальна пропозиція в наших даних — 100% до €150 плюс 50 обертань із відіграшем 30× — призначена для Португалії, і її не опубліковано як активну.",
     ru: "Приветственное предложение в наших данных — 100% до €150 плюс 50 вращений с отыгрышем 30× — относится к Португалии и не опубликовано как действующее.",
+    uz: "Qayd etilgan xush kelibsiz taklifi — 100% bonus €150 gacha va 50 ta aylanish, aylantirish talabi 30× — Portugaliya taklifi boʻlib, faol sifatida eʼlon qilinmagan.",
   },
   // drueckglueck
   {
@@ -1090,6 +1210,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die deutschen Regeln prägen alles: Identitätsprüfung über LUGAS und OASIS, bevor du spielen kannst, und ein monatliches Einzahlungslimit von €1,000 über alle in Deutschland lizenzierten Anbieter hinweg, nicht nur diesen.",
     uk: "Німецькі правила визначають увесь досвід гри: перевірка особи через LUGAS та OASIS, перш ніж ти зможеш грати, і місячний ліміт депозитів €1,000, який діє сукупно для всіх операторів із німецькою ліцензією, а не лише для цього.",
     ru: "Правила Германии определяют весь процесс: проверка личности по LUGAS и OASIS до начала игры и месячный лимит депозитов €1,000, общий для всех операторов с немецкой лицензией, а не только для этого.",
+    uz: "Germaniya qoidalari butun tajribani belgilaydi: oʻynashdan oldin LUGAS va OASIS orqali shaxsni tekshirish hamda faqat shu operatorda emas, Germaniya litsenziyasiga ega barcha operatorlarda birgalikda amal qiladigan oyiga €1,000 depozit limiti.",
   },
   // drueckglueck
   {
@@ -1099,6 +1220,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Auszahlungen in Deutschland starten erst nach abgeschlossener Verifizierung; die Dauer je Methode konnten wir nicht überprüfen.",
     uk: "У Німеччині виведення коштів починається лише після завершення верифікації, і ми не змогли перевірити, скільки часу воно триває для будь-якого окремого способу.",
     ru: "Вывод средств в Германии начинается только после завершения верификации, и нам не удалось проверить, сколько времени занимает каждый отдельный способ.",
+    uz: "Germaniyada pul yechish faqat tasdiqlash tugagandan keyin boshlanadi va biz har bir usul qancha vaqt olishini tekshira olmadik.",
   },
   // drueckglueck
   {
@@ -1108,6 +1230,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Marke wirbt in Deutschland stark im Fernsehen. Werbeausgaben sagen nichts über das Produkt aus, und in unsere Bewertung fließt beides nicht ein.",
     uk: "Бренд активно рекламують на німецькому телебаченні. Витрати на рекламу нічого не підтверджують щодо самого продукту, і ні те, ні інше на нашу оцінку не вплинуло.",
     ru: "Бренд активно рекламируется на телевидении в Германии. Рекламный бюджет ничего не говорит о продукте, и ни то, ни другое в оценке не учитывалось.",
+    uz: "Brend Germaniyada televizorda faol reklama qilinadi. Reklama xarajatlari mahsulot haqida dalil boʻlmaydi va biz uni baholashda hisobga olmaganmiz.",
   },
   // turbonino
   {
@@ -1117,6 +1240,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Pay N Play ist ein Verfahren aus Schweden und Finnland. In Großbritannien ist der Kassenbereich herkömmlich – Debitkarten, PayPal, Apple Pay und Echtzeitüberweisung –, sodass das wichtigste Verkaufsargument der Marke dort nicht greift.",
     uk: "Pay N Play — це механізм для Швеції та Фінляндії. У Великій Британії каса звичайна — дебетові картки, PayPal, Apple Pay і миттєвий банківський переказ, — тож головна перевага бренду там не діє.",
     ru: "Pay N Play — механизм для Швеции и Финляндии. В Великобритании касса обычная — дебетовые карты, PayPal, Apple Pay и мгновенный банковский перевод, — поэтому главная особенность бренда там не действует.",
+    uz: "Pay N Play — Shvetsiya va Finlyandiyada ishlaydigan mexanizm. Buyuk Britaniyada kassa oddiy — debet kartalar, PayPal, Apple Pay va tezkor bank oʻtkazmasi — shuning uchun brendning asosiy afzalligi u yerda amal qilmaydi.",
   },
   // turbonino
   {
@@ -1126,6 +1250,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das britische Willkommensangebot verlangt 60x Umsatz auf Freispielgewinne – sechsmal so viel wie die Schwestermarken für die gleiche Art Angebot. Allein diese Zahl ist Grund genug, zweimal hinzusehen.",
     uk: "Вітальна пропозиція для Великої Британії вимагає відіграшу 60x для виграшів із безкоштовних обертань — у шість разів більше, ніж споріднені бренди просять за пропозицію того самого типу. Одна ця цифра — причина прочитати умови двічі.",
     ru: "Приветственное предложение для Великобритании требует отыгрыш 60x для выигрышей с бесплатных вращений — в шесть раз больше, чем родственные бренды требуют за такое же предложение. Одна эта цифра — причина прочитать условия дважды.",
+    uz: "Buyuk Britaniyadagi xush kelibsiz taklifi bepul aylanishlardan olingan yutuqlarga 60x aylantirish talabini qoʻyadi — bu qardosh brendlar xuddi shunday taklif uchun talab qiladiganidan olti baravar koʻp. Aynan shu bitta raqam uni ikki marta oʻqib chiqishga sabab.",
   },
   // turbonino
   {
@@ -1135,6 +1260,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Trustly-Auszahlungen in Schweden sollen schnell sein; überprüfen konnten wir nur die in Großbritannien erfassten 1–3 Werktage nach Freigabe.",
     uk: "Виведення коштів через Trustly у Швеції описують як швидке; єдиний строк, який ми змогли перевірити, — британський запис про 1–3 робочі дні після схвалення.",
     ru: "Вывод средств через Trustly в Швеции заявлен как быстрый; единственный срок, который нам удалось проверить, — британские данные: 1–3 рабочих дня после одобрения.",
+    uz: "Shvetsiyada Trustly orqali pul yechish tez deb xabar qilinadi; biz tekshira olgan yagona muddat — Buyuk Britaniya maʼlumotlaridagi tasdiqlangandan keyin 1–3 ish kuni.",
   },
   // diamond7
   {
@@ -1144,6 +1270,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das Spielangebot ist das kleinste der Marken von White Hat bei uns (10 Hersteller, bei Hello Casino 17) – wenn dir Vielfalt wichtig ist, schau zuerst bei den Schwestermarken.",
     uk: "Його каталог найменший серед оглянутих нами брендів White Hat — 10 провайдерів проти 17 у Hello Casino, — тож якщо важливий широкий вибір, спершу подивися на споріднені бренди.",
     ru: "Каталог у него самый маленький среди брендов White Hat, о которых мы пишем, — 10 провайдеров против 17 у Hello Casino, — поэтому, если важен широкий выбор, сначала посмотри на родственные бренды.",
+    uz: "Uning katalogi biz sharhlaydigan White Hat brendlari orasida eng kichigi — 10 ta provayder, Hello Casino saytida esa 17 ta — shuning uchun tanlov kengligi muhim boʻlsa, avval qardosh brendlariga qarang.",
   },
   // diamond7
   {
@@ -1153,6 +1280,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Genaue Produktangaben pro Markt sind nur teilweise erfasst, das Profil ist also dünner, als die Lizenzangaben vermuten lassen.",
     uk: "Точні дані про продукт для окремих регіонів зафіксовано лише частково, тож профіль бідніший, ніж можна подумати з ліцензійних записів.",
     ru: "Точные сведения о продукте по регионам записаны лишь частично, поэтому профиль беднее, чем можно подумать по данным о лицензиях.",
+    uz: "Har bir mamlakat boʻyicha aniq mahsulot maʼlumotlari faqat qisman qayd etilgan, shuning uchun profilda litsenziya maʼlumotlaridan kutish mumkin boʻlganidan kamroq maʼlumot bor.",
   },
   // diamond7
   {
@@ -1162,6 +1290,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Welche Länder die Marke über das erfasste Profil für Großbritannien hinaus tatsächlich bedient, ist bei uns ungeklärt.",
     uk: "Які країни бренд насправді обслуговує, крім збереженого профілю Великої Британії, для нас лишається нез'ясованим.",
     ru: "Какие страны бренд на самом деле обслуживает помимо сохранённого у нас профиля для Великобритании, мы пока не выяснили.",
+    uz: "Saqlangan Buyuk Britaniya profilidan tashqari amalda qaysi mamlakatlarga xizmat koʻrsatishi biz tomondan aniqlanmagan.",
   },
   // goldenplay
   {
@@ -1171,6 +1300,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Marke hat eine Tobique-Lizenz, eine Offshore-B2C-Lizenz, die in keinem der 22 aufgeführten Märkte einer nationalen Lizenz gleichwertig ist. In den meisten davon beaufsichtigt niemand vor Ort diesen Anbieter.",
     uk: "Бренд має ліцензію Tobique — це офшорна ліцензія B2C, яка не рівнозначна національній ліцензії в жодному з 22 перелічених регіонів. У більшості з них за цим оператором не наглядає жоден місцевий орган.",
     ru: "У бренда лицензия Tobique — это офшорная лицензия B2C, которая не равнозначна национальной лицензии ни в одном из 22 перечисленных регионов. В большинстве из них этого оператора никто на месте не контролирует.",
+    uz: "U Tobique litsenziyasiga ega — bu offshor B2C litsenziya boʻlib, roʻyxatdagi 22 ta mamlakatning hech birida milliy litsenziyaga teng emas. Ularning aksariyatida bu operatorni hech bir mahalliy organ nazorat qilmaydi.",
   },
   // goldenplay
   {
@@ -1180,6 +1310,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Marke startete 2025, es gibt also kaum Betriebsgeschichte zur Beurteilung – keine Erfahrungswerte zu Auszahlungen, Streitfällen oder dem Verhalten bei Problemen.",
     uk: "Бренд запущено 2025 року, тож історії роботи, за якою його можна оцінити, майже немає — жодних відомостей про виплати, спори чи про те, як він поводиться, коли щось іде не так.",
     ru: "Бренд запущен в 2025 году, поэтому истории работы, по которой о нём можно судить, почти нет — нет накопленных данных о выплатах, спорах и о том, как он ведёт себя, когда что-то идёт не так.",
+    uz: "U 2025-yilda ishga tushgan, shuning uchun uni baholash uchun deyarli faoliyat tarixi yoʻq — toʻlovlar, nizolar yoki biror narsa notoʻgʻri ketganda oʻzini qanday tutishi boʻyicha hech qanday tajriba yoʻq.",
   },
   // goldenplay
   {
@@ -1189,6 +1320,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Für diese Marke sind elf Aktionen erfasst, und keine davon hat ein Prüfdatum oder einen Link zu ihren Bedingungen, deshalb ist keine veröffentlicht.",
     uk: "Для цього бренду зафіксовано одинадцять акцій, і жодна з них не має дати перевірки чи посилання на умови, тому жодної не опубліковано.",
     ru: "По этому бренду записано одиннадцать акций, и ни у одной нет даты проверки или ссылки на условия — поэтому ни одна не опубликована.",
+    uz: "Bu brend uchun oʻn bitta aksiya qayd etilgan va ularning hech birida tekshirilgan sana yoki shartlarga havola yoʻq — shuning uchun hech biri eʼlon qilinmagan.",
   },
   // regencycasino
   {
@@ -1198,6 +1330,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "E-Wallets sind in Griechenland eine echte Lücke – Skrill, Neteller und Revolut fehlen, wobei das aus einer Sekundärquelle stammt, nicht vom Betreiber.",
     uk: "З електронними гаманцями в Греції є справжня прогалина — Skrill, Neteller і Revolut не підтримуються, і це відомо з вторинного джерела, а не від оператора.",
     ru: "Электронные кошельки в Греции — реальный пробел: Skrill, Neteller и Revolut не поддерживаются, причём это сведения из вторичного источника, а не от оператора.",
+    uz: "Gretsiyada elektron hamyonlar boʻyicha jiddiy boʻshliq bor — Skrill, Neteller va Revolut qoʻllab-quvvatlanmaydi va bu maʼlumot operatordan emas, ikkilamchi manbadan olingan.",
   },
   // regencycasino
   {
@@ -1207,6 +1340,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Seite für Großbritannien ist ein White-Label-Angebot von SkillOnNet. Die Marke, die du siehst, und das Unternehmen im britischen Register sind nicht dieselbe Gesellschaft.",
     uk: "Британський сайт працює за моделлю white label від SkillOnNet. Бренд, який ти бачиш, і компанія в британському реєстрі — не одна й та сама юридична особа.",
     ru: "Британский сайт — это white label от SkillOnNet. Бренд, который ты видишь, и компания в британском реестре — не одно и то же юридическое лицо.",
+    uz: "Buyuk Britaniya sayti — SkillOnNet white label sayti. Siz koʻradigan brend va Buyuk Britaniya reyestridagi kompaniya bitta yuridik shaxs emas.",
   },
   // regencycasino
   {
@@ -1216,6 +1350,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Markteinführungen in Dänemark, Spanien, Schweden und Deutschland sind angekündigt, aber nicht bestätigt; veröffentlichte Profile gibt es nur für Dänemark, Großbritannien und Griechenland.",
     uk: "Запуски в Данії, Іспанії, Швеції та Німеччині анонсовано, але не перевірено; опубліковані профілі мають лише Данія, Велика Британія та Греція.",
     ru: "Запуски в Дании, Испании, Швеции и Германии объявлены, но не проверены; опубликованные профили есть только для Дании, Великобритании и Греции.",
+    uz: "Daniya, Ispaniya, Shvetsiya va Germaniyaga kengayish eʼlon qilingan, ammo tasdiqlanmagan; faqat Daniya, Buyuk Britaniya va Gretsiya profillari eʼlon qilingan.",
   },
   // ahti-games
   {
@@ -1225,6 +1360,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Meeresthema und Turnierleiter sind die eigene Inszenierung der Marke; wie stark beides den Spielalltag verändert, haben wir nicht getestet.",
     uk: "Морська тематика й турнірна таблиця — це подача самого бренду; ми не перевіряли, наскільки кожна з них змінює повсякденний досвід гри.",
     ru: "Морская тематика и турнирная лестница — это подача самого бренда; мы не проверяли, насколько то или другое меняет повседневный опыт игры.",
+    uz: "Dengiz mavzusi va turnir darajalari — brendning oʻz taqdimoti; biz ularning kundalik tajribani qanchalik oʻzgartirishini sinab koʻrmaganmiz.",
   },
   // ahti-games
   {
@@ -1234,6 +1370,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Viele Spieler wählen die Marke wegen schneller Auszahlungen, doch überprüfen konnten wir nur die in Großbritannien erfassten 1–3 Werktage nach Freigabe. Die Dauer bei Trustly in Schweden ist nur gemeldet, nicht überprüft.",
     uk: "Швидкість виведення коштів — причина, з якої багато гравців обирають цей бренд, але єдиний строк, який ми змогли перевірити, — британський запис про 1–3 робочі дні після схвалення. Строки Trustly у Швеції заявлено, але не перевірено.",
     ru: "Многие игроки выбирают этот бренд из-за скорости вывода средств, но единственный срок, который нам удалось проверить, — британские данные: 1–3 рабочих дня после одобрения. Срок для Trustly в Швеции заявлен, но не проверен.",
+    uz: "Koʻp oʻyinchilar bu brendni pul yechish tezligi uchun tanlaydi, ammo biz tekshira olgan yagona muddat — Buyuk Britaniya maʼlumotlaridagi tasdiqlangandan keyin 1–3 ish kuni. Shvetsiyadagi Trustly muddati xabar qilingan, lekin tasdiqlanmagan.",
   },
   // ahti-games
   {
@@ -1243,6 +1380,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das Willkommensangebot für Großbritannien umfasst 50 Super Spins für Book of Dead mit £0.50 pro Dreh. Die Überschrift der Seite nennt 100; die eigenen Bedingungen nennen 50, und 50 erfassen wir.",
     uk: "Вітальна пропозиція для Великої Британії — 50 Super Spins у Book of Dead по £0.50 за обертання. У заголовку сторінки вказано 100; в її ж умовах — 50, і саме 50 ми фіксуємо.",
     ru: "Приветственное предложение для Великобритании — 50 Super Spins в Book of Dead по £0.50 за вращение. В заголовке страницы указано 100; в её собственных условиях — 50, и мы записываем 50.",
+    uz: "Buyuk Britaniyadagi xush kelibsiz taklifi — 50 ta Super Spins, Book of Dead oʻyinida, har bir aylanish £0.50. Sahifa sarlavhasida 100 deyilgan; taklifning oʻz shartlarida esa 50, biz ham 50 ni qayd etamiz.",
   },
   // eucasino
   {
@@ -1252,6 +1390,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Trotz des Namens ist EUcasino nicht in der gesamten EU verfügbar. Profile sind für fünf Märkte veröffentlicht, und die übrigen Sprachversionen bedeuten nicht, dass die Marke in diesen Märkten verfügbar ist.",
     uk: "Попри назву, EUcasino доступне не в усьому ЄС. Профілі опубліковано для п'яти регіонів, а наявність решти мовних версій не означає, що сайт доступний у відповідному регіоні.",
     ru: "Несмотря на название, EUcasino доступно не во всём ЕС. Профили опубликованы для пяти регионов, а наличие остальных языковых версий не означает доступности в соответствующем регионе.",
+    uz: "Nomiga qaramay, EUcasino butun Yevropa Ittifoqida mavjud emas. Profillar beshta mamlakat uchun eʼlon qilingan, qolgan til versiyalari esa oʻsha mamlakatlarda mavjudlikni anglatmaydi.",
   },
   // eucasino
   {
@@ -1261,6 +1400,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Von den 16 Marktprofilen sind nur fünf als verfügbar erfasst; die übrigen gelten als nicht verfügbar oder ungeprüft.",
     uk: "Із 16 профілів регіонів цього бренду лише п'ять зафіксовано як доступні; решту задокументовано як недоступні або неперевірені.",
     ru: "Из 16 профилей регионов только пять отмечены как доступные; остальные задокументированы как недоступные или непроверенные.",
+    uz: "Uning 16 ta mamlakat profilidan faqat beshtasi mavjud deb qayd etilgan; qolganlari mavjud emas yoki tasdiqlanmagan deb hujjatlashtirilgan.",
   },
   // eucasino
   {
@@ -1270,6 +1410,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das Willkommensangebot für Großbritannien ist bescheiden: 100% bis zu £25 plus 50 Freispiele. Die Umsatzbedingung liegt bei niedrigen 10x, und genau das macht das Angebot lohnenswert.",
     uk: "Вітальна пропозиція для Великої Британії скромна: 100% до £25 плюс 50 обертань. Відіграш низький, 10x, і саме це в ній найцінніше.",
     ru: "Приветственное предложение для Великобритании скромное: 100% до £25 плюс 50 вращений. Отыгрыш низкий — 10x, и это его сильная сторона.",
+    uz: "Buyuk Britaniyadagi xush kelibsiz taklifi kamtarona: 100% £25 gacha va 50 ta aylanish. Aylantirish talabi past — 10x, aynan shu jihati qimmatli.",
   },
   // slotsmagic
   {
@@ -1279,6 +1420,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur die Lizenz aus Großbritannien ist direkt an der Quelle überprüft. Die Registrierung in Ontario ist als gemeldet erfasst, und die 20 Sprachvarianten laufen unter der Lizenz aus Malta.",
     uk: "Лише британську ліцензію перевірено за першоджерелом. Реєстрацію в Онтаріо зафіксовано як заявлену, а 20 мовних версій працюють за мальтійською ліцензією.",
     ru: "По первоисточнику проверена только британская лицензия. Регистрация в Онтарио отмечена как заявленная, а 20 языковых версий работают по лицензии Мальты.",
+    uz: "Faqat Buyuk Britaniya litsenziyasi birlamchi manba orqali tasdiqlangan. Ontario boʻyicha roʻyxatdan oʻtish “xabar qilingan” sifatida qayd etilgan, 20 ta til varianti esa Malta litsenziyasi ostida ishlaydi.",
   },
   // slotsmagic
   {
@@ -1288,6 +1430,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Gesellschaft in Ontario ist bei uns nur als „noch zu bestätigen“ vermerkt.",
     uk: "Юридичну особу в Онтаріо в наших даних позначено лише як «потребує підтвердження».",
     ru: "Юридическое лицо в Онтарио указано в наших данных только с пометкой «требует подтверждения».",
+    uz: "Ontario yuridik shaxsi bizdagi maʼlumotlarda faqat “tasdiqlanishi kerak” deb belgilangan.",
   },
   // slotsmagic
   {
@@ -1297,6 +1440,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das britische Willkommensangebot ist auf £25 plus 50 Freispiele begrenzt – wenig für eine Bibliothek aus 25 Studios. Die 10x Umsatzbedingung ist der versöhnliche Teil.",
     uk: "Вітальна пропозиція для Великої Британії обмежена £25 плюс 50 обертань, що небагато на тлі бібліотеки ігор від 25 студій. Натомість відіграш 10x — її сильний бік.",
     ru: "Приветственное предложение для Великобритании ограничено £25 плюс 50 вращений — это немного на фоне библиотеки из 25 студий. Выручает отыгрыш 10x.",
+    uz: "Buyuk Britaniyadagi xush kelibsiz taklifi £25 va 50 ta aylanish bilan cheklangan — bu 25 ta studiyali kutubxonaga nisbatan kam. Uning yaxshi tomoni — 10x aylantirish talabi.",
   },
   // casino-redkings
   {
@@ -1306,6 +1450,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das Spielangebot ist das Standardsortiment von SkillOnNet wie bei AHTI Games, EUcasino und SlotsMagic, der Schwerpunkt ist also Gewichtung, nicht exklusiver Inhalt.",
     uk: "Каталог ігор — стандартний набір SkillOnNet, спільний з AHTI Games, EUcasino і SlotsMagic, тож спеціалізація на джекпотах — це питання акценту, а не ексклюзивного вмісту.",
     ru: "Каталог игр — стандартная подборка SkillOnNet, общая с AHTI Games, EUcasino и SlotsMagic, поэтому упор на джекпоты — вопрос акцента, а не эксклюзивного контента.",
+    uz: "Oʻyin katalogi — AHTI Games, EUcasino va SlotsMagic bilan umumiy boʻlgan standart SkillOnNet toʻplami, shuning uchun jekpotlarga yoʻnalganlik eksklyuziv kontent emas, balki urgʻu masalasi.",
   },
   // casino-redkings
   {
@@ -1315,6 +1460,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur die Lizenz aus Großbritannien ist direkt an der Quelle überprüft. Die anderen Sprachversionen laufen unter der B2C-Lizenz aus Malta, deren Nummer wir nicht im Register der Aufsichtsbehörde bestätigen konnten.",
     uk: "Лише британську ліцензію перевірено за першоджерелом. Інші мовні версії працюють за мальтійською ліцензією B2C, номер якої ми не змогли підтвердити за реєстром регулятора.",
     ru: "По первоисточнику проверена только британская лицензия. Остальные языковые версии работают по мальтийской лицензии B2C, номер которой нам не удалось подтвердить по реестру регулятора.",
+    uz: "Faqat Buyuk Britaniya litsenziyasi birlamchi manba orqali tasdiqlangan. Boshqa til versiyalari Malta B2C litsenziyasi ostida ishlaydi, uning raqamini esa regulyator reyestri bilan solishtirib tasdiqlay olmadik.",
   },
   // casino-redkings
   {
@@ -1324,6 +1470,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das britische Willkommensangebot umfasst 100 Freispiele mit 10x Umsatzbedingung, doch auf der Angebotsseite steht keine Mindesteinzahlung – prüfe den Kassenbereich, bevor du dich festlegst.",
     uk: "Вітальна пропозиція для Великої Британії складається зі 100 безкоштовних обертань із відіграшем 10x, але оператор не вказує мінімального депозиту на сторінці пропозиції — тож перевір, скільки просить каса, перш ніж погоджуватися.",
     ru: "Приветственное предложение для Великобритании — 100 бесплатных вращений с отыгрышем 10x, но на странице предложения оператор не указывает минимальный депозит — так что проверь, сколько запросит касса, прежде чем решать.",
+    uz: "Buyuk Britaniyadagi xush kelibsiz taklifi — 100 ta bepul aylanish, aylantirish talabi 10x, ammo operator taklif sahifasida minimal depozitni koʻrsatmagan — shuning uchun qaror qilishdan oldin kassa nimani talab qilishini tekshiring.",
   },
   // dragonbet
   {
@@ -1333,6 +1480,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Angaben zu Zahlungen und Auszahlungen sind die dünnsten aller Anbieter, die wir vorstellen. Wir haben für diese Marke überhaupt keine Zahlungsmethode erfasst, du gehst also ohne Vorwissen an den Kassenbereich heran.",
     uk: "Даних про платежі та виведення коштів тут найменше серед усіх казино, які ми публікуємо. Для цього бренду в нас не зафіксовано жодного способу оплати, тож із касою ти знайомитимешся з нуля.",
     ru: "Сведений о платежах и выводе средств здесь меньше, чем у любого другого казино, которое мы публикуем. По этому бренду у нас нет ни одного способа оплаты, так что с кассой придётся разбираться с нуля.",
+    uz: "Toʻlov va pul yechish boʻyicha maʼlumotlar biz sharhini eʼlon qilgan barcha kazinolar orasida eng kam. Bu brend boʻyicha bizda birorta ham toʻlov usuli qayd etilmagan, shuning uchun kassani hech qanday oldindan maʼlumotsiz ochasiz.",
   },
   // dragonbet
   {
@@ -1342,6 +1490,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Großbritannien ist der einzige erfasste Markt. Nichts hier beschreibt die Marke anderswo.",
     uk: "Велика Британія — єдиний регіон із профілем. Тут немає нічого про роботу бренду деінде.",
     ru: "Великобритания — единственный регион с профилем. Для других регионов здесь ничего не описано.",
+    uz: "Profili tuzilgan yagona mamlakat — Buyuk Britaniya. Bu yerda brendning boshqa joylardagi faoliyati haqida hech narsa yoʻq.",
   },
   // dragonbet
   {
@@ -1351,6 +1500,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Es ist kein Willkommensangebot erfasst, was dir die Seite also auch zeigt, haben wir nicht geprüft.",
     uk: "У наших даних немає вітальної пропозиції, тож усе, що показує тобі сайт, ми не перевіряли.",
     ru: "Приветственного предложения в наших данных нет, поэтому всё, что показывает тебе сайт, мы не проверяли.",
+    uz: "Hech qanday xush kelibsiz taklifi qayd etilmagan, shuning uchun saytda nima koʻrsatilmasin, biz uni tekshirmaganmiz.",
   },
   // jackpotstar
   {
@@ -1360,6 +1510,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das schmale Spielangebot hat zwei Seiten: Vier Kategorien sind erfasst, darunter Megaways und Slots, während andere verbreitete Spielarten fehlen.",
     uk: "Вузький каталог має і плюси, і мінуси: у наших даних чотири категорії — джекпоти, лайв-казино, Megaways і слоти — без настільних ігор, блекджека чи рулетки.",
     ru: "У узкого каталога есть и плюсы, и минусы: в наших данных четыре категории — джекпоты, лайв-казино, Megaways и слоты — без настольных игр, блэкджека и рулетки.",
+    uz: "Tor katalog ham afzallik, ham kamchilik: toʻrtta toifa qayd etilgan — jekpotlar, jonli kazino, Megaways va slotlar — stol oʻyinlari, blekjek yoki ruletka esa yoʻq.",
   },
   // jackpotstar
   {
@@ -1369,6 +1520,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die personalisierten Tagesempfehlungen sind eine Vorschlagsfunktion, kein besserer Preis und keine besseren Gewinnchancen.",
     uk: "Персональні щоденні добірки — це функція рекомендацій, а не краща ціна чи кращі шанси.",
     ru: "Ежедневные персональные подборки — это функция рекомендаций, а не более выгодная цена или более высокие шансы.",
+    uz: "Shaxsiylashtirilgan kundalik tanlovlar — bu tavsiya funksiyasi, yaxshiroq narx yoki yaxshiroq yutish imkoniyati emas.",
   },
   // jackpotstar
   {
@@ -1378,6 +1530,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das einzige erfasste Angebot sind Freispiele für Großbritannien mit 10× Umsatzbedingung, nicht als aktiv veröffentlicht.",
     uk: "Єдина пропозиція в наших даних — британська пропозиція з безкоштовними обертаннями та відіграшем 10×, і її не опубліковано як активну.",
     ru: "Единственное предложение в наших данных — британское предложение с бесплатными вращениями и отыгрышем 10×, и оно не опубликовано как действующее.",
+    uz: "Qayd etilgan yagona taklif — Buyuk Britaniya uchun 10× aylantirish talabli bepul aylanishlar taklifi va u faol sifatida eʼlon qilinmagan.",
   },
   // playuzu
   {
@@ -1387,6 +1540,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur die spanische DGOJ-Lizenz ist direkt an der Quelle überprüft. Die Gesellschaften in Mexiko, Peru, Argentinien und Brasilien sind in unseren eigenen Angaben alle als nicht überprüft erfasst.",
     uk: "Лише іспанську ліцензію DGOJ перевірено за першоджерелом. Мексиканську, перуанську, аргентинську та бразильську юридичні особи в наших власних даних зафіксовано як неперевірені.",
     ru: "По первоисточнику проверена только испанская лицензия DGOJ. Юридические лица в Мексике, Перу, Аргентине и Бразилии в наших собственных данных отмечены как непроверенные.",
+    uz: "Faqat Ispaniyaning DGOJ litsenziyasi birlamchi manba orqali tasdiqlangan. Meksika, Peru, Argentina va Braziliyadagi yuridik shaxslarning barchasi oʻz maʼlumotlarimizda tasdiqlanmagan deb qayd etilgan.",
   },
   // playuzu
   {
@@ -1396,6 +1550,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Großbritannien ist kein Markt dieser Marke; wenn du das aus Großbritannien liest, dient dieses Profil nur zur Information.",
     uk: "Велика Британія не входить до регіонів цього бренду; якщо ти читаєш це з Великої Британії, цей профіль має лише інформаційний характер.",
     ru: "Великобритания не входит в регионы этого бренда; если ты читаешь это из Великобритании, этот профиль — только информация.",
+    uz: "Buyuk Britaniya bu brend uchun koʻrib chiqiladigan mamlakatlar qatorida yoʻq; agar siz Buyuk Britaniyadan oʻqiyotgan boʻlsangiz, bu profil faqat maʼlumot uchun.",
   },
   // playuzu
   {
@@ -1405,6 +1560,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Auszahlungen in Spanien sollen keinen Mindestbetrag haben, doch das stammt aus Sekundärquellen, nicht aus den veröffentlichten Bedingungen des Betreibers.",
     uk: "Про виведення коштів в Іспанії повідомляють, що мінімальної суми немає, але це відомо з вторинних джерел, а не з опублікованих умов оператора.",
     ru: "Сообщается, что у вывода средств в Испании нет минимальной суммы, но это сведения из вторичных источников, а не из опубликованных условий оператора.",
+    uz: "Ispaniyada pul yechish uchun minimal miqdor yoʻqligi xabar qilinadi, ammo bu operatorning eʼlon qilingan shartlaridan emas, ikkilamchi manbalardan olingan.",
   },
   // 21-prive
   {
@@ -1414,6 +1570,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Es gibt eine Vorgeschichte von Beschwerden über verzögerte Auszahlungen. Wir sehen darin einen Grund zu prüfen, wie der Anbieter Auszahlungen heute abwickelt, keinen Beweis, dass er deine verzögern wird – aber prüfe es.",
     uk: "На затримки з виведенням коштів уже були скарги. Для нас це причина перевірити, як казино проводить виплати сьогодні, а не доказ того, що воно затримає твою, — але перевір це.",
     ru: "В прошлом были жалобы на задержки вывода средств. Мы считаем это поводом проверить, как казино обрабатывает выплаты сегодня, а не доказательством того, что твою выплату задержат, — но проверь.",
+    uz: "Pul yechish kechiktirilgani haqida shikoyatlar tarixi bor. Biz buni kazino bugun toʻlovlarni qanday amalga oshirayotganini tekshirish uchun sabab deb bilamiz, sizning toʻlovingiz ham kechiktirilishining isboti deb emas — lekin baribir tekshiring.",
   },
   // 21-prive
   {
@@ -1423,6 +1580,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Eine große Zahl in der Überschrift ist für sich allein noch kein gutes Angebot. Umsatzbedingung und maximale Auszahlung entscheiden, was es wert ist, und genau die solltest du vergleichen.",
     uk: "Велика цифра в заголовку сама собою ще не є доброю пропозицією. Її цінність визначають вимоги до відіграшу та максимальна сума виведення, і саме їх варто порівнювати.",
     ru: "Большая цифра в заголовке сама по себе ещё не делает предложение хорошим. Его ценность определяют требования по отыгрышу и максимальная сумма вывода средств — их и нужно сравнивать.",
+    uz: "Katta reklama raqamining oʻzi yaxshi taklif degani emas. Uning qiymatini aylantirish talabi va maksimal yechib olish miqdori belgilaydi, solishtirish kerak boʻlgani ham aynan shular.",
   },
   // 21-prive
   {
@@ -1432,6 +1590,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Genaue Angaben zu Zahlungen und Auszahlungen sind bei uns noch lückenhaft, die Details zum Kassenbereich also dünner als bei den Schwestermarken.",
     uk: "Точні дані про платежі та виведення коштів у нас досі часткові, тож відомостей про касу тут менше, ніж у споріднених брендів.",
     ru: "Точные сведения о платежах и выводе средств в наших данных пока неполные, поэтому о кассе здесь известно меньше, чем у родственных брендов.",
+    uz: "Aniq toʻlov va pul yechish maʼlumotlari bizdagi yozuvlarda hamon qisman, shuning uchun bu yerdagi kassa tafsilotlari qardosh brendlarnikidan kamroq.",
   },
   // megawayscasino
   {
@@ -1441,6 +1600,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das ist die Marke mit dem schmalsten Angebot der Gruppe – sechs Hersteller, vier Kategorien – und vor allem deshalb schneidet sie am schwächsten ab.",
     uk: "Це найвужчий бренд у групі — шість постачальників і чотири категорії, — і значною мірою саме тому він має тут найнижчу оцінку.",
     ru: "Это самый узкий бренд в группе — шесть поставщиков и четыре категории, — и во многом поэтому у него здесь самая низкая оценка.",
+    uz: "Bu guruhdagi eng tor brend — oltita yetkazib beruvchi va toʻrtta toifa — va u bu yerda asosan shu sababli eng past bahoni oladi.",
   },
   // megawayscasino
   {
@@ -1450,6 +1610,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Großbritannien ist der einzige veröffentlichte Markt. Der internationale Start unter der Lizenz aus Malta ist ab Mai 2026 vermerkt, und wir haben ihn nicht überprüft.",
     uk: "Велика Британія — єдиний опублікований регіон. Міжнародний запуск за мальтійською ліцензією зафіксовано як розпочатий у травні 2026 року, і ми його не перевіряли.",
     ru: "Великобритания — единственный опубликованный регион. Международный запуск по лицензии Мальты отмечен в наших данных как начавшийся в мае 2026 года, и мы его не проверяли.",
+    uz: "Eʼlon qilingan yagona mamlakat — Buyuk Britaniya. Malta litsenziyasi ostidagi xalqaro kengayish 2026-yil mayda boshlangani qayd etilgan, biz buni tasdiqlamaganmiz.",
   },
   // megawayscasino
   {
@@ -1459,6 +1620,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das britische Willkommensangebot: 100 Freispiele für Fishin' Frenzy Big Catch Megaways, 10x Umsatzbedingung, £10 Mindesteinzahlung – klare Bedingungen, kein Einzahlungsbonus.",
     uk: "Вітальна пропозиція для Великої Британії складається зі 100 безкоштовних обертань у Fishin' Frenzy Big Catch Megaways із відіграшем 10x і мінімальним депозитом £10 — прості умови, без бонусу на суму депозиту.",
     ru: "Приветственное предложение для Великобритании — 100 бесплатных вращений в Fishin' Frenzy Big Catch Megaways с отыгрышем 10x и минимальным депозитом £10: условия простые, бонуса на депозит нет.",
+    uz: "Buyuk Britaniyadagi xush kelibsiz taklifi — 100 ta bepul aylanish, Fishin' Frenzy Big Catch Megaways oʻyinida, aylantirish talabi 10x, minimal depozit £10 — shartlar oddiy, depozitga ustama bonus yoʻq.",
   },
   // playojo-bingo
   {
@@ -1468,6 +1630,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das ist ein Bingo-Angebot, keine vollständige Online-Spielothek. Drei Hersteller und drei Kategorien sind erfasst, und die Bewertung spiegelt dieses schmale Angebot wider.",
     uk: "Це бінго-кімната, а не повноцінне казино. У наших даних три постачальники й три категорії, і оцінка відображає цю вузькість.",
     ru: "Это бинго-зал, а не полноценное казино. В наших данных три поставщика и три категории, и оценка отражает эту узость.",
+    uz: "Bu toʻliq kazino emas, bingo xonasi. Uchta yetkazib beruvchi va uchta toifa qayd etilgan, baho ham shu torlikni aks ettiradi.",
   },
   // playojo-bingo
   {
@@ -1477,6 +1640,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Großbritannien ist der einzige veröffentlichte Markt.",
     uk: "Велика Британія — єдиний опублікований регіон.",
     ru: "Великобритания — единственный опубликованный регион.",
+    uz: "Eʼlon qilingan yagona mamlakat — Buyuk Britaniya.",
   },
   // playojo-bingo
   {
@@ -1486,6 +1650,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das erfasste Willkommensangebot gilt für Großbritannien, ohne Umsatzbedingungen, und ist nicht als aktiv veröffentlicht.",
     uk: "Вітальна пропозиція в наших даних — британська пропозиція з нульовим відіграшем, і її не опубліковано як активну.",
     ru: "Приветственное предложение в наших данных — британское, с нулевым отыгрышем, и оно не опубликовано как действующее.",
+    uz: "Qayd etilgan xush kelibsiz taklifi — aylantirish talabisiz Buyuk Britaniya taklifi va u faol sifatida eʼlon qilinmagan.",
   },
   // slotnite
   {
@@ -1495,6 +1660,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Es gibt aktuelle Beschwerden über verzögerte Auszahlungen. Das ist der einzige Grund, warum diese Marke in der Gruppe am schwächsten abschneidet, und genau das solltest du in aktuellen Spielerforen prüfen, bevor du einzahlst, nicht erst nach einem Gewinn.",
     uk: "Є нещодавні скарги на затримки виплат. Це єдина причина, чому бренд має найнижчу оцінку в групі, і саме це варто перевірити на актуальних форумах гравців до депозиту, а не після виграшу.",
     ru: "Есть недавние жалобы на задержки выплат. Это единственная причина, по которой у бренда самая низкая оценка в группе, и именно это стоит проверить на актуальных форумах игроков до депозита, а не после выигрыша.",
+    uz: "Yaqinda toʻlovlar kechiktirilgani haqida shikoyatlar boʻlgan. Bu brendning guruhdagi eng past bahosining yagona sababi shu va buni yutganingizdan keyin emas, depozit qilishdan oldin hozirgi oʻyinchilar forumlarida tekshirish kerak.",
   },
   // slotnite
   {
@@ -1504,6 +1670,7 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Unsere Angaben zu Zahlungen und Auszahlungen sind unvollständig, daher können wir dir keine zu erwartende Dauer nennen.",
     uk: "Точні дані про платежі та виведення коштів у нас досі неповні, тож ми не можемо сказати тобі, на які строки розраховувати.",
     ru: "Точные сведения о платежах и выводе средств в наших данных всё ещё неполные, поэтому мы не можем сказать, каких сроков ждать.",
+    uz: "Aniq toʻlov va pul yechish maʼlumotlari bizdagi yozuvlarda hamon toʻliq emas, shuning uchun qanday muddat kutish kerakligini ayta olmaymiz.",
   },
   // slotnite
   {
@@ -1513,5 +1680,6 @@ export const HIGHLIGHT_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Regionale Varianten des Angebots unterscheiden sich, die Bedingungen bei dir können also von den hier erfassten abweichen.",
     uk: "Регіональні варіанти пропозиції відрізняються, тож умови, які ти бачиш, можуть не збігатися із зафіксованими тут.",
     ru: "Региональные варианты предложения различаются, поэтому условия, которые ты увидишь, могут не совпадать с записанными здесь.",
+    uz: "Taklifning mintaqaviy variantlari farq qiladi, shuning uchun siz koʻradigan shartlar bu yerda qayd etilganlari boʻlmasligi mumkin.",
   },
 ];

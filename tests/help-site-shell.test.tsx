@@ -128,7 +128,7 @@ function assertTreeIsClean(element: React.ReactElement, where: string) {
   for (const value of treeStrings(element)) assertNoCommercialAddress(value, `${where} (inline page data)`);
 }
 
-const routeLanguageByLocale = { "en-GB": "en", "sv-SE": "sv", "da-DK": "da" } as const;
+const routeLanguageByLocale = { "en-GB": "en", "sv-SE": "sv", "da-DK": "da", "uz-UZ": "uz" } as const;
 
 const presentations = HELP_LOCALES.map((locale) => ({
   locale,
@@ -343,7 +343,7 @@ test("the data statement answers every row, including the ones we cannot answer 
       assert.ok(text.includes(subject), `the data statement ${locale} names ${subject}`);
     }
     // §16.3's gate: the open questions are written down, not left out.
-    assert.ok(copy.sections.some((section) => /yet|endnu|ännu/i.test(section.heading)), `the data statement ${locale} lists what is not answered`);
+    assert.ok(copy.sections.some((section) => /yet|endnu|ännu|hali/i.test(section.heading)), `the data statement ${locale} lists what is not answered`);
   }
 });
 
@@ -442,7 +442,7 @@ test("the commission line is replaced, not carried over", () => {
   for (const locale of HELP_LOCALES) {
     const line = helpRevenueLine(locale);
     assert.doesNotMatch(line, /B4GAMBLE/i, `the ${locale} line names the other brand`);
-    assert.match(line, /gratis|free/i, `the ${locale} line says the site is free`);
+    assert.match(line, /gratis|free|bepul/i, `the ${locale} line says the site is free`);
     assert.ok(line.length > 80, `the ${locale} line explains, rather than hinting`);
   }
   // The five pages that print it all go through one component.

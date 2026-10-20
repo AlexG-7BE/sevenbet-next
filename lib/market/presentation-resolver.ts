@@ -36,9 +36,10 @@ export type PresentationResolution = Readonly<{
  * Markets where the country decides the language before the browser does (Founder, 7 Oct 2026):
  * a visitor in Ukraine opens the Ukrainian site whatever their browser is set to, because many
  * browsers there ask for Russian or English. An explicit language address and a language the
- * visitor picked themselves still come first.
+ * visitor picked themselves still come first. Uzbekistan joined on 20 Oct 2026 for the same
+ * reason: browsers there mostly ask for Russian, which is not published.
  */
-const GEO_LANGUAGE_FIRST_MARKETS: ReadonlySet<string> = new Set(["UA"]);
+const GEO_LANGUAGE_FIRST_MARKETS: ReadonlySet<string> = new Set(["UA", "UZ"]);
 
 /**
  * A language the Founder has not published is never chosen for a visitor: not from a saved
@@ -90,6 +91,7 @@ const worldwideReadersLabel: Readonly<Record<SupportedLanguage, string>> = {
   nb: "lesere over hele verden",
   uk: "читачі з усього світу",
   ru: "читатели со всего мира",
+  uz: "butun dunyodagi oʻquvchilar",
   fr: "les lecteurs du monde entier",
 };
 

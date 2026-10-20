@@ -68,6 +68,7 @@ const sourceEqualAllowlist: Readonly<Partial<Record<ProgrammeLocale, readonly st
   "nb-NO": ["Pause", "{label}: {status}"],
   "uk-UA": ["{label}: {status}"],
   "ru-RU": ["{label}: {status}"],
+  "uz-UZ": ["{label}: {status}"],
 };
 
 const localeMarkers: Readonly<Record<Exclude<ProgrammeLocale, "en-GB">, string>> = {
@@ -83,6 +84,7 @@ const localeMarkers: Readonly<Record<Exclude<ProgrammeLocale, "en-GB">, string>>
   "nb-NO": "beskyttet hjelp",
   "uk-UA": "захищена допомога",
   "ru-RU": "защищённая помощь",
+  "uz-UZ": "himoyalangan yordam",
 };
 
 const obviousEnglishSystemCopy = /\b(?:Loading your private Programme session|Programme page not found|This Programme page is unavailable|Return to My Programme|Open protected Help|Read Privacy Notice|Verifying access|Enter Mission|Start mission|Review mission|Resume mission|Current mission|Move up|Move down|Mission progress|Complete Mission|Log out of B4GAMBLE|Forgot password|Checking account|New here)\b/i;
@@ -101,6 +103,7 @@ const clinicalClaims: Readonly<Record<ProgrammeLocale, readonly RegExp[]>> = {
   "nb-NO": [/\bdu har spilleavhengighet\b/i, /\brisikoscoren din er\b/i, /\bdet er trygt å spille\b/i],
   "uk-UA": [/у тебе (?:ігрова залежність|розлад)/iu, /твій (?:бал|показник) ризику/iu, /безпечно грати|грати безпечно/iu],
   "ru-RU": [/у тебя (?:игровая зависимость|расстройство)/iu, /тво[йя] (?:балл|показатель|оценка) риска/iu, /безопасно играть|играть безопасно/iu],
+  "uz-UZ": [/sizda (?:qimorga qaramlik|qimor buzilishi)/iu, /sizning xavf (?:bal|baho|koʻrsatkich|daraja)\p{L}*/iu, /oʻynash xavfsiz|xavfsiz oʻynash/iu],
 };
 
 const commercialRecommendations: Readonly<Record<ProgrammeLocale, readonly RegExp[]>> = {
@@ -117,6 +120,7 @@ const commercialRecommendations: Readonly<Record<ProgrammeLocale, readonly RegEx
   "nb-NO": [/\b(?:vi|b4gamble) anbefaler (?:et |en )?(?:kasino|casino|operatør|bonus)\b/i],
   "uk-UA": [/(?:ми радимо|ми рекомендуємо|b4gamble (?:радить|рекомендує)).*(?:казино|оператор|бонус)/iu],
   "ru-RU": [/(?:мы советуем|мы рекомендуем|b4gamble (?:советует|рекомендует)).*(?:казино|оператор|бонус)/iu],
+  "uz-UZ": [/(?:biz tavsiya qilamiz|biz maslahat beramiz|b4gamble (?:tavsiya qiladi|maslahat beradi)).*(?:kazino|operator|bonus)/iu],
 };
 
 function placeholders(value: string) {

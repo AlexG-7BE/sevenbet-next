@@ -39,7 +39,7 @@ const publishedLocaleCoreReady: TranslationReviewState = {
   publicExperience: "PUBLIC_CORE_READY",
 };
 
-/** Founder-accepted language whose market has no reviewed local safety evidence (Russian). */
+/** Founder-accepted language whose market has no reviewed local safety evidence (Russian, Uzbek). */
 const languagePublicationAccepted: TranslationReviewState = {
   ...machineTranslated,
   publicExperience: "PUBLIC_CORE_READY",
@@ -80,6 +80,7 @@ export const TRANSLATION_REVIEW_STATE = {
   "nb-NO": publishedLocaleCoreReady,
   "uk-UA": firstWavePublicationAccepted,
   "ru-RU": languagePublicationAccepted,
+  "uz-UZ": languagePublicationAccepted,
   "en-CA": architectureOnlyTranslated,
   "fr-CA": architectureOnlyTranslated,
 } as const satisfies Record<SupportedLocale, TranslationReviewState>;

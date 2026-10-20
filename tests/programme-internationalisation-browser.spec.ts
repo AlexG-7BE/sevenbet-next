@@ -355,7 +355,7 @@ async function installAuthenticatedProgramme(
   });
 }
 
-test("all 11 Programme routes render localized anonymous, access, support and registration states", async ({ browser }) => {
+test("all 12 Programme routes render localized anonymous, access, support and registration states", async ({ browser }) => {
   test.setTimeout(180_000);
   const turnLocales: ProgrammeLocale[] = [];
   for (const [index, route] of PROGRAMME_ROUTES.entries()) {
@@ -432,7 +432,7 @@ test("ordinary pages retain deny-all capabilities while localized public Program
   }
 });
 
-test("the Programme selector exposes exactly 11 direct routes and preserves one anonymous subject and local narrative", async ({ page }) => {
+test("the Programme selector exposes exactly 12 direct routes and preserves one anonymous subject and local narrative", async ({ page }) => {
   const localeRequests: ProgrammeLocale[] = [];
   let publicPresentationPosts = 0;
   await installAnonymousProgramme(page, "en-GB", localeRequests);
@@ -452,7 +452,7 @@ test("the Programme selector exposes exactly 11 direct routes and preserves one 
     const selector = page.locator("[data-programme-language-selector]:visible");
     const messages = publicShellMessages((await page.locator("html").getAttribute("lang")) as ProgrammeLocale);
     await selector.getByRole("button", { name: messages.changeMarketAndLanguage }).click();
-    await expect(selector.getByRole("menuitemradio")).toHaveCount(11);
+    await expect(selector.getByRole("menuitemradio")).toHaveCount(12);
     await selector.locator(`a[href^="${route.path}"]`).click();
     await expect(page).toHaveURL(new RegExp(`${route.path.replaceAll("/", "\\/")}(?:\\?auth=google-error&error=account_not_linked)?$`));
     await expect(page.locator("html")).toHaveAttribute("lang", route.locale);
@@ -463,7 +463,7 @@ test("the Programme selector exposes exactly 11 direct routes and preserves one 
   expect(publicPresentationPosts).toBe(0);
 });
 
-test("all Missions and every action render interactively across the 11-locale desktop/mobile matrix", async ({ page }) => {
+test("all Missions and every action render interactively across the 12-locale desktop/mobile matrix", async ({ page }) => {
   test.setTimeout(180_000);
   const control: AuthenticatedFixtureControl = { missionNumber: 2, actionIndex: 0 };
   const guidanceLocales: ProgrammeLocale[] = [];

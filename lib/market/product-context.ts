@@ -97,8 +97,18 @@ export function robotsAllowIndexing(robots: Metadata["robots"] | undefined) {
   return robots.index !== false;
 }
 
+/**
+ * Help and Responsible Gambling exist only in the languages of GB and the governed safety
+ * markets. An indexable language without its own page (Uzbek) is left out: its `/uz/help`
+ * redirects to the English page, and a hreflang target that redirects is a crawler error.
+ */
 export function firstWaveSafetyLanguageAlternates(pathname: "/help" | "/responsible-gambling", site: SiteClass = "main") {
-  return productLanguageAlternates(pathname, site);
+  return Object.fromEntries(Object.entries(productLanguageAlternates(pathname, site)).filter(([language]) => {
+    if (language === "x-default") return true;
+    const profile = INDEXABLE_LANGUAGE_ROUTE_PROFILES.find((candidate) => candidate.language === language);
+    const market = profile ? marketProfileByLocale(profile.defaultLocale) : null;
+    return Boolean(market && isLocalizedPublicDestination(pathname, market));
+  }));
 }
 
 export function openGraphLocale(locale: SupportedLocale) {

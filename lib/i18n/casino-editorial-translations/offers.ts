@@ -10,6 +10,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Willkommensangebot für Estland",
     uk: "Вітальна пропозиція для казино в Естонії",
     ru: "Приветственное предложение казино в Эстонии",
+    uz: "Kazino xush kelibsiz taklifi (EE)",
   },
   // betsson
   {
@@ -19,6 +20,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100% bis zu SEK 1,000 in der Online-Spielothek plus 50 Freispiele",
     uk: "100% до SEK 1,000 у казино плюс 50 безкоштовних обертань",
     ru: "100% до SEK 1,000 в казино плюс 50 бесплатных вращений",
+    uz: "Kazinoda 1,000 SEK gacha 100% va 50 ta bepul aylanish",
   },
   // supercasino
   {
@@ -28,6 +30,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100% bis zu NZ$1,200 + 200 Freispiele",
     uk: "100% до NZ$1,200 + 200 безкоштовних обертань",
     ru: "100% до NZ$1,200 + 200 бесплатных вращений",
+    uz: "1,200 NZ$ gacha 100% + 200 ta bepul aylanish",
   },
   // nordicbet, rizk
   {
@@ -37,6 +40,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Willkommensangebot",
     uk: "Вітальна пропозиція для казино",
     ru: "Приветственное предложение казино",
+    uz: "Kazino xush kelibsiz taklifi",
   },
   // skol-casino, hello-casino
   {
@@ -46,6 +50,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100% bis zu €300 + 100 Freispiele",
     uk: "100% до €300 + 100 безкоштовних обертань",
     ru: "100% до €300 + 100 бесплатных вращений",
+    uz: "300 € gacha 100% + 100 ta bepul aylanish",
   },
   // playojo
   {
@@ -55,6 +60,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100 Freispiele ohne Umsatzbedingungen für Book of Dead",
     uk: "100 безкоштовних обертань без відіграшу в грі Book of Dead",
     ru: "100 бесплатных вращений без отыгрыша в игре Book of Dead",
+    uz: "Book of Dead oʻyinida aylantirish talabisiz 100 ta bepul aylanish",
   },
   // gday-casino, diamond7
   {
@@ -64,6 +70,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100% bis zu €100 + 25 Freispiele",
     uk: "100% до €100 + 25 безкоштовних обертань",
     ru: "100% до €100 + 25 бесплатных вращений",
+    uz: "100 € gacha 100% + 25 ta bepul aylanish",
   },
   // regencycasino, eucasino, slotsmagic
   {
@@ -73,6 +80,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100% bis zu £25 plus 50 Freispiele",
     uk: "100% до £25 плюс 50 безкоштовних обертань",
     ru: "100% до £25 плюс 50 бесплатных вращений",
+    uz: "25 £ gacha 100% va 50 ta bepul aylanish",
   },
   // casino-redkings
   {
@@ -82,6 +90,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100 Freispiele für Sahara Riches Cash Collect",
     uk: "100 безкоштовних обертань у грі Sahara Riches Cash Collect",
     ru: "100 бесплатных вращений в игре Sahara Riches Cash Collect",
+    uz: "Sahara Riches Cash Collect oʻyinida 100 ta bepul aylanish",
   },
   // jackpotstar
   {
@@ -91,6 +100,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100 Freispiele für 777 Strike",
     uk: "100 безкоштовних обертань у грі 777 Strike",
     ru: "100 бесплатных вращений в игре 777 Strike",
+    uz: "777 Strike oʻyinida 100 ta bepul aylanish",
   },
   // 21-prive
   {
@@ -100,6 +110,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100% bis zu €300 + 200 Freispiele",
     uk: "100% до €300 + 200 безкоштовних обертань",
     ru: "100% до €300 + 200 бесплатных вращений",
+    uz: "300 € gacha 100% + 200 ta bepul aylanish",
   },
   // playojo-bingo
   {
@@ -109,6 +120,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "500 kostenlose Bingo-Tickets + 50 Freispiele, ohne Umsatzbedingungen",
     uk: "500 безкоштовних квитків на бінго + 50 безкоштовних обертань, без відіграшу",
     ru: "500 бесплатных билетов бинго + 50 бесплатных вращений, без отыгрыша",
+    uz: "500 ta bepul bingo chiptasi + 50 ta bepul aylanish, aylantirish talabisiz",
   },
   // slotnite
   {
@@ -118,6 +130,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100% bis zu €250 + 100 Freispiele",
     uk: "100% до €250 + 100 безкоштовних обертань",
     ru: "100% до €250 + 100 бесплатных вращений",
+    uz: "250 € gacha 100% + 100 ta bepul aylanish",
   },
   // inkabet
   {
@@ -127,6 +140,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Aktuelles Willkommensangebot in fünf Stufen.",
     uk: "Актуальна п'ятирівнева вітальна пропозиція для казино.",
     ru: "Актуальное приветственное предложение казино из пяти уровней.",
+    uz: "Joriy besh darajali kazino xush kelibsiz taklifi.",
   },
   // betsafe
   {
@@ -136,6 +150,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Aktuelle BGA-Schlagzeile: 100% Willkommensbonus bis zu €200 + 150 Freispiele.",
     uk: "Актуальна головна пропозиція за даними BGA: вітальний бонус 100% до €200 + 150 безкоштовних обертань.",
     ru: "Актуальное главное предложение по данным BGA: приветственный бонус 100% до €200 + 150 бесплатных вращений.",
+    uz: "Joriy BGA sarlavhasi: 200 € gacha 100% xush kelibsiz bonusi + 150 ta bepul aylanish.",
   },
   // betsson
   {
@@ -145,6 +160,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur für die erste Einzahlung. 100% Einzahlungsbonus bis SEK 1,000 bei 30x Umsatz auf Einzahlung und Bonus, plus 50 Freispiele für Pirots 4.",
     uk: "Лише на перший депозит. 100% до SEK 1,000 з відіграшем 30x суми депозиту та бонусу, плюс 50 безкоштовних обертань у грі Pirots 4.",
     ru: "Только на первый депозит. Бонус 100% до SEK 1,000 с отыгрышем 30x от суммы депозита и бонуса, плюс 50 бесплатных вращений в игре Pirots 4.",
+    uz: "Faqat birinchi depozit uchun. 1,000 SEK gacha depozitga 100% bonus (depozit va bonus 30x aylantiriladi), shuningdek Pirots 4 oʻyinida 50 ta bepul aylanish.",
   },
   // starcasino
   {
@@ -154,6 +170,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Unterlagen unseres Partners bestätigen ein Willkommensangebot für Italien. Die wesentlichen Angebotsbedingungen gehen daraus nicht hervor.",
     uk: "Затверджені матеріали партнера підтверджують посилання на італійську вітальну пропозицію для казино. Істотних умов пропозиції ці дані не розкривають.",
     ru: "Одобренные материалы партнёра подтверждают, что есть ссылка на итальянское приветственное предложение казино. Существенных условий предложения в этих материалах нет.",
+    uz: "Ruxsat etilgan hamkor materiallari toʻplami Italiya kazinosi uchun xush kelibsiz taklifi yoʻnalishi mavjudligini tasdiqlaydi. Taklifning asosiy mexanikasi bu dalillar bilan aniqlanmagan.",
   },
   // supercasino
   {
@@ -163,6 +180,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Aktuelles Willkommensangebot von SuperCasino in Neuseeland für Wacky Panda.",
     uk: "Актуальна вітальна пропозиція для казино від SuperCasino в Новій Зеландії, у грі Wacky Panda.",
     ru: "Актуальное приветственное предложение казино SuperCasino для Новой Зеландии в игре Wacky Panda.",
+    uz: "Wacky Panda oʻyinida SuperCasino NZ kazinosining joriy xush kelibsiz taklifi.",
   },
   // nordicbet, rizk
   {
@@ -172,6 +190,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Unterlagen unseres Partners bestätigen ein echtes Willkommensangebot für die übrige Welt. Die wesentlichen Angebotsbedingungen gehen daraus nicht hervor.",
     uk: "Затверджені матеріали партнера підтверджують справжнє посилання на вітальну пропозицію для казино, призначену для решти світу. Істотних умов пропозиції ці дані не розкривають.",
     ru: "Одобренные материалы партнёра подтверждают, что есть настоящая ссылка на приветственное предложение казино для остальных стран. Существенных условий предложения в этих материалах нет.",
+    uz: "Ruxsat etilgan hamkor materiallari toʻplami ROW (dunyoning qolgan qismi) uchun haqiqiy kazino xush kelibsiz taklifi yoʻnalishi mavjudligini tasdiqlaydi. Taklifning asosiy mexanikasi bu dalillar bilan aniqlanmagan.",
   },
   // skol-casino, gday-casino, diamond7, 21-prive, slotnite
   {
@@ -181,6 +200,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Aktuelles, von uns recherchiertes Angebot zur ersten Einzahlung für die übrige Welt.",
     uk: "Актуальна пропозиція на перший депозит для решти світу, яку ми дослідили.",
     ru: "Актуальное изученное нами предложение на первый депозит для остальных стран.",
+    uz: "Oʻrganilgan joriy ROW (dunyoning qolgan qismi) birinchi depozit taklifi.",
   },
   // hello-casino
   {
@@ -190,6 +210,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Aktuelles August-Angebot zur ersten Einzahlung unter MGA-Lizenz.",
     uk: "Актуальна серпнева пропозиція на перший депозит (MGA).",
     ru: "Актуальное августовское предложение на первый депозит по лицензии MGA.",
+    uz: "Avgust oyidagi joriy MGA birinchi depozit taklifi.",
   },
   // playojo
   {
@@ -199,6 +220,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur für die erste Einzahlung. 100 Freispiele zu je SEK 1; Gewinne werden als Echtgeld ohne Umsatzbedingungen ausgezahlt.",
     uk: "Лише на перший депозит. 100 безкоштовних обертань вартістю SEK 1 кожне; виграші виплачуються реальними грошима без відіграшу.",
     ru: "Только на первый депозит. 100 бесплатных вращений по SEK 1 каждое; выигрыши выплачиваются реальными деньгами без отыгрыша.",
+    uz: "Faqat birinchi depozit uchun. Har biri 1 SEK boʻlgan 100 ta bepul aylanish; yutuqlar aylantirish talabisiz naqd pul sifatida toʻlanadi.",
   },
   // goldenplay
   {
@@ -208,6 +230,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Wiederkehrende Verlosungsaktion von GoldenPlay; das aktuelle Unternehmensprofil beschreibt an Einzahlungen gekoppelte Teilnahmen und einen wiederkehrenden Geldpreis.",
     uk: "Регулярна акція GoldenPlay з розіграшем; в актуальних матеріалах профілю компанії описано квитки розіграшу, пов'язані з депозитами, і регулярний грошовий приз.",
     ru: "Регулярная акция GoldenPlay с розыгрышем; в актуальных материалах профиля компании описаны билеты розыгрыша за депозиты и регулярный денежный приз.",
+    uz: "GoldenPlay kazinosining muntazam tirajli aksiyasi; joriy kompaniya profili materiallarida depozit evaziga beriladigan ishtirok imkoniyatlari va muntazam naqd pul sovrini tasvirlangan.",
   },
   // regencycasino, eucasino, slotsmagic
   {
@@ -217,6 +240,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur für die erste Einzahlung. 100% Einzahlungsbonus bis £25 und 50 Freispiele, beide mit 10x Umsatzbedingung.",
     uk: "Лише на перший депозит. 100% до £25 і 50 безкоштовних обертань, в обох випадках відіграш 10x.",
     ru: "Только на первый депозит. Бонус 100% до £25 и 50 бесплатных вращений, оба с отыгрышем 10x.",
+    uz: "Faqat birinchi depozit uchun. 25 £ gacha depozitga 100% bonus va 50 ta bepul aylanish, ikkalasi ham 10x aylantirish talabi bilan.",
   },
   // casino-redkings
   {
@@ -226,6 +250,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur für die erste Einzahlung. 100 Freispiele mit 10x Umsatzbedingung auf Freispielgewinne.",
     uk: "Лише на перший депозит. 100 безкоштовних обертань, відіграш 10x для виграшів із безкоштовних обертань.",
     ru: "Только на первый депозит. 100 бесплатных вращений; отыгрыш выигрышей с них — 10x.",
+    uz: "Faqat birinchi depozit uchun. 100 ta bepul aylanish; bepul aylanishlardan olingan yutuqlar 10x aylantiriladi.",
   },
   // jackpotstar
   {
@@ -235,6 +260,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Zahle bei deiner ersten Einzahlung £20 ein und erhalte 100 Freispiele (£0.10) für 777 Strike; für Freispielgewinne gilt eine 10x Umsatzbedingung innerhalb von 30 Tagen (nur Slots).",
     uk: "За перший депозит £20 нараховується 100 безкоштовних обертань (£0.10) у грі 777 Strike; для виграшів із безкоштовних обертань діє відіграш 10x протягом 30 днів (лише слоти).",
     ru: "При первом депозите £20 начисляется 100 бесплатных вращений (£0.10) в игре 777 Strike; выигрыши с бесплатных вращений нужно отыграть 10x в течение 30 дней (только в слотах).",
+    uz: "Birinchi depozit sifatida 20 £ kiriting va 777 Strike oʻyinida 100 ta bepul aylanish (0.10 £) oling; bepul aylanishlardan olingan yutuqlar 30 kun ichida 10x aylantirilishi kerak (faqat slotlarda).",
   },
   // playojo-bingo
   {
@@ -244,6 +270,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Bingo-Willkommenspaket zur ersten Einzahlung: 500 kostenlose Bingo-Tickets plus 50 Freispiele; Gewinne werden als Echtgeld ohne Umsatzbedingungen ausgezahlt.",
     uk: "Вітальний пакет для бінго за перший депозит: 500 безкоштовних квитків на бінго плюс 50 безкоштовних обертань; виграші виплачуються реальними грошима без відіграшу.",
     ru: "Приветственный пакет для бинго на первый депозит: 500 бесплатных билетов бинго плюс 50 бесплатных вращений; выигрыши выплачиваются реальными деньгами без отыгрыша.",
+    uz: "Birinchi depozit uchun bingo xush kelibsiz paketi: 500 ta bepul bingo chiptasi va 50 ta bepul aylanish; yutuqlar aylantirish talabisiz naqd pul sifatida toʻlanadi.",
   },
   // inkabet
   {
@@ -253,6 +280,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "30× Bonus und Freispielgewinne",
     uk: "30× бонус і виграші з безкоштовних обертань",
     ru: "30× от бонуса и выигрышей с бесплатных вращений",
+    uz: "Bonus va bepul aylanish yutuqlari: 30×",
   },
   // betsson
   {
@@ -262,6 +290,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "30x Einzahlung und Bonus; Freispielgewinne 35x",
     uk: "30x депозит і бонус; виграші з безкоштовних обертань 35x",
     ru: "30x от суммы депозита и бонуса; выигрыши с бесплатных вращений — 35x",
+    uz: "Depozit va bonus: 30x; bepul aylanish yutuqlari: 35x",
   },
   // starcasino, nordicbet, rizk
   {
@@ -271,6 +300,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die wesentlichen Angebotsbedingungen gehen aus den vorliegenden Quellen nicht hervor.",
     uk: "Істотних умов пропозиції дані з джерел не розкривають.",
     ru: "Существенных условий предложения в данных источника нет.",
+    uz: "Taklifning asosiy mexanikasi manba dalillari bilan aniqlanmagan.",
   },
   // supercasino
   {
@@ -280,6 +310,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "35× Bonus; Freispielgewinne 30×",
     uk: "35× бонус; виграші з безкоштовних обертань 30×",
     ru: "35× от бонуса; выигрыши с бесплатных вращений — 30×",
+    uz: "Bonus: 35×; bepul aylanish yutuqlari: 30×",
   },
   // skol-casino, gday-casino, diamond7, 21-prive, slotnite
   {
@@ -289,6 +320,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Umsatzbedingung wird in den aktuellen Angebotsunterlagen nicht gesondert angegeben.",
     uk: "Вимоги до відіграшу в актуальних даних про пропозицію окремо не зазначено.",
     ru: "Требования по отыгрышу в актуальных данных о предложении отдельно не указаны.",
+    uz: "Joriy taklif dalillarida aylantirish talabi alohida koʻrsatilmagan.",
   },
   // hello-casino
   {
@@ -298,6 +330,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "35× Bonus plus Einzahlung, sofern nicht anders angegeben.",
     uk: "35× бонус плюс депозит, якщо не зазначено інше.",
     ru: "35× от суммы бонуса и депозита, если не указано иное.",
+    uz: "Agar boshqacha koʻrsatilmagan boʻlsa, bonus va depozit 35× aylantiriladi.",
   },
   // playojo
   {
@@ -307,6 +340,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Keine Umsatzbedingungen; Freispielgewinne werden als Echtgeld ausgezahlt",
     uk: "Без відіграшу; виграші з безкоштовних обертань виплачуються реальними грошима",
     ru: "Без отыгрыша; выигрыши с бесплатных вращений выплачиваются реальными деньгами",
+    uz: "Aylantirish talabi yoʻq; bepul aylanish yutuqlari naqd pul sifatida toʻlanadi",
   },
   // goldenplay
   {
@@ -316,6 +350,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Wiederkehrende Verlosungsaktion",
     uk: "Регулярна акція з розіграшем",
     ru: "Регулярная акция с розыгрышем",
+    uz: "Muntazam tirajli aksiya",
   },
   // regencycasino
   {
@@ -325,6 +360,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "10x Bonus und Freispielgewinne, nur Slots",
     uk: "10x бонус і виграші з безкоштовних обертань, лише слоти",
     ru: "10x от бонуса и выигрышей с бесплатных вращений, только в слотах",
+    uz: "Bonus va bepul aylanish yutuqlari: 10x, faqat slotlarda",
   },
   // eucasino, slotsmagic
   {
@@ -334,6 +370,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "10x Bonus und 10x Freispielgewinne, nur Slots",
     uk: "10x бонус і 10x виграші з безкоштовних обертань, лише слоти",
     ru: "10x от бонуса и 10x от выигрышей с бесплатных вращений, только в слотах",
+    uz: "Bonus 10x va bepul aylanish yutuqlari 10x, faqat slotlarda",
   },
   // casino-redkings
   {
@@ -343,6 +380,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "10x Freispielgewinne, nur Slots",
     uk: "10x виграші з безкоштовних обертань, лише слоти",
     ru: "10x от выигрышей с бесплатных вращений, только в слотах",
+    uz: "Bepul aylanish yutuqlari: 10x, faqat slotlarda",
   },
   // jackpotstar
   {
@@ -352,6 +390,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "10x Freispielgewinne innerhalb von 30 Tagen (nur Slots)",
     uk: "10x виграші з безкоштовних обертань протягом 30 днів (лише слоти)",
     ru: "10x от выигрышей с бесплатных вращений в течение 30 дней (только в слотах)",
+    uz: "Bepul aylanish yutuqlari: 10x, 30 kun ichida (faqat slotlarda)",
   },
   // playojo-bingo
   {
@@ -361,6 +400,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Keine Umsatzbedingungen",
     uk: "Без відіграшу",
     ru: "Без отыгрыша",
+    uz: "Aylantirish talabisiz",
   },
   // inkabet
   {
@@ -370,6 +410,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neukunden; erste Einzahlung innerhalb von 10 Tagen; bestimmte Zahlungsmethoden sind ausgeschlossen.",
     uk: "Нові клієнти; перший депозит протягом 10 днів; деякі способи оплати не беруть участі.",
     ru: "Новые клиенты; первый депозит в течение 10 дней; некоторые способы оплаты исключены.",
+    uz: "Yangi mijozlar; birinchi depozit 10 kun ichida; ayrim toʻlov usullari istisno qilinadi.",
   },
   // betsafe
   {
@@ -379,6 +420,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neue Spieler; die genauen Einzelheiten lassen sich nur anhand der Angebotsbedingungen klären.",
     uk: "Нові гравці; точні істотні умови визначаються правилами пропозиції.",
     ru: "Новые игроки; точные существенные условия нужно смотреть в условиях предложения.",
+    uz: "Yangi oʻyinchilar; aniq asosiy mexanikani bilish uchun taklif shartlari kerak.",
   },
   // betsson
   {
@@ -388,6 +430,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neukunden mit Registrierung nach dem 20. Oktober 2025, nur erste Einzahlung.",
     uk: "Нові клієнти, зареєстровані після 20 жовтня 2025 року, лише перший депозит.",
     ru: "Новые клиенты, зарегистрированные после 20 октября 2025 года; только на первый депозит.",
+    uz: "2025-yil 20-oktabrdan keyin roʻyxatdan oʻtgan yangi mijozlar, faqat birinchi depozit.",
   },
   // supercasino
   {
@@ -397,6 +440,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neukunden; 18+ oder das jeweils geltende gesetzliche Mindestalter, je nachdem, welches höher ist.",
     uk: "Нові клієнти; 18+ або встановлений законом вік, якщо він вищий.",
     ru: "Новые клиенты; 18+ или установленный законом возраст, если он выше.",
+    uz: "Yangi mijozlar; 18+ yoki amaldagi qonuniy yosh — qaysi biri katta boʻlsa.",
   },
   // skol-casino, hello-casino, gday-casino, diamond7, 21-prive, slotnite
   {
@@ -406,6 +450,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neue teilnahmeberechtigte Spieler; es gelten die genauen lokalen Teilnahmevoraussetzungen und die aktuellen Bedingungen des Anbieters.",
     uk: "Нові гравці, які відповідають вимогам; діють точні місцеві правила участі та актуальні умови оператора.",
     ru: "Новые игроки, которые соответствуют требованиям; действуют точные местные правила участия и актуальные условия оператора.",
+    uz: "Talablarga mos yangi oʻyinchilar; aniq mahalliy talablar va operatorning joriy shartlari amal qiladi.",
   },
   // playojo, eucasino, casino-redkings
   {
@@ -415,6 +460,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neue Spieler, nur erste Einzahlung.",
     uk: "Нові гравці, лише перший депозит.",
     ru: "Новые игроки, только на первый депозит.",
+    uz: "Yangi oʻyinchilar, faqat birinchi depozit.",
   },
   // goldenplay
   {
@@ -424,6 +470,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Teilnahmeberechtigte Spieler in unterstützten Märkten; es gelten die aktuellen Aktionsbedingungen und lokale Einschränkungen.",
     uk: "Гравці, які відповідають вимогам, у підтримуваних регіонах; діють актуальні умови акції та місцеві обмеження.",
     ru: "Игроки в поддерживаемых регионах, которые соответствуют требованиям; действуют актуальные условия акции и местные ограничения.",
+    uz: "Qoʻllab-quvvatlanadigan mamlakatlardagi talablarga mos oʻyinchilar; aksiyaning joriy shartlari va mahalliy cheklovlar amal qiladi.",
   },
   // regencycasino, slotsmagic
   {
@@ -433,6 +480,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neue Spieler, nur erste Einzahlung. Wird automatisch gutgeschrieben; eine Stornierung kann beantragt werden.",
     uk: "Нові гравці, лише перший депозит. Нараховується автоматично; скасування — за запитом.",
     ru: "Новые игроки, только на первый депозит. Начисляется автоматически; можно запросить отмену.",
+    uz: "Yangi oʻyinchilar, faqat birinchi depozit. Avtomatik hisobga oʻtkaziladi; bekor qilishni soʻrash mumkin.",
   },
   // jackpotstar
   {
@@ -442,6 +490,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neukunden mit erster Einzahlung in Großbritannien.",
     uk: "Нові гравці у Великій Британії, які роблять перший депозит.",
     ru: "Новые игроки в Великобритании, которые впервые вносят депозит.",
+    uz: "Buyuk Britaniyada birinchi marta depozit qilayotgan yangi oʻyinchilar.",
   },
   // playojo-bingo
   {
@@ -451,6 +500,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Neue Einzahler in Großbritannien; ein Willkommenspaket pro Spieler – du kannst nicht sowohl das Willkommensangebot der Online-Spielothek als auch das Bingo-Angebot nutzen.",
     uk: "Нові гравці у Великій Британії, які роблять депозит; один вітальний пакет на гравця — не можна отримати і пропозицію для казино, і пропозицію для бінго.",
     ru: "Новые игроки в Великобритании, которые вносят депозит; один приветственный пакет на игрока — получить сразу и предложение казино, и предложение бинго нельзя.",
+    uz: "Buyuk Britaniyada depozit qilayotgan yangi oʻyinchilar; har bir oʻyinchiga bitta xush kelibsiz paketi — kazino va bingo takliflarining ikkalasini olib boʻlmaydi.",
   },
   // inkabet
   {
@@ -460,6 +510,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Freispiele für Sweet Bonanza 1000",
     uk: "Безкоштовні обертання в грі Sweet Bonanza 1000",
     ru: "Бесплатные вращения в игре Sweet Bonanza 1000",
+    uz: "Sweet Bonanza 1000 oʻyinida bepul aylanishlar",
   },
   // inkabet
   {
@@ -469,6 +520,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Maximaler Einsatz mit Bonus S/20",
     uk: "Максимальна ставка з бонусом S/20",
     ru: "Максимальная ставка с бонусом S/20",
+    uz: "Bonus bilan maksimal stavka S/20",
   },
   // inkabet
   {
@@ -478,6 +530,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Umsatzbedingung für Bonus/Freispiele 30×",
     uk: "Відіграш бонусу/безкоштовних обертань 30×",
     ru: "Отыгрыш бонуса и бесплатных вращений: 30×",
+    uz: "Bonus/bepul aylanishlar uchun aylantirish talabi: 30×",
   },
   // inkabet
   {
@@ -487,6 +540,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Skrill, Neteller und Paysafecard gehören zu den Einzahlungsmethoden, die nicht für das Angebot zählen",
     uk: "Skrill, Neteller і Paysafecard належать до способів депозиту, з якими пропозиція не діє",
     ru: "Skrill, Neteller и Paysafecard входят в число способов депозита, которые не дают права на предложение",
+    uz: "Skrill, Neteller va Paysafecard bonus uchun hisobga olinmaydigan depozit usullari qatoriga kiradi",
   },
   // betsson, playojo
   {
@@ -496,6 +550,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Mindesteinzahlung SEK 100.",
     uk: "Мінімальний депозит SEK 100.",
     ru: "Минимальный депозит SEK 100.",
+    uz: "Minimal depozit 100 SEK.",
   },
   // betsson
   {
@@ -505,6 +560,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Einzahlung und Bonus müssen vor einer Auszahlung 30-mal in der Online-Spielothek umgesetzt werden.",
     uk: "Депозит і бонус потрібно відіграти 30 разів у казино до виведення коштів.",
     ru: "Депозит и бонус нужно отыграть в казино 30 раз до вывода средств.",
+    uz: "Pul yechishdan oldin depozit va bonus kazinoda 30 marta aylantirilishi kerak.",
   },
   // betsson
   {
@@ -514,6 +570,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Freispiele gelten für Pirots 4 mit SEK 2 pro Dreh; ihre Gewinne müssen 35-mal umgesetzt werden.",
     uk: "Безкоштовні обертання діють у грі Pirots 4, SEK 2 за обертання; виграші з них потрібно відіграти 35 разів.",
     ru: "Бесплатные вращения — в игре Pirots 4 по SEK 2 за вращение; выигрыши с них отыгрываются 35 раз.",
+    uz: "Bepul aylanishlar Pirots 4 oʻyinida, har bir aylanish 2 SEK; ulardan olingan yutuqlar 35 marta aylantiriladi.",
   },
   // betsson
   {
@@ -523,6 +580,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Maximaler Einsatz beim Umsetzen: SEK 60 pro Runde oder SEK 5 pro Linie.",
     uk: "Максимальна ставка під час відіграшу — SEK 60 за раунд або SEK 5 за лінію.",
     ru: "Максимальная ставка во время отыгрыша — SEK 60 за раунд или SEK 5 за линию.",
+    uz: "Aylantirish davomida maksimal stavka har bir raund uchun 60 SEK yoki har bir chiziq uchun 5 SEK.",
   },
   // betsson
   {
@@ -532,6 +590,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "60 Tage Zeit, um die Umsatzbedingungen zu erfüllen.",
     uk: "60 днів на виконання вимог до відіграшу.",
     ru: "На отыгрыш даётся 60 дней.",
+    uz: "Aylantirish talabini bajarish uchun 60 kun beriladi.",
   },
   // supercasino
   {
@@ -541,6 +600,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "40 Freispiele täglich an 5 Tagen",
     uk: "40 безкоштовних обертань щодня протягом 5 днів",
     ru: "40 бесплатных вращений ежедневно в течение 5 дней",
+    uz: "Har kuni 40 ta bepul aylanish, 5 kun davomida",
   },
   // supercasino
   {
@@ -550,6 +610,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Freispiele verfallen nach 24 Stunden",
     uk: "Безкоштовні обертання діють 24 години",
     ru: "Бесплатные вращения действуют 24 часа",
+    uz: "Bepul aylanishlarning amal qilish muddati 24 soat",
   },
   // supercasino
   {
@@ -559,6 +620,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Maximale Umwandlung in Echtgeld NZ$2,500",
     uk: "Максимальна сума конвертації в реальні гроші NZ$2,500",
     ru: "Максимальная сумма для перевода в реальные деньги — NZ$2,500",
+    uz: "Naqd pulga aylantirishning maksimal miqdori 2,500 NZ$",
   },
   // supercasino
   {
@@ -568,6 +630,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Maximaler Einsatz mit Bonus NZ$5",
     uk: "Максимальна ставка з бонусом NZ$5",
     ru: "Максимальная ставка с бонусом NZ$5",
+    uz: "Bonus bilan maksimal stavka 5 NZ$",
   },
   // supercasino
   {
@@ -577,6 +640,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Einzahlungen per Skrill, Neteller und Paysafecard ausgeschlossen",
     uk: "Депозити через Skrill, Neteller і Paysafecard не беруть участі",
     ru: "Депозиты через Skrill, Neteller и Paysafecard исключены",
+    uz: "Skrill, Neteller va Paysafecard orqali depozitlar hisobga olinmaydi",
   },
   // skol-casino, slotnite
   {
@@ -586,6 +650,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Mindesteinzahlung €10.",
     uk: "Мінімальний депозит €10.",
     ru: "Минимальный депозит €10.",
+    uz: "Minimal depozit 10 €.",
   },
   // skol-casino, gday-casino, diamond7
   {
@@ -595,6 +660,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Dass das Angebot angezeigt wird, sagt nichts über eine lokale behördliche Genehmigung oder eine Freigabe durch den Partner aus.",
     uk: "Показ пропозиції не означає схвалення місцевого регулятора чи партнера.",
     ru: "Показ предложения не означает одобрения местным регулятором или партнёром.",
+    uz: "Taklifning koʻrsatilishi mahalliy regulyator yoki hamkor tomonidan tasdiqlanganini bildirmaydi.",
   },
   // hello-casino, gday-casino, diamond7, 21-prive
   {
@@ -604,6 +670,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Mindesteinzahlung €20.",
     uk: "Мінімальний депозит €20.",
     ru: "Минимальный депозит €20.",
+    uz: "Minimal depozit 20 €.",
   },
   // hello-casino
   {
@@ -613,6 +680,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Der Bonus verfällt nach 30 Tagen; die Freispiele verfallen nach 10 Tagen.",
     uk: "Бонус діє 30 днів; обертання — 10 днів.",
     ru: "Бонус действует 30 дней; вращения — 10 дней.",
+    uz: "Bonusning amal qilish muddati 30 kun, aylanishlarniki esa 10 kun.",
   },
   // hello-casino
   {
@@ -622,6 +690,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Maximaler Einsatz mit Bonus €5.",
     uk: "Максимальна ставка з бонусом €5.",
     ru: "Максимальная ставка с бонусом €5.",
+    uz: "Bonus bilan maksimal stavka 5 €.",
   },
   // playojo
   {
@@ -631,6 +700,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Freispiele gelten für Book of Dead mit SEK 1 pro Dreh.",
     uk: "Обертання діють у грі Book of Dead, SEK 1 за обертання.",
     ru: "Вращения — в игре Book of Dead по SEK 1 за вращение.",
+    uz: "Aylanishlar Book of Dead oʻyinida, har bir aylanish 1 SEK.",
   },
   // playojo
   {
@@ -640,6 +710,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nur gültig, wenn es deine erste Einzahlung bei einem von Skill On Net lizenzierten Anbieter ist.",
     uk: "Діє, лише якщо це перший депозит у будь-якому казино з ліцензією Skill On Net.",
     ru: "Действует, только если это первый депозит в любом из казино с лицензией Skill On Net.",
+    uz: "Faqat Skill On Net litsenziyasi ostidagi kazinolarning birortasida qilingan birinchi depozit uchun amal qiladi.",
   },
   // regencycasino
   {
@@ -649,6 +720,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Freispiele gelten für Big Bass Splash mit £0.10 pro Dreh.",
     uk: "Безкоштовні обертання діють у грі Big Bass Splash, £0.10 за обертання.",
     ru: "Бесплатные вращения — в игре Big Bass Splash по £0.10 за вращение.",
+    uz: "Bepul aylanishlar Big Bass Splash oʻyinida, har bir aylanish 0.10 £.",
   },
   // regencycasino, eucasino, slotsmagic
   {
@@ -658,6 +730,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Maximaler Einsatz beim Umsetzen: 10% (mindestens £0.10) der Freispielgewinne und des Bonus oder £5 – je nachdem, was niedriger ist.",
     uk: "Максимальна ставка під час відіграшу: 10% (мінімум £0.10) від виграшів із безкоштовних обертань і бонусу або £5 — залежно від того, що менше.",
     ru: "Максимальная ставка во время отыгрыша: 10% (минимум £0.10) от выигрышей с бесплатных вращений и бонуса или £5 — что меньше.",
+    uz: "Aylantirish davomida maksimal stavka — bepul aylanish yutuqlari va bonus summasining 10% (kamida 0.10 £) yoki 5 £, qaysi biri kichik boʻlsa.",
   },
   // regencycasino
   {
@@ -667,6 +740,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Das Angebot kann nach der Gutschrift auf Wunsch storniert werden.",
     uk: "Після нарахування пропозицію можна скасувати за запитом.",
     ru: "После начисления предложение можно отменить по запросу.",
+    uz: "Taklif hisobga oʻtkazilgandan keyin soʻrov boʻyicha bekor qilinishi mumkin.",
   },
   // regencycasino, eucasino, slotsmagic
   {
@@ -676,6 +750,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Freispiele müssen vor dem eingezahlten Guthaben genutzt werden.",
     uk: "Обертання потрібно використати раніше, ніж внесені кошти.",
     ru: "Сначала нужно использовать вращения, затем — внесённые средства.",
+    uz: "Aylanishlar depozit qilingan mablagʻdan oldin ishlatilishi kerak.",
   },
   // eucasino, slotsmagic
   {
@@ -685,6 +760,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Freispiele gelten für Big Bass Bonanza mit £0.10 pro Dreh.",
     uk: "Безкоштовні обертання діють у грі Big Bass Bonanza, £0.10 за обертання.",
     ru: "Бесплатные вращения — в игре Big Bass Bonanza по £0.10 за вращение.",
+    uz: "Bepul aylanishlar Big Bass Bonanza oʻyinida, har bir aylanish 0.10 £.",
   },
   // eucasino, casino-redkings
   {
@@ -694,6 +770,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein Bonus hindert dich nicht daran, dein eigenes eingezahltes Guthaben auszuzahlen.",
     uk: "Бонус не блокує виведення твого власного депозитного балансу.",
     ru: "Бонус не мешает вывести остаток твоего собственного депозита.",
+    uz: "Bonus oʻzingiz depozit qilgan balansni yechib olishga toʻsqinlik qilmaydi.",
   },
   // slotsmagic, casino-redkings
   {
@@ -703,6 +780,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Mindesteinzahlung £20: Die Angebotsseite nennt keine, daher gilt die Standardregel aus der GB-Bonusrichtlinie der Marke („Sofern nicht anders angegeben, beträgt die Mindesteinzahlung für jeden Einzahlungsbonus £20“).",
     uk: "Мінімальний депозит £20: на сторінці пропозиції його не вказано, тому діє стандартне правило з GB Bonus Policy бренду («Якщо не зазначено інше, мінімальний депозит для отримання будь-якого депозитного бонусу — £20»).",
     ru: "Минимальный депозит £20: на странице предложения он не указан, поэтому действует стандартное правило из бонусной политики бренда для Великобритании (GB Bonus Policy): «Если не указано иное, минимальный депозит для получения любого депозитного бонуса — £20».",
+    uz: "Minimal depozit 20 £: taklif sahifasida u koʻrsatilmagan, shuning uchun brendning GB Bonus Policy hujjatidagi standart qoida amal qiladi (“Agar boshqacha koʻrsatilmagan boʻlsa, har qanday depozit bonusini olish uchun minimal depozit 20 £”).",
   },
   // casino-redkings
   {
@@ -712,6 +790,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Die Freispiele gelten für Sahara Riches Cash Collect mit £0.10 pro Dreh.",
     uk: "Безкоштовні обертання діють у грі Sahara Riches Cash Collect, £0.10 за обертання.",
     ru: "Бесплатные вращения — в игре Sahara Riches Cash Collect по £0.10 за вращение.",
+    uz: "Bepul aylanishlar Sahara Riches Cash Collect oʻyinida, har bir aylanish 0.10 £.",
   },
   // casino-redkings
   {
@@ -721,6 +800,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Maximaler Einsatz beim Umsetzen: 10% (mindestens £0.10) der Freispielgewinne oder £5 – je nachdem, was niedriger ist.",
     uk: "Максимальна ставка під час відіграшу: 10% (мінімум £0.10) від виграшів із безкоштовних обертань або £5 — залежно від того, що менше.",
     ru: "Максимальная ставка во время отыгрыша: 10% (минимум £0.10) от выигрышей с бесплатных вращений или £5 — что меньше.",
+    uz: "Aylantirish davomida maksimal stavka — bepul aylanish yutuqlarining 10% (kamida 0.10 £) yoki 5 £, qaysi biri kichik boʻlsa.",
   },
   // jackpotstar
   {
@@ -730,6 +810,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Mindesteinzahlung bei der ersten Einzahlung £20",
     uk: "Мінімальний перший депозит £20",
     ru: "Минимальный первый депозит £20",
+    uz: "Minimal birinchi depozit 20 £",
   },
   // jackpotstar
   {
@@ -739,6 +820,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "100 Freispiele für 777 Strike zu je £0.10",
     uk: "100 безкоштовних обертань у грі 777 Strike по £0.10",
     ru: "100 бесплатных вращений в игре 777 Strike по £0.10",
+    uz: "777 Strike oʻyinida 100 ta bepul aylanish, har biri 0.10 £",
   },
   // jackpotstar
   {
@@ -748,6 +830,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "10x Umsatzbedingung auf Freispielgewinne, 30 Tage",
     uk: "Відіграш 10x для виграшів із безкоштовних обертань, 30 днів",
     ru: "Отыгрыш 10x для выигрышей с бесплатных вращений, 30 дней",
+    uz: "Bepul aylanish yutuqlari uchun 10x aylantirish, 30 kun",
   },
   // jackpotstar
   {
@@ -757,6 +840,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Maximaler Einsatz 10% der Freispielgewinne oder £5",
     uk: "Макс. ставка 10% від виграшів із безкоштовних обертань або £5",
     ru: "Макс. ставка: 10% от выигрышей с бесплатных вращений или £5",
+    uz: "Maksimal stavka bepul aylanish yutuqlarining 10% yoki 5 £",
   },
   // jackpotstar
   {
@@ -766,6 +850,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Freispiele können den Hauptgewinn nicht auslösen",
     uk: "Безкоштовні обертання не можуть активувати джекпот",
     ru: "Бесплатные вращения не активируют джекпот",
+    uz: "Bepul aylanishlar jekpotni ishga tushirmaydi",
   },
   // jackpotstar
   {
@@ -775,6 +860,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Ein Einzahlungs- oder Willkommensbonus pro 72 Stunden über alle SkillOnNet-Seiten hinweg",
     uk: "Один депозитний/вітальний бонус на 72 год у всіх казино SkillOnNet",
     ru: "Один депозитный или приветственный бонус за 72 ч на все казино SkillOnNet",
+    uz: "Barcha SkillOnNet kazinolarida 72 soat ichida bitta depozit/xush kelibsiz bonusi",
   },
   // 21-prive
   {
@@ -784,6 +870,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Frühere Beschwerden über Auszahlungen bleiben aus redaktioneller Sicht ein Vorbehalt.",
     uk: "Давніші скарги щодо виведення коштів залишаються редакційним застереженням.",
     ru: "Прошлые жалобы на вывод средств остаются редакционной оговоркой.",
+    uz: "Pul yechish boʻyicha ilgari kelgan shikoyatlar tahririy cheklov sifatida qolmoqda.",
   },
   // playojo-bingo
   {
@@ -793,6 +880,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Mindesteinzahlung bei der ersten Einzahlung £10 (laut Sekundärquelle)",
     uk: "Мінімальний перший депозит £10 (вторинне джерело)",
     ru: "Минимальный первый депозит £10 (вторичный источник)",
+    uz: "Minimal birinchi depozit 10 £ (qoʻshimcha variant)",
   },
   // playojo-bingo
   {
@@ -802,6 +890,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "500 kostenlose Bingo-Tickets",
     uk: "500 безкоштовних квитків на бінго",
     ru: "500 бесплатных билетов бинго",
+    uz: "500 ta bepul bingo chiptasi",
   },
   // playojo-bingo
   {
@@ -811,6 +900,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "50 Freispiele",
     uk: "50 безкоштовних обертань",
     ru: "50 бесплатных вращений",
+    uz: "50 ta bepul aylanish",
   },
   // playojo-bingo
   {
@@ -820,6 +910,7 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Nicht mit dem Willkommensangebot der Online-Spielothek kombinierbar",
     uk: "Не поєднується з вітальною пропозицією для казино",
     ru: "Нельзя совместить с приветственным предложением казино",
+    uz: "Kazino xush kelibsiz taklifi bilan birlashtirib boʻlmaydi",
   },
   // slotnite
   {
@@ -829,5 +920,6 @@ export const OFFER_ENTRIES: readonly CasinoEditorialEntry[] = [
     de: "Aktuelle Beschwerden über verzögerte Auszahlungen bleiben aus redaktioneller Sicht ein Vorbehalt.",
     uk: "Нещодавні скарги на затримки виплат залишаються редакційним застереженням.",
     ru: "Недавние жалобы на задержки выплат остаются редакционной оговоркой.",
+    uz: "Yaqinda toʻlovlar kechikishi boʻyicha kelgan shikoyatlar tahririy cheklov sifatida qolmoqda.",
   },
 ];

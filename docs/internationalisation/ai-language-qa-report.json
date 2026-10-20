@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-02",
   "assurance": "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW",
   "sourceLocale": "en-GB",
-  "catalogDigest": "9fba3e58b9362886e244fe8ee6c47038093fb001b9237d7fc6939cf1a9345506",
+  "catalogDigest": "6ac20785e069a164a9e94af0d5506c0a5cd646a2b153505060f806efed597a04",
   "status": "PASS",
   "locales": [
     {
@@ -272,6 +272,28 @@
     },
     {
       "locale": "ru-RU",
+      "status": "PASS",
+      "checkedStrings": 785,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS",
+        "NATURAL_PUBLIC_LANGUAGE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "uz-UZ",
       "status": "PASS",
       "checkedStrings": 785,
       "checks": {

@@ -435,7 +435,7 @@ test("the footer notice block is hidden from every visitor and kept whole (Found
     assert.ok(compliance.includes(marker), marker);
   }
   for (const key of ["ageNotice", "licensedLinks", "supportLead", "entity"]) {
-    assert.equal(catalog.match(new RegExp(`^    ${key}: "`, "gm"))?.length, 15, `${key} stays in every footer language`);
+    assert.equal(catalog.match(new RegExp(`^    ${key}: "`, "gm"))?.length, 16, `${key} stays in every footer language`);
   }
   // The block carried the rule above the legal links; while it is hidden the baseline carries it.
   assert.ok(readFileSync("components/public-shell/PublicShell.module.css", "utf8")
@@ -468,7 +468,7 @@ test("the footer links to the brand's five social profiles and the schema names 
   assert.ok(links.includes('rel="me noopener noreferrer" target="_blank"'));
   assert.ok(links.includes('<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">'));
   assert.ok(links.includes('<span className="srOnly">{profile.name} {opensInNewTab}</span>'));
-  assert.equal(catalog.match(/^    social: "/gm)?.length, 15, "the row is labelled in every footer language");
+  assert.equal(catalog.match(/^    social: "/gm)?.length, 16, "the row is labelled in every footer language");
   // 44px targets on phones.
   assert.ok(styles.includes("  .footerSocial a { width:44px; height:44px; }"));
 
@@ -647,7 +647,7 @@ test("the footer links the pages that had no internal link: pause plan, family a
   const catalog = readFileSync("lib/i18n/public-shell-catalog.ts", "utf8");
   for (const [key, href] of [["pausePlan", "/pause-plan"], ["beside", "/beside"], ["pauseStatistics", "/pause-statistics"], ["gamblingControl", "/gambling-control"], ["forCreators", "/for-creators"]]) {
     assert.ok(footer.includes(`[footer.${key}, "${href}"]`), `${href} is a footer link`);
-    assert.equal(catalog.match(new RegExp(`^    ${key}: "`, "gm"))?.length, 15, `${key} is labelled in every footer language`);
+    assert.equal(catalog.match(new RegExp(`^    ${key}: "`, "gm"))?.length, 16, `${key} is labelled in every footer language`);
   }
   // The desktop Home footer keeps its height: its screen paging measures it.
   assert.ok(footer.includes('const extraLinks = new Set(["/pause-plan", "/beside", "/pause-statistics", "/gambling-control", "/for-creators"]);'));

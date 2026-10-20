@@ -63,6 +63,10 @@ export const PROGRAMME_OUTPUT_SAFETY_PATTERNS: Record<ProgrammeLocale, LocalePat
     clinicalOrSafety: [/диагно[зс]\p{L}*/iu, /(?:оценк|показател|балл)\p{L}* риска/iu, /безопасно играть/iu, /где играть/iu, /сам\p{L}+ безопасн\p{L}*/iu, /\bxp\b/i],
     commercialTerms: [/казино/iu, /оператор\p{L}*/iu, /бонус\p{L}*/iu],
   },
+  "uz-UZ": {
+    clinicalOrSafety: [/tashxis\p{L}*/iu, /diagno[zs]\p{L}*/iu, /xavf (?:bal|baho|koʻrsatkich|daraja)\p{L}*/iu, /xavfsiz oʻyna\p{L}*/iu, /qayerda oʻyna\p{L}*/iu, /eng xavfsiz/iu, /\bxp\b/i],
+    commercialTerms: [/kazino\p{L}*/iu, /operator\p{L}*/iu, /bonus\p{L}*/iu],
+  },
 };
 
 /**
