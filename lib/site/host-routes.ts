@@ -99,8 +99,12 @@ export const SITE_ROUTE_MANIFEST = [
   { path: "/api/presentation", match: "EXACT", siteClass: "SHARED" },
 
   // ------------------------------------------------------------------ HELP
-  { path: "/program", match: "SUBTREE", siteClass: "HELP" },
-  { path: "/10-steps", match: "EXACT", siteClass: "HELP" },
+  // Founder decision, 20 October 2026: the Programme and the public 10 Steps page stay on BOTH
+  // hosts, each under its own name and shell, so phase 3 never redirects them. `SHARED`, not
+  // `HELP`: the help host serves them and the main host keeps serving them after
+  // `HELP_SITE_REDIRECTS` is on. See RFC-057 §5 and the decision record of 17 October 2026.
+  { path: "/program", match: "SUBTREE", siteClass: "SHARED" },
+  { path: "/10-steps", match: "EXACT", siteClass: "SHARED" },
   // The UK help-ad landing (noindex).
   { path: "/start", match: "EXACT", siteClass: "HELP" },
   { path: "/pause-plan", match: "EXACT", siteClass: "HELP" },
