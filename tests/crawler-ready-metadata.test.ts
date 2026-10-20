@@ -477,7 +477,8 @@ test("llms.txt leads with the Programme, stays factual and uses canonical URLs o
   assert.match(body, /editor score from 0 to 10/);
   assert.ok(body.indexOf("## 10-Step Control Programme") < body.indexOf("## Gambling control answers"));
   assert.ok(body.indexOf("## Gambling control answers") < body.indexOf("## Markets"));
-  for (const path of ["/en/gambling-control", "/sv/control-without-quitting", "/da/gambling-control-tools", "/en/can-you-trust-b4gamble"]) {
+  // UZ-LICENSED-OPERATORS-2026-10-20: the Uzbek register page, in English and Uzbek only.
+  for (const path of ["/en/gambling-control", "/sv/control-without-quitting", "/da/gambling-control-tools", "/en/can-you-trust-b4gamble", "/en/uzbekistan-licensed-operators", "/uz/uzbekistan-licensed-operators"]) {
     assert.ok(body.includes(`(${absoluteUrl(path)})`), path);
   }
   for (const path of ["/en/bonuses", "/sv/best-offers", "/da/casinos", "/de/bonuses", "/sv/casino/betsson", "/de/casino/playojo"]) {
@@ -489,7 +490,7 @@ test("llms.txt leads with the Programme, stays factual and uses canonical URLs o
   // No link hops through the language-neutral redirect.
   const links = [...body.matchAll(/\]\((https?:\/\/[^)]+)\)/g)].map((match) => new URL(match[1]).pathname);
   for (const pathname of links) {
-    assert.ok(/^\/(?:en|de|sv|da)(?:\/|$)/.test(pathname) || ["/program", "/bonus-guide", "/affiliate-disclosure", "/privacy", "/terms", "/llms-full.txt"].includes(pathname), pathname);
+    assert.ok(/^\/(?:en|de|sv|da|uz)(?:\/|$)/.test(pathname) || ["/program", "/bonus-guide", "/affiliate-disclosure", "/privacy", "/terms", "/llms-full.txt"].includes(pathname), pathname);
   }
   // The Production smoke still counts the Learning Center articles.
   assert.equal(llmsArticleCount(body), 1);

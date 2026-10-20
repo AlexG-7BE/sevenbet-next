@@ -11,6 +11,7 @@ import { absoluteUrl } from "@/lib/site";
 import { HELP_OWNER, helpShellCopy } from "@/lib/site/help-copy";
 import { HELP_CANONICAL_ORIGIN, HELP_SITE_NAME } from "@/lib/site/host-gate";
 import { BRAND_STATEMENT, CONTROL_PATHS } from "@/lib/i18n/static-pages/gambling-control";
+import { UZ_LICENSED_OPERATORS_PATH, UZ_REGISTER_READ_ON } from "@/lib/i18n/static-pages/uzbekistan-licensed-operators";
 
 /**
  * The launch markets B4GAMBLE is built for (28 Sep 2026), in the order llms.txt lists them.
@@ -138,6 +139,10 @@ export function buildLlmsTxt(input: {
   const articleLines = input.articles
     .map((article) => `- [${oneLine(article.title)}](${canonicalEnglishUrl(articlePath(article))}): ${oneLine(article.excerpt)}`);
 
+  const uzbekMarket = marketProfileByCountry("UZ");
+  if (!uzbekMarket) throw new Error("Market UZ is missing from the registry");
+  const uzbekLanguage = languageRouteByLocale(uzbekMarket.defaultLocale);
+
   const answerLines = LLMS_CONTROL_ANSWER_PAGES.map((page) => {
     const versions = nordicUrls(page.path).map((version) => `[${version.label}](${version.url})`).join(" · ");
     return `- [${page.title}](${canonicalEnglishUrl(page.path)}): ${page.description}. Also in ${versions}.`;
@@ -171,6 +176,12 @@ ${answerLines.join("\n")}
 ## Markets
 
 ${marketSections.join("\n\n")}
+
+## Uzbekistan: licensed operators
+
+Reference only: B4GAMBLE has no partner link for Uzbekistan, and the page links to no operator.
+
+- [Licensed online casinos and bookmakers in Uzbekistan](${canonicalEnglishUrl(UZ_LICENSED_OPERATORS_PATH)}): the companies in the NAPP licence register as of ${UZ_REGISTER_READ_ON}, what the law requires, and how to tell the licensed site and app from mirrors and copies. Also in [${uzbekLanguage.label}](${marketUrl(uzbekMarket, UZ_LICENSED_OPERATORS_PATH)}).
 
 ## How B4GAMBLE reviews
 

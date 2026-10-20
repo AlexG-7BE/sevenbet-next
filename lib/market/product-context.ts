@@ -98,17 +98,27 @@ export function robotsAllowIndexing(robots: Metadata["robots"] | undefined) {
 }
 
 /**
- * Help and Responsible Gambling exist only in the languages of GB and the governed safety
- * markets. An indexable language without its own page (Uzbek) is left out: its `/uz/help`
- * redirects to the English page, and a hreflang target that redirects is a crawler error.
+ * The language versions of a page that exist: an indexable language is listed only where the
+ * route is localizable in that language's market. A language without its own page is left out,
+ * because its address redirects or answers 404, and a hreflang target that does either is a
+ * crawler error. `x-default` is the English page, which every such route has.
  */
-export function firstWaveSafetyLanguageAlternates(pathname: "/help" | "/responsible-gambling", site: SiteClass = "main") {
+export function existingLanguageAlternates(pathname: string, site: SiteClass = "main") {
   return Object.fromEntries(Object.entries(productLanguageAlternates(pathname, site)).filter(([language]) => {
     if (language === "x-default") return true;
     const profile = INDEXABLE_LANGUAGE_ROUTE_PROFILES.find((candidate) => candidate.language === language);
     const market = profile ? marketProfileByLocale(profile.defaultLocale) : null;
     return Boolean(market && isLocalizedPublicDestination(pathname, market));
   }));
+}
+
+/**
+ * Help and Responsible Gambling exist only in the languages of GB and the governed safety
+ * markets. An indexable language without its own page is left out: its Help address
+ * redirects to the English page, and a hreflang target that redirects is a crawler error.
+ */
+export function firstWaveSafetyLanguageAlternates(pathname: "/help" | "/responsible-gambling", site: SiteClass = "main") {
+  return existingLanguageAlternates(pathname, site);
 }
 
 export function openGraphLocale(locale: SupportedLocale) {
