@@ -55,6 +55,45 @@ still served whole. `b4gamble.com` is byte-identical: the whole pass is behind `
 and `tests/help-site-own-brand.test.tsx` holds the main home's HTML and CSS to a digest in four
 languages.
 
+**The two text pages are short and laid out like the answer pages (Founder, 18 and 20 October
+2026).** He opened `https://pauseplan.help/en/who-runs-this` on his phone: «границы проходят не там
+где надо на мобильной версии… слишком много текста и он плохо читаемый», then «сделай это и в
+десктоп версии и в мобильной версии и на обоих сайтах что бы было одинаково». Branch
+`fix/owner-pages-readability`. **DETECTED, local production build, both hosts, 20 October 2026:**
+
+- **The bands were the body background repeating.** The public shell makes `html` and `body`
+  exactly one viewport tall, so the decorative body gradients are one viewport-sized tile repeated
+  down the page: a hard seam every 844px on a phone and every 900px on a laptop, wherever it fell
+  in a paragraph. `/who-runs-this` and `/for-organisations` now paint the night surface
+  (`--sb-surface-night`, the shell header's and footer's own colour) through
+  `body:has([data-runtime-renderer="help-text-page"])` in `app/globals.css`, and the page itself
+  carries it too. Every other page keeps the decorative background exactly as it is.
+- **The title was under the header.** The header is fixed and 81px tall on both hosts at every
+  width from 320 to 1440px (measured; on a phone that reports a notch, plus the inset). The page
+  began 40px from the top on a phone and 64px on a laptop, so the eyebrow and half the title were
+  hidden. It now starts at the header's height plus `clamp(48px, 8vw, 96px)`, and headings and
+  sections carry the same `scroll-margin-top`.
+- **One look on both hosts.** The two pages take the answer pages' system — the site typeface, the
+  yellow eyebrow line, one card per answer — and the stylesheet reads nothing about the host, so
+  `b4gamble.com/…/who-runs-this` and `pauseplan.help/…/who-runs-this` are the same page under
+  different shells. `/can-you-trust-b4gamble` was checked for both defects and has neither (its
+  title starts 51px below the header on a phone and 97px on a laptop, on an opaque page), so it is
+  unchanged.
+- **The owner page is five short answers.** Who runs it, where the money comes from, that what you
+  write is never used for casinos, no tracking, what the site is not, then one line and a link to
+  `/for-organisations`. It keeps the owner's legal name, that it is a United States company in
+  New York and `b4gamble.com` as plain text, never a link. The street address, the partner-press
+  qualification, the processors and storage, and the programme's date with its automatic test now
+  live only on `/for-organisations`, which gained the three facts that had been only on the owner
+  page (no gambling licence and not a public body, how the commission is earned, that programme
+  starts are all we count).
+- Guards: `tests/help-text-pages-layout.test.tsx` (new, in `help-site-shell:test`) holds the
+  stylesheet contract and that the page renders byte-identically for both site classes;
+  `tests/help-text-pages-browser.spec.ts` (new, in `ci:browser`) measures header against first
+  line and the background at 320, 390 and 1280px; `tests/help-site-shell.test.tsx` holds the owner
+  page short and every moved fact on the data statement; `tests/help-site-own-brand.test.tsx`
+  holds that both pages print the other site's address as text and never its name.
+
 ### Phase 1, the host foundation (PR #535, merged 17 October 2026 as `7e171506`)
 
 **DETECTED in the repository and deployed to Production with every switch unset, so nothing it
@@ -257,7 +296,8 @@ main site, so the main host behaves exactly as before:
   `OutboundClick` read and the notes that described them; its MCP description says so. **No
   schema change, no migration, no column removed** — the field stays and receives nothing new.
   Rows written before this keep their link until the separate data job clears them, which is
-  not part of phase 1, so `/who-runs-this` must say that plainly while it is true. Partner
+  not part of phase 1, so the help site must say that plainly while it is true (since 20 October
+  2026 `/for-organisations` says it, and `/who-runs-this` links there). Partner
   clicks are still measured commercially, by the aggregate daily projection, where no account
   is involved. Amends RFC-046 §7.
 - **Still to come in phase 1:** a help-site not-found page that replaces the gate's own

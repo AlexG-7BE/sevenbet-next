@@ -1491,6 +1491,15 @@ approves the exact text before merge. Content, in plain words:
 The page replaces the help-side use of `/can-you-trust-b4gamble`, whose
 research next-step block cannot appear on the help host.
 
+**Amended, Founder, 20 October 2026** («слишком много текста и он плохо
+читаемый»; [decision record](../07_Decisions/HELP-SITE-RFC-057-APPROVED-2026-10-17.md),
+amendment of 20 October): the page gives five short answers and links
+`/for-organisations` for the rest. The legal name, the United States company
+and `b4gamble.com` as plain text stay on it; the street address of point 1,
+the partner-press qualification of point 4 and the storage detail of point 5
+are said on `/for-organisations`, which keeps them on the help site while
+they are true.
+
 ### 17.1 Help-host copy the Founder sees before merge
 
 **CONTRADICTION (DETECTED):** point 2 says this site earns nothing, while help

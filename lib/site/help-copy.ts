@@ -337,66 +337,73 @@ export type HelpTextPage = Readonly<{
   title: string;
   intro: string;
   sections: readonly Readonly<{ heading: string; paragraphs: readonly string[] }>[];
+  /**
+   * One line after the answers that sends the reader to the page with the rest of them, and
+   * the link to it. The owner page has it; the data statement is the page it points at.
+   */
+  more?: Readonly<{ lead: string; label: string; href: string }>;
   /** The last line, with the contact route the page offers. */
   contactLead: string;
   contactLabel: string;
 }>;
 
+/**
+ * Short answers, one card each (Founder, 20 October 2026: «слишком много текста и он плохо
+ * читаемый»). The reader here is a person deciding whether to trust a help site, and wants five
+ * plain answers, not a disclosure document. Everything the long version said is still said, on
+ * `/for-organisations`, one tap away: the street address, the partner-press qualification and its
+ * dates, the processors and where data is held, the automatic test that keeps casino links out
+ * of the programme, and the questions we cannot answer yet.
+ *
+ * What this page must keep saying (RFC-057 §17, amended 20 October 2026): the owner's legal
+ * name, that it is a United States company, the other site's address as plain text — never a
+ * link — and that this site earns nothing and carries no casino, advert or partner link.
+ */
 const ownerPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
   "en-GB": {
     metadataTitle: `Who runs this site | ${HELP_SITE_NAME}`,
     metadataDescription: `Who owns ${HELP_SITE_NAME}, how the company earns its money, why there are no casino links here and what happens to what you write.`,
     eyebrow: "Straight answers",
     title: "Who runs this site",
-    intro: "You are reading a site about gambling harm. You should know who wrote it and how they are paid before you trust a word of it. Here is all of it, in plain language.",
+    intro: "This site is about gambling harm. You should know who wrote it and how they are paid.",
     sections: [
       {
-        heading: "Who runs this site",
+        heading: "Who runs it",
         paragraphs: [
-          `${HELP_SITE_NAME} is run by ${HELP_OWNER.legalName}, a company registered in the ${HELP_OWNER.country}, at 447 Broadway, 2nd Floor, 1663, ${HELP_OWNER.city}, NY 10013.`,
-          "It is not a gambling company, it holds no gambling licence, and it is not a charity or a public body.",
+          `${HELP_SITE_NAME} is run by ${HELP_OWNER.legalName}, a company in ${HELP_OWNER.city}, in the ${HELP_OWNER.country}. It is not a gambling company and it is not a charity.`,
         ],
       },
       {
-        heading: "How the company earns its money",
+        heading: "Where the money comes from",
         paragraphs: [
-          `${HELP_OWNER.legalName} also runs ${HELP_OWNER.otherSite}, a separate site that compares licensed online casinos. That site is paid a commission when a reader opens an account with an operator through one of its links. That is where the money comes from.`,
-          "This site is not part of that. There is no casino, no bonus, no comparison and no partner link anywhere on it, and it earns nothing. We are not linking you to that other site from here; we are telling you it exists because you have a right to know who is behind this one.",
+          `The same company runs ${HELP_OWNER.otherSite}, a casino-comparison site at a different address, and licensed casino operators pay it commission. That is where the money comes from.`,
+          "This site earns nothing from you. There are no casinos, no adverts and no partner links anywhere on it, the programme included.",
         ],
       },
       {
-        heading: "The programme has no casino links",
+        heading: "What you write is never used for casinos",
         paragraphs: [
-          "No step, screen, card, email or finished plan in the ten-step programme links to a casino, a bonus or a comparison page. It has been that way since 16 October 2026, and it is checked by an automatic test on every change, so it cannot come back by accident.",
+          "Nothing you write in the programme, in a pause plan or in Help is used to choose, time or rank a casino or an advert, and none of it is given to a casino operator or a partner.",
         ],
       },
       {
-        heading: "What you write never reaches the casino side",
+        heading: "No tracking",
         paragraphs: [
-          "What you write in the programme, in a pause plan or in Help is never used to choose, rank, time or personalise any casino, any offer or any advertising, and it is never given to an operator or to an affiliate partner.",
-          `Being honest about one thing that is not finished: until 17 October 2026, when a signed-in person pressed a partner link on ${HELP_OWNER.otherSite}, that press was stored against their account, and an internal weekly count put those presses next to programme steps. New presses no longer store the account and the count no longer includes them. The rows recorded before that change still carry the link until we clear them, and this page will say so until the day that job has run.`,
-        ],
-      },
-      {
-        heading: "What is stored, and where",
-        paragraphs: [
-          `Accounts, programme answers and pause reminders are stored in one database in the ${HELP_OWNER.country}, the same database the company's other site uses. There is a full answer for organisations, with every processor, every place data is held and every open question, on the page for organisations, and the legal detail is in the Privacy Notice.`,
-        ],
-      },
-      {
-        heading: "This site sets no tracking cookies",
-        paragraphs: [
-          "There is no Google tag, no advertising pixel and no analytics cookie on this site, so there is no cookie banner either. The only storage is what a page you asked for needs: signing in, your language and keeping your place in the programme.",
-          "Because of that we cannot see who you are or what you read. We count how many people start the programme and nothing else.",
+          "No Google tag, no advertising pixel and no analytics cookie, so there is no cookie banner. We cannot see what you read. We count how many people start the programme, and nothing else.",
         ],
       },
       {
         heading: "What this site is not",
         paragraphs: [
-          "It is not medical care, therapy, diagnosis or crisis support, and it blocks nothing. If gambling is already hurting your money, your sleep or the people around you, a national self-exclusion and a helpline are the right first step, and both are listed in Help.",
+          "It is not medical care, therapy, diagnosis or crisis support, and it blocks nothing. If gambling is already hurting your money, your sleep or the people around you, start with a national self-exclusion scheme and a helpline. Both are in Help.",
         ],
       },
     ],
+    more: {
+      lead: "The full answers are on the page for organisations: every company that handles your data, where it is kept, and the questions we cannot answer yet.",
+      label: `${shell["en-GB"].footer.organisations} →`,
+      href: HELP_ORGANISATIONS_PATH,
+    },
     contactLead: "Something here wrong, missing or unclear? Tell us and we will fix it.",
     contactLabel: "Contact us",
   },
@@ -405,55 +412,45 @@ const ownerPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
     metadataDescription: `Vem som äger ${HELP_SITE_NAME}, hur företaget tjänar sina pengar, varför det inte finns några casinolänkar här och vad som händer med det du skriver.`,
     eyebrow: "Raka svar",
     title: "Vem driver sajten",
-    intro: "Du läser en sajt om spelproblem. Då bör du få veta vem som har skrivit den och hur de får betalt innan du litar på ett enda ord. Här är allt, på vanlig svenska.",
+    intro: "Den här sajten handlar om spelproblem. Då ska du få veta vem som har skrivit den och hur de får betalt.",
     sections: [
       {
-        heading: "Vem driver sajten",
+        heading: "Vem som står bakom",
         paragraphs: [
-          `${HELP_SITE_NAME} drivs av ${HELP_OWNER.legalName}, ett företag registrerat i USA, på 447 Broadway, 2nd Floor, 1663, New York, NY 10013.`,
-          "Det är inget spelbolag, det har ingen spellicens, och det är varken en ideell förening eller en myndighet.",
+          `${HELP_SITE_NAME} drivs av ${HELP_OWNER.legalName}, ett företag i New York i USA. Det är varken ett spelbolag eller en ideell organisation.`,
         ],
       },
       {
-        heading: "Hur företaget tjänar sina pengar",
+        heading: "Var pengarna kommer ifrån",
         paragraphs: [
-          `${HELP_OWNER.legalName} driver också ${HELP_OWNER.otherSite}, en separat sajt som jämför licensierade casinon på nätet. Den sajten får provision när en läsare öppnar ett konto hos ett spelbolag via någon av dess länkar. Det är därifrån pengarna kommer.`,
-          "Den här sajten är inte en del av det. Här finns inga casinon, inga bonusar, inga jämförelser och inga partnerlänkar, och den tjänar ingenting. Vi länkar dig inte dit härifrån; vi berättar att sajten finns, eftersom du har rätt att veta vem som står bakom den här.",
+          `Samma företag driver ${HELP_OWNER.otherSite}, en sajt som jämför casinon och ligger på en annan adress. Licensierade spelbolag betalar provision till den, och det är därifrån pengarna kommer.`,
+          "Den här sajten tjänar ingenting på dig. Här finns inga casinon, ingen reklam och inga partnerlänkar, inte heller i programmet.",
         ],
       },
       {
-        heading: "Programmet har inga casinolänkar",
+        heading: "Det du skriver används aldrig för casinon",
         paragraphs: [
-          "Inget steg, ingen skärm, inget kort, inget mejl och ingen färdig plan i programmet med tio steg länkar till ett casino, en bonus eller en jämförelsesida. Så har det varit sedan den 16 oktober 2026, och det kontrolleras av ett automatiskt test vid varje ändring, så det kan inte komma tillbaka av misstag.",
+          "Inget av det du skriver i programmet, i en pausplan eller i Hjälp används för att välja, tajma eller rangordna ett casino eller en annons, och inget av det lämnas till ett spelbolag eller en partner.",
         ],
       },
       {
-        heading: "Det du skriver når aldrig casinosidan",
+        heading: "Ingen spårning",
         paragraphs: [
-          "Det du skriver i programmet, i en pausplan eller i Hjälp används aldrig för att välja, rangordna, tajma eller anpassa något casino, något erbjudande eller någon reklam, och det lämnas aldrig ut till ett spelbolag eller till en affiliatepartner.",
-          `Ärligt om en sak som inte är klar: fram till den 17 oktober 2026 sparades det mot kontot när en inloggad person tryckte på en partnerlänk på ${HELP_OWNER.otherSite}, och en intern veckoräkning lade de trycken bredvid stegen i programmet. Nya tryck sparar inte längre kontot, och räkningen innehåller dem inte längre. Raderna som skrevs före ändringen har kvar kopplingen tills vi rensar dem, och den här sidan säger det tills det är gjort.`,
-        ],
-      },
-      {
-        heading: "Vad som sparas, och var",
-        paragraphs: [
-          "Konton, svar i programmet och påminnelser om pauser sparas i en databas i USA, samma databas som företagets andra sajt använder. Hela svaret för organisationer, med varje leverantör, varje plats där uppgifter ligger och varje öppen fråga, finns på sidan för organisationer, och det juridiska står i integritetspolicyn.",
-        ],
-      },
-      {
-        heading: "Sajten sätter inga spårningskakor",
-        paragraphs: [
-          "Det finns ingen Google-tagg, ingen annonspixel och ingen analyskaka på sajten, och därför inte heller någon kakruta. Det enda som lagras är det som sidan du bad om behöver: inloggning, ditt språk och din plats i programmet.",
-          "Därför kan vi inte se vem du är eller vad du läser. Vi räknar hur många som börjar programmet, inget annat.",
+          "Ingen Google-tagg, ingen annonspixel och ingen analyskaka, och därför ingen kakruta. Vi kan inte se vad du läser. Vi räknar hur många som börjar programmet, inget annat.",
         ],
       },
       {
         heading: "Vad sajten inte är",
         paragraphs: [
-          "Den är inte vård, terapi, diagnos eller akut stöd, och den blockerar ingenting. Om spelandet redan går ut över pengarna, sömnen eller människorna omkring dig är Spelpaus och Stödlinjen rätt första steg, och båda finns under Hjälp.",
+          "Den är inte vård, terapi, diagnos eller akut stöd, och den blockerar ingenting. Om spelandet redan går ut över pengarna, sömnen eller människorna omkring dig, börja med Spelpaus och Stödlinjen. Båda finns under Hjälp.",
         ],
       },
     ],
+    more: {
+      lead: "De fullständiga svaren finns på sidan för organisationer: varje företag som hanterar dina uppgifter, var de ligger och vad vi ännu inte kan svara på.",
+      label: `${shell["sv-SE"].footer.organisations} →`,
+      href: HELP_ORGANISATIONS_PATH,
+    },
     contactLead: "Är något fel, saknas eller är otydligt? Säg till, så rättar vi det.",
     contactLabel: "Kontakta oss",
   },
@@ -462,55 +459,45 @@ const ownerPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
     metadataDescription: `Hvem der ejer ${HELP_SITE_NAME}, hvordan firmaet tjener sine penge, hvorfor der ikke er casinolinks her, og hvad der sker med det, du skriver.`,
     eyebrow: "Klare svar",
     title: "Hvem står bag",
-    intro: "Du læser et websted om spilproblemer. Så bør du vide, hvem der har skrevet det, og hvordan de får betalt, før du tror på et eneste ord. Her er det hele, i almindeligt sprog.",
+    intro: "Dette websted handler om spilproblemer. Så bør du vide, hvem der har skrevet det, og hvordan de får betalt.",
     sections: [
       {
-        heading: "Hvem står bag",
+        heading: "Hvem der driver det",
         paragraphs: [
-          `${HELP_SITE_NAME} drives af ${HELP_OWNER.legalName}, et firma registreret i USA, på 447 Broadway, 2nd Floor, 1663, New York, NY 10013.`,
-          "Det er ikke et spilselskab, det har ingen spillicens, og det er hverken en forening eller en offentlig myndighed.",
+          `${HELP_SITE_NAME} drives af ${HELP_OWNER.legalName}, et firma i New York i USA. Det er hverken et spilselskab eller en velgørende organisation.`,
         ],
       },
       {
-        heading: "Hvordan firmaet tjener sine penge",
+        heading: "Hvor pengene kommer fra",
         paragraphs: [
-          `${HELP_OWNER.legalName} driver også ${HELP_OWNER.otherSite}, et separat site, der sammenligner licenserede onlinecasinoer. Det site får provision, når en læser opretter en konto hos en udbyder gennem et af dets links. Det er derfra, pengene kommer.`,
-          "Dette websted er ikke en del af det. Her er ingen casinoer, ingen bonusser, ingen sammenligninger og ingen partnerlinks, og det tjener ingenting. Vi linker dig ikke derhen herfra; vi fortæller, at det findes, fordi du har ret til at vide, hvem der står bag dette.",
+          `Samme firma driver ${HELP_OWNER.otherSite}, et site, der sammenligner casinoer og ligger på en anden adresse. Licenserede spiludbydere betaler provision til det, og det er derfra, pengene kommer.`,
+          "Dette websted tjener ingenting på dig. Her er ingen casinoer, ingen reklamer og ingen partnerlinks, heller ikke i programmet.",
         ],
       },
       {
-        heading: "Programmet har ingen casinolinks",
+        heading: "Det, du skriver, bruges aldrig til casinoer",
         paragraphs: [
-          "Intet trin, ingen skærm, intet kort, ingen mail og ingen færdig plan i programmet med ti trin linker til et casino, en bonus eller en sammenligningsside. Sådan har det været siden den 16. oktober 2026, og det kontrolleres af en automatisk test ved hver ændring, så det kan ikke komme tilbage ved et uheld.",
+          "Intet af det, du skriver i programmet, i en pauseplan eller i Hjælp, bruges til at vælge, time eller rangere et casino eller en reklame, og intet af det gives til en spiludbyder eller en partner.",
         ],
       },
       {
-        heading: "Det, du skriver, når aldrig casinosiden",
+        heading: "Ingen sporing",
         paragraphs: [
-          "Det, du skriver i programmet, i en pauseplan eller i Hjælp, bruges aldrig til at vælge, rangere, time eller tilpasse et casino, et tilbud eller en reklame, og det gives aldrig til en udbyder eller til en affiliatepartner.",
-          `Ærligt om én ting, der ikke er færdig: indtil den 17. oktober 2026 blev det gemt på kontoen, når en logget ind person trykkede på et partnerlink på ${HELP_OWNER.otherSite}, og en intern ugentlig optælling satte de tryk ved siden af trinnene i programmet. Nye tryk gemmer ikke længere kontoen, og optællingen indeholder dem ikke længere. De rækker, der blev skrevet før ændringen, har stadig forbindelsen, indtil vi rydder dem, og denne side siger det, indtil det er gjort.`,
-        ],
-      },
-      {
-        heading: "Hvad der gemmes, og hvor",
-        paragraphs: [
-          "Konti, svar i programmet og påmindelser om pauser gemmes i én database i USA, den samme database som firmaets andet site bruger. Hele svaret til organisationer, med hver leverandør, hvert sted data ligger, og hvert åbent spørgsmål, står på siden til organisationer, og det juridiske står i privatlivspolitikken.",
-        ],
-      },
-      {
-        heading: "Dette websted sætter ingen sporingscookies",
-        paragraphs: [
-          "Der er intet Google-tag, ingen reklamepixel og ingen analysecookie på webstedet, og derfor heller ingen cookiebanner. Det eneste, der gemmes, er det, siden du bad om, har brug for: login, dit sprog og din plads i programmet.",
-          "Derfor kan vi ikke se, hvem du er, eller hvad du læser. Vi tæller, hvor mange der starter programmet, og intet andet.",
+          "Intet Google-tag, ingen reklamepixel og ingen analysecookie, og derfor intet cookiebanner. Vi kan ikke se, hvad du læser. Vi tæller, hvor mange der starter programmet, og intet andet.",
         ],
       },
       {
         heading: "Hvad dette websted ikke er",
         paragraphs: [
-          "Det er ikke behandling, terapi, diagnose eller akut hjælp, og det blokerer ingenting. Hvis spillet allerede går ud over din økonomi, din søvn eller menneskene omkring dig, er ROFUS og StopSpillet det rigtige første skridt, og begge står under Hjælp.",
+          "Det er ikke behandling, terapi, diagnose eller akut hjælp, og det blokerer ingenting. Hvis spillet allerede går ud over din økonomi, din søvn eller menneskene omkring dig, så start med ROFUS og StopSpillet. Begge står under Hjælp.",
         ],
       },
     ],
+    more: {
+      lead: "De fulde svar står på siden til organisationer: hvert firma, der håndterer dine data, hvor de ligger, og hvad vi endnu ikke kan svare på.",
+      label: `${shell["da-DK"].footer.organisations} →`,
+      href: HELP_ORGANISATIONS_PATH,
+    },
     contactLead: "Er noget forkert, mangler eller er uklart? Sig til, så retter vi det.",
     contactLabel: "Kontakt os",
   },
@@ -530,6 +517,12 @@ export function helpOwnerPage(locale: SupportedLocale | string | null | undefine
  * written down as "not yet" rather than left out. The honest "we do not know yet" lines below
  * are those rows; they are removed one by one as the answers are established, and phase 4
  * (outreach) does not start while one of them is still a surprise.
+ *
+ * Since 20 October 2026 it is also the long version of `/who-runs-this`: whatever the short
+ * owner page stopped saying is said here — the street address, how the commission is earned,
+ * that the company holds no gambling licence and is not a public body, the partner-press
+ * qualification with its date, the programme's date and its automatic test, and that we count
+ * programme starts and nothing else. `tests/help-site-shell.test.tsx` holds each of them here.
  */
 const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
   "en-GB": {
@@ -542,7 +535,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
       {
         heading: "Who you would be dealing with",
         paragraphs: [
-          `${HELP_OWNER.legalName}, a company in the ${HELP_OWNER.country}, 447 Broadway, 2nd Floor, 1663, ${HELP_OWNER.city}, NY 10013. It is the data controller. It is a commercial company, not a charity: it also runs ${HELP_OWNER.otherSite}, a casino-comparison site that is paid commission by licensed operators. This site carries no casino, bonus or partner link and earns nothing.`,
+          `${HELP_OWNER.legalName}, a company in the ${HELP_OWNER.country}, 447 Broadway, 2nd Floor, 1663, ${HELP_OWNER.city}, NY 10013. It is the data controller. It is a commercial company, not a charity: it also runs ${HELP_OWNER.otherSite}, a casino-comparison site that licensed operators pay a commission when a reader opens an account with one of them through its links. It is not a gambling company, holds no gambling licence and is not a public body. This site carries no casino, bonus or partner link and earns nothing.`,
           "We are saying this first because it is the thing most likely to stop you working with us, and you should not have to find it out later.",
         ],
       },
@@ -565,6 +558,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
         heading: "What we never do",
         paragraphs: [
           "Programme, pause and Help information is never used to choose, rank, time or personalise any casino, offer or advertisement; never sold; and never given to a gambling operator or affiliate partner.",
+          "No step, screen, card, email or finished plan in the ten-step programme links to a casino, a bonus or a comparison page. That has been so since 16 October 2026, and an automatic test checks it on every change, so it cannot come back by accident.",
           `One qualification, because it is still true as we write this: partner link presses made on ${HELP_OWNER.otherSite} before 17 October 2026 are stored against the account that made them. New presses are not, and the internal weekly count no longer reads them. Clearing the old rows is a separate job we have not yet run.`,
           "If you refer people to us, we will never send you anything that identifies them. The most we would ever share is a count.",
         ],
@@ -573,6 +567,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
         heading: "Tracking",
         paragraphs: [
           "This site carries no Google tag, no advertising pixel and no analytics cookie, so it shows no cookie banner. The only storage is what a requested page needs: sign-in, language and programme continuity.",
+          "So we cannot see who a reader is or what they read. We count how many people start the programme, and nothing else.",
         ],
       },
       {
@@ -609,7 +604,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
       {
         heading: "Vem ni skulle ha att göra med",
         paragraphs: [
-          `${HELP_OWNER.legalName}, ett företag i USA, 447 Broadway, 2nd Floor, 1663, New York, NY 10013. Det är personuppgiftsansvarig. Det är ett kommersiellt företag, inte en ideell förening: det driver också ${HELP_OWNER.otherSite}, en jämförelsesajt för casinon som får provision av licensierade spelbolag. Den här sajten har inga casino-, bonus- eller partnerlänkar och tjänar ingenting.`,
+          `${HELP_OWNER.legalName}, ett företag i USA, 447 Broadway, 2nd Floor, 1663, New York, NY 10013. Det är personuppgiftsansvarig. Det är ett kommersiellt företag, inte en ideell förening: det driver också ${HELP_OWNER.otherSite}, en jämförelsesajt för casinon som får provision av licensierade spelbolag när en läsare öppnar ett konto hos något av dem via sajtens länkar. Det är inget spelbolag, har ingen spellicens och är ingen myndighet. Den här sajten har inga casino-, bonus- eller partnerlänkar och tjänar ingenting.`,
           "Vi säger det först, eftersom det är det som mest sannolikt får er att avstå, och ni ska inte behöva upptäcka det i efterhand.",
         ],
       },
@@ -632,6 +627,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
         heading: "Vad vi aldrig gör",
         paragraphs: [
           "Uppgifter från programmet, pausplanen och Hjälp används aldrig för att välja, rangordna, tajma eller anpassa något casino, erbjudande eller reklam; säljs aldrig; och lämnas aldrig till ett spelbolag eller en affiliatepartner.",
+          "Inget steg, ingen skärm, inget kort, inget mejl och ingen färdig plan i programmet med tio steg länkar till ett casino, en bonus eller en jämförelsesida. Så har det varit sedan den 16 oktober 2026, och ett automatiskt test kontrollerar det vid varje ändring, så det kan inte komma tillbaka av misstag.",
           `En reservation, eftersom den fortfarande gäller när vi skriver det här: tryck på partnerlänkar som gjordes på ${HELP_OWNER.otherSite} före den 17 oktober 2026 är sparade mot kontot som gjorde dem. Nya tryck är det inte, och den interna veckoräkningen läser dem inte längre. Att rensa de gamla raderna är ett separat arbete som vi ännu inte har gjort.`,
           "Om ni hänvisar människor till oss skickar vi aldrig något till er som pekar ut dem. Det mesta vi någonsin skulle dela är ett antal.",
         ],
@@ -640,6 +636,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
         heading: "Spårning",
         paragraphs: [
           "Sajten har ingen Google-tagg, ingen annonspixel och ingen analyskaka, och därför ingen kakruta. Det enda som lagras är det som en begärd sida behöver: inloggning, språk och din plats i programmet.",
+          "Därför kan vi inte se vem en läsare är eller vad hen läser. Vi räknar hur många som börjar programmet, inget annat.",
         ],
       },
       {
@@ -676,7 +673,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
       {
         heading: "Hvem I ville have med at gøre",
         paragraphs: [
-          `${HELP_OWNER.legalName}, et firma i USA, 447 Broadway, 2nd Floor, 1663, New York, NY 10013. Det er dataansvarlig. Det er et kommercielt firma, ikke en forening: det driver også ${HELP_OWNER.otherSite}, et sammenligningssite for casinoer, der får provision af licenserede udbydere. Dette websted har ingen casino-, bonus- eller partnerlinks og tjener ingenting.`,
+          `${HELP_OWNER.legalName}, et firma i USA, 447 Broadway, 2nd Floor, 1663, New York, NY 10013. Det er dataansvarlig. Det er et kommercielt firma, ikke en forening: det driver også ${HELP_OWNER.otherSite}, et sammenligningssite for casinoer, der får provision af licenserede udbydere, når en læser opretter en konto hos en af dem gennem sitets links. Det er ikke et spilselskab, har ingen spillicens og er ikke en offentlig myndighed. Dette websted har ingen casino-, bonus- eller partnerlinks og tjener ingenting.`,
           "Vi siger det først, fordi det er det, der mest sandsynligt får jer til at sige nej, og I skal ikke opdage det bagefter.",
         ],
       },
@@ -699,6 +696,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
         heading: "Hvad vi aldrig gør",
         paragraphs: [
           "Oplysninger fra programmet, pauseplanen og Hjælp bruges aldrig til at vælge, rangere, time eller tilpasse et casino, et tilbud eller en reklame; sælges aldrig; og gives aldrig til en spiludbyder eller en affiliatepartner.",
+          "Intet trin, ingen skærm, intet kort, ingen mail og ingen færdig plan i programmet med ti trin linker til et casino, en bonus eller en sammenligningsside. Sådan har det været siden den 16. oktober 2026, og en automatisk test kontrollerer det ved hver ændring, så det kan ikke komme tilbage ved et uheld.",
           `Ét forbehold, fordi det stadig gælder, mens vi skriver dette: tryk på partnerlinks foretaget på ${HELP_OWNER.otherSite} før den 17. oktober 2026 er gemt på den konto, der foretog dem. Nye tryk er ikke, og den interne ugentlige optælling læser dem ikke længere. At rydde de gamle rækker er et separat stykke arbejde, vi endnu ikke har udført.`,
           "Hvis I henviser folk til os, sender vi aldrig noget til jer, der peger på dem. Det mest, vi nogensinde ville dele, er et antal.",
         ],
@@ -707,6 +705,7 @@ const organisationsPage: Readonly<Record<HelpLocale, HelpTextPage>> = {
         heading: "Sporing",
         paragraphs: [
           "Webstedet har intet Google-tag, ingen reklamepixel og ingen analysecookie, og derfor ingen cookiebanner. Det eneste, der gemmes, er det, en ønsket side har brug for: login, sprog og din plads i programmet.",
+          "Derfor kan vi ikke se, hvem en læser er, eller hvad vedkommende læser. Vi tæller, hvor mange der starter programmet, og intet andet.",
         ],
       },
       {

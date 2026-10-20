@@ -1,70 +1,153 @@
-/* Mobile first, and never below the 12px floor the typography audit enforces. */
+/*
+ * The two plain-text pages, /who-runs-this and /for-organisations, on both hosts (Founder,
+ * 18 and 20 October 2026: «границы проходят не там где надо… сделай… на обоих сайтах что бы было
+ * одинаково»). They wear the answer pages' visual system — the one /can-you-trust-b4gamble and
+ * the control pages use: the night surface, the site's own typeface, the yellow eyebrow line and
+ * one card per answer — so every edge a reader sees is the edge of an answer.
+ *
+ * Nothing here reads the host: the help shell and the main shell draw the same 81px fixed
+ * header, so one stylesheet gives both sites the same page.
+ *
+ * Mobile first, and never below the 12px floor the typography audit enforces.
+ */
 .page {
+  /* `.header` in components/public-shell/PublicShell.module.css, on both hosts: fixed, 81px tall,
+     plus the notch inset on a phone that reports one (zero in an ordinary browser tab).
+     tests/help-text-pages-layout.test.tsx holds the two equal. */
+  --shell-header-height: calc(81px + env(safe-area-inset-top));
+  --page-breathing: clamp(48px, 8vw, 96px);
+  padding: calc(var(--shell-header-height) + var(--page-breathing)) var(--site-gutter) clamp(72px, 10vw, 120px);
+  background: var(--sb-surface-night);
+  color: var(--sb-paper);
+  font-family: var(--font-seven-sans), Arial, sans-serif;
+  overflow-wrap: break-word;
+}
+
+.page * { box-sizing: border-box; }
+
+/* An anchor jump, the skip link or a heading brought into view never lands under the header. */
+.page,
+.page :is(h1, h2, section, footer, [id]) {
+  scroll-margin-top: calc(var(--shell-header-height) + 24px);
+}
+
+.column {
+  width: min(var(--public-reading-max), 100%);
   margin: 0 auto;
-  max-width: 44rem;
-  padding: 2.5rem 1.25rem 4rem;
 }
 
 .header small {
-  display: block;
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--sb-acid);
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.75rem;
-  opacity: 0.68;
+  letter-spacing: .2em;
+  line-height: 1.4;
   text-transform: uppercase;
 }
 
+.header small::before {
+  content: "";
+  width: 44px;
+  height: 1px;
+  flex: 0 0 auto;
+  background: var(--sb-acid);
+}
+
 .header h1 {
-  font-size: 2rem;
-  line-height: 1.12;
-  margin: 0 0 1rem;
+  margin: 20px 0 0;
+  font-size: clamp(2rem, 7vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1.04;
 }
 
 .intro {
-  font-size: 1.0625rem;
-  line-height: 1.6;
-  margin: 0;
-  opacity: 0.86;
+  max-width: 58ch;
+  margin: 20px 0 0;
+  color: rgba(250, 250, 247, .82);
+  font-size: 1.1875rem;
+  line-height: 1.55;
+}
+
+.sections {
+  display: grid;
+  gap: 14px;
+  margin-top: clamp(32px, 5vw, 48px);
 }
 
 .section {
-  margin-top: 2.25rem;
+  padding: 22px;
+  border: 1px solid rgba(250, 250, 247, .12);
+  border-radius: var(--sb-radius-m);
+  background: #171616;
 }
 
 .section h2 {
-  font-size: 1.125rem;
-  line-height: 1.3;
-  margin: 0 0 0.75rem;
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: -.015em;
+  line-height: 1.25;
 }
 
 .section p {
-  font-size: 1rem;
-  line-height: 1.65;
-  margin: 0 0 0.85rem;
+  max-width: 62ch;
+  margin: 10px 0 0;
+  color: var(--sb-grey-200);
+  font-size: 1.0625rem;
+  line-height: 1.6;
 }
 
+.more {
+  margin-top: 28px;
+}
+
+.more p {
+  max-width: 58ch;
+  margin: 0;
+  color: rgba(250, 250, 247, .82);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.more a,
+.contact a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.more a { margin-top: 6px; color: var(--sb-acid); }
+
 .contact {
-  border-top: 1px solid rgba(128, 128, 128, 0.28);
-  margin-top: 3rem;
-  padding-top: 1.5rem;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(250, 250, 247, .12);
 }
 
 .contact p {
+  margin: 0;
+  color: rgba(250, 250, 247, .72);
   font-size: 1rem;
   line-height: 1.6;
-  margin: 0 0 0.75rem;
 }
 
-.contact a {
-  display: inline-block;
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 44px;
-  min-height: 44px;
+.contact a { margin-top: 4px; color: var(--sb-paper); }
+
+.page a:focus-visible {
+  outline: 3px solid var(--sb-acid);
+  outline-offset: 3px;
 }
 
 @media (min-width: 760px) {
-  .page { padding: 4rem 2rem 6rem; }
-  .header h1 { font-size: 2.75rem; }
+  .section { padding: 28px 30px; }
+  .section h2 { font-size: 1.375rem; }
+  .intro { font-size: 1.25rem; }
 }

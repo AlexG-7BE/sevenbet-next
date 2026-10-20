@@ -228,6 +228,19 @@ body:has([data-handoff-page]) {
 body:has([data-handoff-page])::before {
   display: none;
 }
+/* The two plain-text pages, /who-runs-this and /for-organisations, on both hosts (Founder,
+   18 and 20 October 2026). The decorative body background above was drawn for the long design
+   pages. The public shell makes html and body exactly one viewport tall (below), so that
+   background is one viewport-sized tile repeated down the page, and on a page of plain text its
+   seams cut straight across paragraphs. These pages paint the night surface instead, the colour
+   of the shell's own header and footer; every other page keeps the background exactly as it is.
+   tests/help-text-pages-layout.test.tsx holds both halves. */
+body:has([data-runtime-renderer="help-text-page"]) {
+  background: var(--sb-surface-night);
+}
+body:has([data-runtime-renderer="help-text-page"])::before {
+  display: none;
+}
 /* The captured Home reference fixes both root boxes at viewport height. Keep the
    production public shell on that same scroll-root geometry so classic browser
    scrollbars cannot shift only dynamic routes inward by their reserved width. */
