@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-02",
   "assurance": "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW",
   "sourceLocale": "en-GB",
-  "catalogDigest": "6ac20785e069a164a9e94af0d5506c0a5cd646a2b153505060f806efed597a04",
+  "catalogDigest": "c6bb5e2fdbb63e580c6a8b573fe6644ddbf0a22113a4b9b36c2be980fc977a0b",
   "status": "PASS",
   "locales": [
     {
@@ -295,7 +295,7 @@
     {
       "locale": "uz-UZ",
       "status": "PASS",
-      "checkedStrings": 785,
+      "checkedStrings": 801,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",

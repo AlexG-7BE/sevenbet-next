@@ -39,6 +39,8 @@ export const PAGE_CHECKS = Object.freeze([
   { id: "home-sv", path: "/sv", kind: "html", lang: "sv" },
   { id: "home-da", path: "/da", kind: "html", lang: "da" },
   { id: "home-de", path: "/de", kind: "html", lang: "de" },
+  // UZBEK-LANGUAGE-2026-10-20: added once /uz was live in Production.
+  { id: "home-uz", path: "/uz", kind: "html", lang: "uz" },
   { id: "best-offers-en", path: "/en/best-offers", kind: "html", lang: "en", minReviewLinks: FLOORS.bestOffersReviewLinks },
   { id: "bonuses-en", path: "/en/bonuses", kind: "html", lang: "en", minReviewLinks: FLOORS.bonusesReviewLinks },
   { id: "casinos-en", path: "/en/casinos", kind: "html", lang: "en", minReviewLinks: FLOORS.casinosReviewLinks },

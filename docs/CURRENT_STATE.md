@@ -12,11 +12,11 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Uzbek language on both sites — in review
+## Uzbek language on both sites — live since 20 October 2026
 
 **Founder instruction, 20 October 2026:** "я хочу перевести сайты на узбекский, оба сайта,
 сделай это." Decision record: [UZBEK-LANGUAGE-2026-10-20](07_Decisions/UZBEK-LANGUAGE-2026-10-20.md).
-**Not live until the pull request is merged and deployed.**
+**LIVE in Production since 20 October 2026** (PR #546, merge `20ef738e`, Vercel success). **DETECTED** from the United States through Firecrawl: `https://b4gamble.com/uz` answers 200 with `lang="uz-UZ"`, `index, follow` and the Uzbek home; `https://pauseplan.help/uz` answers 200 with the Uzbek help home under "Pause Plan" (the help host is `noindex` in every language, as before). The Uzbek Help and Responsible Gambling pages below came in the follow-up pull request.
 
 - **Twelve published languages.** `uz` (`uz-UZ`, `/uz`, "Oʻzbekcha", Latin script with U+02BB
   and U+02BC) is `published` and `indexable` in `lib/market/registry.ts`, with a `UZ` market
@@ -28,16 +28,21 @@ This checkpoint supersedes older candidate/draft/current-state language where it
   Learn hub UI, About, Contact, FAQ, Methodology, 10 Steps, the wagering calculator, review
   titles, casino review text and offer terms, cookie banner, error pages, the whole Programme,
   and the help site's own copy (`lib/site/help-copy.ts`).
+- **Help and Responsible Gambling in Uzbek:** `UZ` is a governed safety market with
+  official resources read on 20 October 2026 — self-exclusion in the Unified State Register
+  of Bets and Players, the list of persons dependent on risk-based games (6 months to
+  5 years), NAPP as the regulator contact, the Republican Mental Health Centre's call centre,
+  103/102 for emergencies. `/uz/help` and `/uz/responsible-gambling` exist.
 - **Not translated, by design:** the GB/SE/DK pause plans and the pages around them, the
   control answer pages (they describe British, Swedish and Danish services), Learn guides
-  (data), and Help/Responsible Gambling (no verified Uzbek resource; `/uz` links Help to the
-  English address).
+  (data).
 - **Commercial:** no partner route for Uzbekistan; offers there show without a partner button
   until one is granted.
 - **Reviews stay out of the Uzbek index** under the licence rule of 15 October 2026: no casino
   is licensed for Uzbekistan, so `/uz/casino/…` pages are published and translated but not in
-  the sitemap, IndexNow or hreflang. `/help` hreflang lists only languages with a Help page.
-- **Production smoke** gets `/uz` only after the release is live (repository precedent).
+  the sitemap, IndexNow or hreflang. `/help` hreflang lists only languages with a Help page
+  (Uzbek included).
+- **Production smoke** checks the `/uz` home, added after the release was live.
 
 ## The Programme stays on both sites — decided 20 October 2026
 

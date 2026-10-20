@@ -553,7 +553,7 @@ test("translation review state records only first-wave Founder publication accep
         ? "FOUNDER_PUBLICATION_ACCEPTED"
         : "FOUNDER_PUBLICATION_NOT_ACCEPTED",
       legalReview: "REQUIRED",
-      marketEvidenceReview: ["DE", "ES", "SE", "DK", "GR", "UA"].includes(profile.countryCode) ? "FIRST_WAVE_EVIDENCE_REVIEWED" : "REQUIRED",
+      marketEvidenceReview: ["DE", "ES", "SE", "DK", "GR", "UA", "UZ"].includes(profile.countryCode) ? "FIRST_WAVE_EVIDENCE_REVIEWED" : "REQUIRED",
     });
   }
 });

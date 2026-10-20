@@ -58,8 +58,8 @@ test("review states distinguish source, machine translation, AI QA and Founder a
 });
 
 test("first-wave profiles contain dated detected evidence and market-specific safety resources", () => {
-  assert.deepEqual(FIRST_WAVE_MARKETS, ["DE", "ES", "SE", "DK", "GR", "PE", "UA"]);
-  const expectedResources = { DE: ["OASIS", "BIÖG Beratungstelefon zur Glücksspielsucht", "Check dein Spiel"], ES: ["RGIAJ"], SE: ["Spelpaus.se", "Stödlinjen"], DK: ["ROFUS", "StopSpillet"], GR: ["Οδηγός αποκλεισμού και αυτοαποκλεισμού", "BetBlocker στα ελληνικά"], PE: ["Registro de personas prohibidas", "Orientación sobre juego responsable"], UA: ["Заява на обмеження участі в азартних іграх", "Безкоштовна гаряча лінія ПлейСіті", "Тест на ігрову залежність"] } as const;
+  assert.deepEqual(FIRST_WAVE_MARKETS, ["DE", "ES", "SE", "DK", "GR", "PE", "UA", "UZ"]);
+  const expectedResources = { DE: ["OASIS", "BIÖG Beratungstelefon zur Glücksspielsucht", "Check dein Spiel"], ES: ["RGIAJ"], SE: ["Spelpaus.se", "Stödlinjen"], DK: ["ROFUS", "StopSpillet"], GR: ["Οδηγός αποκλεισμού και αυτοαποκλεισμού", "BetBlocker στα ελληνικά"], PE: ["Registro de personas prohibidas", "Orientación sobre juego responsable"], UA: ["Заява на обмеження участі в азартних іграх", "Безкоштовна гаряча лінія ПлейСіті", "Тест на ігрову залежність"], UZ: ["Oʻzini oʻzi chetlatish", "Tavakkalchilikka asoslangan oʻyinlarga qaram shaxslar roʻyxati", "Call-markaz"] } as const;
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = FIRST_WAVE_MARKET_EVIDENCE[market];
     assert.equal(profile.evidenceState, "EVIDENCE_FOUNDATION_REVIEWED_NOT_LEGAL_APPROVAL");
@@ -68,8 +68,8 @@ test("first-wave profiles contain dated detected evidence and market-specific sa
     assert.ok(profile.evidence.length >= 4, market);
     for (const record of profile.evidence) {
       assert.equal(record.classification, "DETECTED", `${market}:${record.id}`);
-      // Ukraine joined on 7 October 2026 and was read on that day.
-      assert.equal(record.reviewedAt, market === "UA" ? "2026-10-07" : "2026-09-03", `${market}:${record.id}`);
+      // Ukraine joined on 7 October 2026 and Uzbekistan on 20 October 2026, each read on that day.
+      assert.equal(record.reviewedAt, market === "UA" ? "2026-10-07" : market === "UZ" ? "2026-10-20" : "2026-09-03", `${market}:${record.id}`);
       assert.match(record.url, /^https:\/\//, `${market}:${record.id}`);
       assert.ok(record.nextReviewAt > record.reviewedAt, `${market}:${record.id}`);
     }
@@ -88,7 +88,7 @@ test("first-wave profiles contain dated detected evidence and market-specific sa
 });
 
 test("commercial readiness is fail-closed and adds the exact market-specific gates", () => {
-  const expectedSpecific = { DE: "EXACT_OPERATOR_DOMAIN_MATCH", ES: "PROMOTIONAL_COPY_REVIEW", SE: null, DK: null, GR: "HGC_AFFILIATE_SUITABILITY_REQUIRED", PE: "EXACT_OPERATOR_DOMAIN_MATCH", UA: null } as const;
+  const expectedSpecific = { DE: "EXACT_OPERATOR_DOMAIN_MATCH", ES: "PROMOTIONAL_COPY_REVIEW", SE: null, DK: null, GR: "HGC_AFFILIATE_SUITABILITY_REQUIRED", PE: "EXACT_OPERATOR_DOMAIN_MATCH", UA: null, UZ: null } as const;
   const evidenceField = {
     EXISTING_COMMERCIAL_AUTHORITY: "existingCommercialAuthority",
     CURRENT_OPERATOR_MARKET_LICENCE: "operatorMarketLicenceEvidence",
@@ -130,7 +130,7 @@ test("only GB and the governed safety markets receive localized Help and Respons
     assert.equal(parsePublicMarketRoute(`/${language}/responsible-gambling`).kind, "CANONICAL_LOCALE", market);
     assert.equal(parsePublicMarketRoute(`/${profile.defaultLocale.toLowerCase()}/responsible-gambling`).kind, "LEGACY_MARKET_ROUTE", market);
   }
-  for (const market of ["IT", "PT", "NL", "FI", "NO", "RU", "UZ", "CA"] as const) {
+  for (const market of ["IT", "PT", "NL", "FI", "NO", "RU", "CA"] as const) {
     const profile = marketProfileByCountry(market);
     assert.ok(profile);
     assert.equal(parsePublicMarketRoute(`/${profile.routeMarket}/help`).kind, "INVALID", market);
@@ -138,7 +138,7 @@ test("only GB and the governed safety markets receive localized Help and Respons
   }
   assert.equal(parsePublicMarketRoute("/de/help/article").kind, "INVALID");
   const alternates = firstWaveSafetyLanguageAlternates("/help");
-  assert.deepEqual(Object.keys(alternates).sort(), ["da", "de", "en", "sv", "x-default"]);
+  assert.deepEqual(Object.keys(alternates).sort(), ["da", "de", "en", "sv", "uz", "x-default"]);
 });
 
 test("first-wave safety presentation is localized, attributed and has no commercial or Programme action", () => {
@@ -161,7 +161,8 @@ test("first-wave safety presentation is localized, attributed and has no commerc
 
 test("first-wave metadata is indexed only where the Founder opened search, and German product terminology avoids generic Casino language", () => {
   // SEO-INDEX-DE-SV-DA-2026-09-27: DE, SE and DK are indexed; ES, GR and PE stay noindex. LANGUAGES-HIDDEN-2026-10-09: UA is withdrawn.
-  const indexed = new Set(["DE", "SE", "DK"]);
+  // UZBEK-LANGUAGE-2026-10-20: Uzbek is indexed, and Uzbekistan's Help page with it.
+  const indexed = new Set(["DE", "SE", "DK", "UZ"]);
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = marketProfileByCountry(market);
     assert.ok(profile);
