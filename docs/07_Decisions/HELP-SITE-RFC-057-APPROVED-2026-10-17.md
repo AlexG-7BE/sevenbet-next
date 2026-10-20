@@ -281,6 +281,58 @@ the trade he asked for: he would not read the wall of text, and neither will a f
 **Way back.** Reverting the pull request restores the pause plan at `/`. Nothing about the main
 site, the Firewall rule, the route manifest or the database changes either way.
 
+## Amendment, 20 October 2026: the owner page is five short answers, and both text pages are laid out like the answer pages
+
+This amends **RFC-057 §17** (the owner-disclosure page). It is the final internal authority on
+the point.
+
+**What happened.** On 18 October the Founder opened `https://pauseplan.help/en/who-runs-this` on
+his phone: «Поправь оформление, видишь как блоки по цветовой гамме неудачно смотрится… как будто
+бы границы проходят не там где надо на мобильной версии. Также поправь само описание, слишком
+много текста и он плохо читаемый». On 20 October: «сделай это и в десктоп версии и в мобильной
+версии и на обоих сайтах что бы было одинаково».
+
+**Why the page looked broken.** Two defects, both measured on a local production build of both
+hosts. The public shell makes `html` and `body` one viewport tall, so the decorative body
+background — drawn for the long design pages — is a viewport-sized tile repeated down the page,
+with a hard seam every 844px on a phone and 900px on a laptop, across whatever paragraph is
+there. And the fixed 81px header covered the eyebrow and half the title, because the page began
+40px from the top.
+
+**For the build.**
+
+- **`/who-runs-this` says five things, briefly:** who runs it (7BE Inc., a company in New York,
+  United States; not a gambling company, not a charity); where the money comes from (the same
+  company runs `b4gamble.com`, named as plain text and never linked, and licensed operators pay it
+  commission; this site earns nothing and carries no casino, advert or partner link anywhere, the
+  programme included); that what you write is never used for casinos and never given to an
+  operator or partner; no tracking; and what the site is not, with self-exclusion and a helpline
+  first. Then one line and a link to `/for-organisations` for the full answers, and the contact
+  line, in English, Swedish and Danish.
+- **§17 points 1, 4 and 5 move, they are not dropped.** The street address, the partner-press
+  qualification with its date (§17 point 4, Q7), the processors and storage, and the programme's
+  date with its automatic test are said on `/for-organisations`, one tap from the owner page; the
+  data statement also gains the three facts that had been only on the owner page. The
+  qualification stays on the help site until the data job of Q7 has run, as §17 requires — on
+  the page an organisation reads, which is where the question is asked.
+- **Both text pages wear the answer pages' system** (the one `/can-you-trust-b4gamble` and the
+  control pages use): the night surface, the site typeface, the yellow eyebrow line and one card
+  per answer. The body background on these two pages is the night surface instead of the
+  decorative tile; every other page keeps it. The page starts at the header's height plus
+  `clamp(48px, 8vw, 96px)`. Nothing in the stylesheet reads the host, so `b4gamble.com` and
+  `pauseplan.help` show the same page under their own shells, on a phone and on a laptop.
+- **`/can-you-trust-b4gamble` is unchanged.** It was checked for both defects and has neither, and
+  its copy is for a different reader.
+- **`b4gamble.com`'s home page is byte-identical**, still held to its digest.
+
+**Evidence.** Branch `fix/owner-pages-readability`. Guards: `tests/help-text-pages-layout.test.tsx`
+and `tests/help-text-pages-browser.spec.ts` (new, in `ci:quality` and `ci:browser`),
+`tests/help-site-shell.test.tsx` and `tests/help-site-own-brand.test.tsx` (extended).
+`docs/CURRENT_STATE.md` records the measurements.
+
+**Way back.** Reverting the pull request restores the long owner page and the old layout. No
+route, switch, Firewall rule or database row changes either way.
+
 ## Evidence
 
 - RFC-057 §22, where each of these eight questions is written out with the recommendation he
