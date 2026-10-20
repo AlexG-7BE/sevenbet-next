@@ -316,7 +316,13 @@ This reverses nothing else: every other help route still moves to the help host 
 PR #530 still stands — the Programme shows no casino, offer, bonus, comparison or `/r/` link to
 anyone, on either host.
 
-**Open before phase 3:** `/10-steps` is public and indexable on both hosts and the two copies
-differ only in the site name and the chrome. One canonical has to be chosen. The recommendation
-in RFC-057 §5 is the help host, with the main host's copy pointing at it.
+**Settled the same day:** `/10-steps` is public and indexable on both hosts, so it gets one
+canonical — **the help host** — and the main host's copy points at it. Phase 3 builds that.
+`/program` needs no such rule, being an account surface.
+
+**Also asked and answered, 20 October 2026:** on `b4gamble.com` the `/10-steps` page keeps the
+commercial header with Casinos, Bonuses and Best Offers. It lives under `app/(public)` and
+wears the ordinary menu, unlike `/program`, whose own layout builds the clean shell of PR #530.
+The Founder was shown the difference and chose to keep it: the commercial site's menu reaches
+every page of it (his decision of 17 October 2026).
 

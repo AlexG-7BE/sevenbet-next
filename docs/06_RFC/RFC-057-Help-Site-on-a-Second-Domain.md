@@ -491,11 +491,19 @@ ends it by moving those routes off the main host:
   and indexable, so from the deployment that makes the help host indexable both
   hosts offer a near-identical page that differs only in the site name and the
   chrome. `/program` is not at risk in the same way: it is an account surface.
-  Recommendation, to settle before phase 3: give `/10-steps` one canonical —
-  the help host, because that is where the help audience and the outreach land
-  — and let the main host's copy point at it, keeping the page itself where it
-  is. The alternative, two self-referencing canonicals, leaves the choice to
-  Google and risks it folding the pair the other way.
+  **DECIDED, Founder, 20 October 2026:** `/10-steps` has one canonical, the
+  help host, because that is where the help audience and the outreach land.
+  The main host keeps serving its own copy and points its canonical at
+  `HELP_ORIGIN`, so the pair is never left to Google to fold. Phase 3 builds
+  it; `/program` needs no such rule, being an account surface.
+- **The main host's `/10-steps` keeps the commercial menu** (Founder,
+  20 October 2026, asked and answered). The page sits under `app/(public)`, so
+  it wears the ordinary header with Casinos, Bonuses and Best Offers, while
+  `/program` wears the clean shell its own layout builds
+  (`researchNavigation={false}`, PR #530). He was shown the difference and
+  chose to keep it: `b4gamble.com` is the commercial site and its menu reaches
+  every page of it (decision of 17 October 2026). On `HELP_ORIGIN` the same
+  page wears the help menu.
 - **`/can-you-trust-b4gamble` stays on the main site** and is `COMMERCIAL`.
   Changed in this revision: the earlier draft had it 301 to
   `HELP_ORIGIN/who-runs-this`. A commercial site that takes affiliate

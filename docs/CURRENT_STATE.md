@@ -27,9 +27,11 @@ amendment of 20 October). **LIVE in the manifest, nothing a visitor sees has cha
   content, and phase 3 never redirects them. Every other help route still moves in phase 3.
 - PR #530 is untouched: the Programme shows no casino, offer, bonus, comparison or `/r/` link
   to anyone, on either host.
-- **Open before phase 3:** `/10-steps` is public and indexable on both hosts and the copies
-  differ only in the site name and the chrome. One canonical must be chosen; RFC-057 §5
-  recommends the help host.
+- **Canonical, decided 20 October 2026:** `/10-steps` has one canonical, the help host; the
+  main host keeps its copy and points at it. Phase 3 builds it.
+- **The main host's `/10-steps` keeps the commercial menu** (Founder, 20 October 2026). It is
+  an `app/(public)` page and wears the ordinary header with Casinos, Bonuses and Best Offers;
+  only `/program` wears the clean shell of PR #530.
 
 ## The help site on a second domain is approved — phase 2 is live, not indexed
 
