@@ -298,3 +298,25 @@ site, the Firewall rule, the route manifest or the database changes either way.
   host's home is held to a digest) and `tests/help-site-shell.test.tsx` (the help home's only
   three links are `/program`, `/pause-plan` and `/who-runs-this`), with the address-stability
   check in `tests/help-site-host.test.ts`.
+
+## Amendment, 20 October 2026 — the Programme stays on both sites
+
+The Founder compared the Programme on `b4gamble.com` and on `pauseplan.help` and asked for them
+to be the same. They already are, where it counts: the missions, their order, their questions,
+their rewards and their screens come from one catalogue and one set of components, so no step
+differs between the hosts. What differs is the frame — the wordmark, the menu and the footer —
+because each host wears its own.
+
+Shown that, he chose: **the Programme and the public 10 Steps page stay on both sites, each
+keeping its current styling**, and phase 3 does not redirect them. Recorded here and in
+RFC-057 §5 and §18; `lib/site/host-routes.ts` moves `/program` and `/10-steps` from `HELP` to
+`SHARED`, the class `/` and `/login` already use.
+
+This reverses nothing else: every other help route still moves to the help host in phase 3, and
+PR #530 still stands — the Programme shows no casino, offer, bonus, comparison or `/r/` link to
+anyone, on either host.
+
+**Open before phase 3:** `/10-steps` is public and indexable on both hosts and the two copies
+differ only in the site name and the chrome. One canonical has to be chosen. The recommendation
+in RFC-057 §5 is the help host, with the main host's copy pointing at it.
+
