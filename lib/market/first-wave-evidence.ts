@@ -11,7 +11,7 @@ export type MarketEvidenceRecord = Readonly<{
   authority: string;
   title: string;
   url: string;
-  reviewedAt: "2026-09-03" | "2026-10-07";
+  reviewedAt: "2026-09-03" | "2026-10-07" | "2026-10-20";
   nextReviewAt: string;
   classification: EvidenceClassification;
   materialFact: string;
@@ -48,7 +48,7 @@ export type FirstWaveSafetyCopy = Readonly<{
 
 export type FirstWaveMarketEvidenceProfile = Readonly<{
   market: FirstWaveMarketCode;
-  locale: Extract<SupportedLocale, "de-DE" | "es-ES" | "sv-SE" | "da-DK" | "el-GR" | "es-PE" | "uk-UA">;
+  locale: Extract<SupportedLocale, "de-DE" | "es-ES" | "sv-SE" | "da-DK" | "el-GR" | "es-PE" | "uk-UA" | "uz-UZ">;
   authorityName: string;
   /** The day the evidence was read, as the page shows it; unset for the profiles reviewed with the first wave. */
   evidenceReviewedOn?: string;
@@ -74,6 +74,15 @@ function peruEvidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classifi
 /** Read on the State Agency's own pages on 7 October 2026 for the Ukrainian release. */
 function ukraineEvidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classification">): MarketEvidenceRecord {
   return { ...input, reviewedAt: "2026-10-07", classification: "DETECTED" };
+}
+
+/**
+ * Read on 20 October 2026 for the Uzbek release, on official pages only: the regulator (napp.uz),
+ * the national legislation database (lex.uz), the state mental health centre and the public
+ * services portal (my.gov.uz).
+ */
+function uzbekistanEvidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classification">): MarketEvidenceRecord {
+  return { ...input, reviewedAt: "2026-10-20", classification: "DETECTED" };
 }
 
 export const FIRST_WAVE_MARKET_EVIDENCE = {
@@ -320,6 +329,93 @@ export const FIRST_WAVE_MARKET_EVIDENCE = {
       nonCommercial: "На цій сторінці немає операторів азартних ігор, бонусів і партнерських посилань.",
       disclaimer: "B4GAMBLE не є регулятором і не надає лікування чи консультацій. Умови послуг і правила конфіденційності перевіряй безпосередньо в кожної установи.",
       urgent: "Якщо є безпосередня небезпека, телефонуй 112 або 103. B4GAMBLE не є ні екстреною, ні клінічною службою.",
+    },
+  },
+  UZ: {
+    market: "UZ",
+    locale: "uz-UZ",
+    authorityName: "Oʻzbekiston Respublikasi Istiqbolli loyihalar milliy agentligi",
+    evidenceReviewedOn: "20-10-2026",
+    evidenceState: "EVIDENCE_FOUNDATION_REVIEWED_NOT_LEGAL_APPROVAL",
+    commercialState: "NOT_VERIFIED_FAIL_CLOSED",
+    promotionalCopyReview: "REQUIRED",
+    terminology: [
+      "Use tavakkalchilikka asoslangan oʻyinlar for risk-based games, as the Uzbek acts do, and qimor oʻyinlari in plain sentences.",
+      "Name the list and the register exactly: Tavakkalchilikka asoslangan oʻyinlarga qaram shaxslar roʻyxati; Stavkalar va oʻyinchilarning yagona davlat registri.",
+      "The agency's phone and e-mail are regulator contacts; never present them as counselling or treatment.",
+      "The mental health centre's pages list alcohol, drug and substance addiction and do not name gambling; say so instead of implying a gambling service.",
+    ],
+    resources: [
+      {
+        kind: "SELF_EXCLUSION",
+        name: "Oʻzini oʻzi chetlatish",
+        provider: "Stavkalar va oʻyinchilarning yagona davlat registri",
+        url: "https://lex.uz/ru/docs/7615025",
+        attribution: "Registr nizomiga koʻra (3639-son, 2025-yil 7-iyul) oʻzini oʻzi chetlatgan oʻyinchi depozit qila olmaydi va cheklovlar reyestriga kiritiladi. Shundan keyin tuzilgan bitimlar bekor qilinadi, pul esa oʻyinchining bankdagi hisobvaragʻiga qaytariladi. Registr litsenziyalangan platformalarga kirishni cheklaydi.",
+      },
+      {
+        kind: "SELF_EXCLUSION",
+        name: "Tavakkalchilikka asoslangan oʻyinlarga qaram shaxslar roʻyxati",
+        provider: "Oʻzbekiston Respublikasi Istiqbolli loyihalar milliy agentligi",
+        url: "https://lex.uz/ru/docs/7257887",
+        attribution: "Oʻz arizangiz bilan 6 oydan 5 yilgacha muddatga kiritilasiz; yaqin qarindoshingizning arizasi bilan esa sud qarori asosida 5 yilga (Vazirlar Mahkamasining 814-son qarori, 2024-yil 6-dekabr). Roʻyxatni agentlik yuritadi.",
+      },
+      {
+        kind: "SUPPORT",
+        name: "Agentlikka murojaat",
+        provider: "Oʻzbekiston Respublikasi Istiqbolli loyihalar milliy agentligi",
+        url: "https://napp.uz/oz/appeal",
+        phone: "(71) 231-79-09",
+        attribution: "Agentlik murojaatlarni info@napp.uz elektron pochtasi orqali, shaxsiy va aloqa maʼlumotlaringiz koʻrsatilgan holda qabul qiladi. Telefon — agentlik kantselyariyasi. Bu regulyator, psixologik yordam xizmati emas.",
+      },
+      {
+        kind: "SUPPORT",
+        name: "Call-markaz",
+        provider: "Respublika ixtisoslashtirilgan ruhiy salomatlik ilmiy-amaliy tibbiyot markazi",
+        url: "https://mentalhealthcenter.uz/?page_id=145",
+        phone: "+998 55 515 45 65",
+        attribution: "Respublika ruhiy salomatlik markazining call-markazi. Markaz saytida alkogolizm, giyohvandlik va toksikomaniya boʻyicha yordam koʻrsatilgan, qimor oʻyinlari alohida tilga olinmagan — bu boʻyicha yordam olish mumkinligini qoʻngʻiroq qilib soʻrang.",
+      },
+      {
+        kind: "INFORMATION",
+        name: "Oylik sarflash limiti",
+        provider: "Stavkalar va oʻyinchilarning yagona davlat registri",
+        url: "https://lex.uz/ru/docs/7615025",
+        attribution: "Registr nizomiga koʻra oylik limitni oʻyinchining arizasi bilan oshirish mumkin, lekin u oʻyinchining oʻrtacha oylik daromadining 10 foizidan oshmasligi kerak.",
+      },
+      {
+        kind: "INFORMATION",
+        name: "Tavakkalchilikka asoslangan oʻyinlarni tartibga soluvchi hujjatlar",
+        provider: "Oʻzbekiston Respublikasi Istiqbolli loyihalar milliy agentligi",
+        url: "https://napp.uz/oz/news/lotereyalar-va-tavakkalchilikka-asoslangan-boshqa-o-yinlarni-tartibga-solish-maqsadida-qabul-qilingan-normativ-huquqiy-hujjatlar-yuzasidan-ma-lumot",
+        attribution: "Agentlikning rasmiy tushuntirishi: tashkilotchilar voyaga yetmaganlarga, qaram shaxslar roʻyxatidagi va cheklovlar roʻyxatidagi shaxslarga xizmat koʻrsata olmaydi; oʻyinchilar majburiy raqamli identifikatsiyadan oʻtadi, barcha toʻlovlar yagona registr orqali amalga oshiriladi.",
+      },
+    ],
+    evidence: [
+      uzbekistanEvidence({ id: "uz-napp-acts", authority: "NAPP", title: "Lotereyalar va tavakkalchilikka asoslangan oʻyinlarni tartibga solish boʻyicha hujjatlar", url: "https://napp.uz/ru/news/lotereyalar-va-tavakkalchilikka-asoslangan-boshqa-o-yinlarni-tartibga-solish-maqsadida-qabul-qilingan-normativ-huquqiy-hujjatlar-yuzasidan-ma-lumot", nextReviewAt: "2027-01-20", materialFact: "The National Agency of Prospective Projects (NAPP) licenses online risk-based games, lotteries and bookmaking. Its explanation of the acts of July 2025 states that organisers must integrate with the Unified State Register of Players and Bets, identify players digitally, accept money only through the Register, and may not serve minors, persons dependent on risk-based games or persons on the restrictions list.", applicability: "Market evidence context only; not operator approval and not B4GAMBLE commercial authority." }),
+      uzbekistanEvidence({ id: "uz-register-regulation", authority: "NAPP", title: "Stavkalar va oʻyinchilarning yagona davlat registri toʻgʻrisidagi nizom (3639-son, 07.07.2025)", url: "https://lex.uz/ru/docs/7615025", nextReviewAt: "2027-01-20", materialFact: "Clause 1 defines the list of persons dependent on risk-based games (own application, 6 months to 5 years; close relatives' application, court decision, 5 years) and records players' self-exclusion applications; clause 10 has the Register prevent and limit platform access for persons on the lists; clause 51 caps a raised monthly limit at 10 per cent of the player's average monthly income; clauses 53 and 54: on self-exclusion deposits are blocked, the player enters the restrictions register, later transactions are cancelled and funds go back to the player's bank account.", applicability: "Self-exclusion and limit facts only. The application channel is not stated in the clauses read, so the page sends the reader to the agency rather than to a form." }),
+      uzbekistanEvidence({ id: "uz-dependent-list", authority: "Cabinet of Ministers", title: "Vazirlar Mahkamasining 814-son qarori (06.12.2024)", url: "https://lex.uz/ru/docs/7257887", nextReviewAt: "2027-04-20", materialFact: "A natural person is included in the list on their own application for 6 months to 5 years, or on a close relative's application by court decision for 5 years; the agency keeps the Unified State Register of Bets and Players.", applicability: "Period and route of inclusion only." }),
+      uzbekistanEvidence({ id: "uz-napp-contact", authority: "NAPP", title: "Bogʻlanish va murojaatlar", url: "https://napp.uz/oz/appeal", nextReviewAt: "2027-01-20", materialFact: "The agency asks for appeals by e-mail to info@napp.uz with personal and contact details; its contact page lists the chancellery phone (+99871) 231-79-09 and the address Nukus street 22, Mirobod district, Tashkent.", applicability: "E-mail and phone only; office hours are intentionally not copied, and the contacts are not presented as counselling." }),
+      uzbekistanEvidence({ id: "uz-mental-health-centre", authority: "Mental Health Centre", title: "Respublika ixtisoslashtirilgan ruhiy salomatlik ilmiy-amaliy tibbiyot markazi — kontaktlar", url: "https://mentalhealthcenter.uz/?page_id=145", nextReviewAt: "2027-01-20", materialFact: "The Republican Specialized Scientific-Practical Medical Center of Mental Health publishes a call-centre number, +998 55 515 45 65 (printed +9989(55) 515 45 65), and reception numbers; its listed directions are the polyclinic, alcoholism, drug addiction, toxicomania, medical-social rehabilitation and intensive care. A search of the site for gambling addiction returns nothing.", applicability: "Call-centre number only, with the plain statement that the centre's pages do not name gambling." }),
+      uzbekistanEvidence({ id: "uz-emergency-numbers", authority: "my.gov.uz", title: "Aloqa — favqulodda xizmatlar", url: "https://my.gov.uz/uz/contact", nextReviewAt: "2027-04-20", materialFact: "The public services portal lists 101 fire service, 102 police, 103 ambulance and 1050 rescue service.", applicability: "Emergency numbers for the urgent line only." }),
+    ],
+    copy: {
+      eyebrow: "Nazorat va yordam",
+      helpTitle: "Tijoriy boʻlimlardan alohida yordam.",
+      helpLead: "Oʻzbekistondagi tekshirilgan rasmiy manbalar: oʻzini oʻzi chetlatish, yordam va maʼlumot.",
+      responsibleTitle: "Masʼuliyatli oʻyin",
+      responsibleLead: "Nazorat, oʻzini oʻzi chetlatish va yordam haqida amaliy maʼlumot — tashxissiz va takliflarsiz.",
+      resourcesTitle: "Tekshirilgan tashqi manbalar",
+      selfExclusionTitle: "Oʻzini oʻzi chetlatish",
+      supportTitle: "Yordam va qoʻllab-quvvatlash",
+      informationTitle: "Rasmiy maʼlumot",
+      reviewedLabel: "Manbalar tekshirilgan",
+      sourceLabel: "Manba",
+      externalLabel: "Tashqi saytni ochish",
+      unavailable: "Tekshirilgan mahalliy manba yoʻq.",
+      nonCommercial: "Bu sahifada qimor operatorlari, bonuslar va hamkor havolalari yoʻq.",
+      disclaimer: "B4GAMBLE regulyator emas va davolash yoki maslahat xizmatini koʻrsatmaydi. Har bir xizmatning shartlari va maxfiylik qoidalarini uning oʻz saytida tekshiring.",
+      urgent: "Bevosita xavf boʻlsa, 103 (tez tibbiy yordam) yoki 102 (politsiya) raqamiga qoʻngʻiroq qiling. B4GAMBLE favqulodda yoki klinik xizmat emas.",
     },
   },
 } as const satisfies Record<FirstWaveMarketCode, FirstWaveMarketEvidenceProfile>;

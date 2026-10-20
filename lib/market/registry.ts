@@ -378,7 +378,7 @@ export const INITIAL_EUROPEAN_MARKET_CODES = [
   "UZ",
 ] as const satisfies readonly MarketCode[];
 
-export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR", "PE", "UA"] as const satisfies readonly MarketCode[];
+export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR", "PE", "UA", "UZ"] as const satisfies readonly MarketCode[];
 export type FirstWaveEvidenceMarketCode = typeof FIRST_WAVE_EVIDENCE_MARKET_CODES[number];
 
 export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "PE", "SE", "DK", "GR", "UA", "RU", "UZ"] as const satisfies readonly MarketCode[];

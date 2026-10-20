@@ -79,7 +79,7 @@ export function programmePathForPresentationLocale(locale: SupportedLocale) {
 }
 
 const localizedHelpLocales = new Set<ProgrammeLocale>([
-  "de-DE", "es-ES", "sv-SE", "da-DK", "el-GR", "uk-UA",
+  "de-DE", "es-ES", "sv-SE", "da-DK", "el-GR", "uk-UA", "uz-UZ",
 ]);
 
 export function programmeHelpPath(locale: ProgrammeLocale) {
