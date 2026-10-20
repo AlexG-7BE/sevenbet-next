@@ -320,12 +320,48 @@ test("the owner page names the owner and the other site in plain text, and links
     assert.doesNotMatch(html, B4GAMBLE_HOST, `the owner page ${locale} prints a b4gamble.com URL`);
     assert.doesNotMatch(html, FORBIDDEN_HREF, `the owner page ${locale} carries a commercial address`);
     assertTreeIsClean(element, `the owner page ${locale}`);
-    // The six points of §17 are all there.
+    // §17 as amended on 20 October 2026: five short answers, then the way to the long version.
     const text = copy.sections.flatMap((section) => section.paragraphs).join(" ");
-    assert.ok(text.includes(HELP_OWNER.legalName), "point 1, who runs it");
-    assert.ok(text.includes(HELP_OWNER.otherSite), "point 2, how the company earns");
-    assert.match(text, /2026/, "point 4, the partner-press qualification is dated");
-    assert.ok(copy.sections.length >= 6, "all six points of §17");
+    assert.ok(text.includes(HELP_OWNER.legalName), "who runs it");
+    assert.match(text, /New York/, "where the company is");
+    assert.match(text, /United States|USA/, "that it is a United States company");
+    assert.ok(text.includes(HELP_OWNER.otherSite), "how the company earns");
+    assert.equal(copy.sections.length, 5, `the owner page ${locale} gives five answers`);
+    // The page offers exactly two routes: the data statement, with the rest of the answers,
+    // and the contact page. Both in the reader's own language.
+    const prefix = `/${routeLanguageByLocale[locale]}`;
+    assert.equal(copy.more?.href, HELP_ORGANISATIONS_PATH, `the owner page ${locale} points at the data statement`);
+    assert.equal(copy.more?.label, `${helpShellCopy(locale).footer.organisations} →`, "with the footer's own name for it");
+    const hrefs = [...html.matchAll(/href="([^"]*)"/g)].map((match) => match[1]);
+    assert.deepEqual(hrefs, [`${prefix}${HELP_ORGANISATIONS_PATH}`, `${prefix}/contact`], `the owner page ${locale} links only the data statement and the contact page`);
+  }
+});
+
+test("the owner page is short, and what it stopped saying is still said on the data statement", () => {
+  // Founder, 20 October 2026: «слишком много текста и он плохо читаемый». The long answer was
+  // not deleted; it moved one tap away, and this holds every piece of it there.
+  const words = (value: string) => value.split(/\s+/).filter(Boolean).length;
+  for (const locale of HELP_LOCALES) {
+    const owner = helpOwnerPage(locale);
+    const ownerText = [owner.intro, ...owner.sections.flatMap((section) => [section.heading, ...section.paragraphs])].join(" ");
+    assert.ok(words(ownerText) <= 230, `the owner page ${locale} is ${words(ownerText)} words long`);
+    for (const section of owner.sections) {
+      assert.ok(section.paragraphs.join(" ").length <= 330, `"${section.heading}" (${locale}) is a short answer`);
+    }
+    assert.doesNotMatch(ownerText, /447 Broadway/, `the owner page ${locale} no longer prints the street address`);
+    assert.doesNotMatch(ownerText, /\b17\.? (?:October|oktober)\b/, `the owner page ${locale} no longer carries the partner-press qualification`);
+
+    const organisations = helpOrganisationsPage(locale);
+    const text = organisations.sections.flatMap((section) => section.paragraphs).join(" ");
+    assert.match(text, /447 Broadway, 2nd Floor, 1663, New York, NY 10013/, `the data statement ${locale} prints the street address`);
+    assert.match(text, /\b17\.? (?:October|oktober) 2026\b/, `the data statement ${locale} carries the dated partner-press qualification`);
+    assert.ok(text.includes(HELP_OWNER.otherSite), `the data statement ${locale} names the other site`);
+    assert.match(text, /\b16\.? (?:October|oktober) 2026\b/, `the data statement ${locale} dates the programme's clean state`);
+    assert.match(text, /automatic test|automatiskt test|automatisk test/, `the data statement ${locale} says a test keeps it so`);
+    assert.match(text, /gambling licence|spellicens|spillicens/, `the data statement ${locale} says the company holds no gambling licence`);
+    assert.match(text, /public body|myndighet|myndighed/, `the data statement ${locale} says the company is not a public body`);
+    assert.match(text, /start the programme|börjar programmet|starter programmet/, `the data statement ${locale} says what is counted`);
+    assert.match(text, /Privacy Notice|integritetspolicyn|privatlivspolitikken/, `the data statement ${locale} points at the Privacy Notice`);
   }
 });
 

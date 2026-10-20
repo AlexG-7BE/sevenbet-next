@@ -50,9 +50,12 @@ import {
 } from "../lib/security/help-host-firewall-rule";
 import {
   HELP_LOCALES,
+  HELP_OWNER,
   HELP_OWNER_PATH,
   MAIN_SITE_NAME,
   helpHomeCopy,
+  helpOrganisationsPage,
+  helpOwnerPage,
   helpOwnerLinkLabel,
   helpRoutePath,
   siteFileSlug,
@@ -212,6 +215,23 @@ test("every copy table a help page renders is unbranded in all three published l
   assert.match(page, /site === "help" && row\.id === "b4gamble" \? "this-site" : row\.id/, "the control-tools row is renamed on the help host");
   const css = readFileSync("app/(public)/gambling-control/GamblingControl.module.css", "utf8");
   assert.match(css, /data-control-tool="this-site"/, "and the stylesheet hooks on the new name as well");
+});
+
+test("the two text pages say the other site's address, as text, and never its name", () => {
+  // The one deliberate exception of §6 rule 2: honesty about the owner needs the address of the
+  // site that earns the money. It is the address, written out, and nothing else — not the
+  // wordmark, not a link, not an image name — and the short owner page of 20 October 2026 still
+  // says it. tests/help-site-shell.test.tsx holds that it is never a link.
+  for (const locale of HELP_LOCALES) {
+    for (const [route, copy] of [["/who-runs-this", helpOwnerPage(locale)], ["/for-organisations", helpOrganisationsPage(locale)]] as const) {
+      const strings = copyStrings(copy);
+      assert.ok(strings.some((value) => value.includes(HELP_OWNER.otherSite)), `${route} ${locale} names the other site's address`);
+      for (const value of strings) {
+        assert.doesNotMatch(value, new RegExp(MAIN_SITE_NAME), `${route} ${locale} says the other brand's name`);
+        assertUnbranded(value.split(HELP_OWNER.otherSite).join(""), `${route} ${locale}`);
+      }
+    }
+  }
 });
 
 test("the main host's copy tables still name B4GAMBLE exactly as they do today", () => {
