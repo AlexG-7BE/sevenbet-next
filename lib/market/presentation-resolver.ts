@@ -96,7 +96,7 @@ const worldwideReadersLabel: Readonly<Record<SupportedLanguage, string>> = {
 };
 
 /** A trusted country without a market profile is named in the page language, never as its ISO code. */
-function countryDisplayName(countryCode: string, language: SupportedLanguage) {
+export function countryDisplayName(countryCode: string, language: SupportedLanguage) {
   try {
     return new Intl.DisplayNames([language], { type: "region" }).of(countryCode) ?? countryCode;
   } catch {

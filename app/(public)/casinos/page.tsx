@@ -6,6 +6,7 @@ import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceV
 import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
 import { CasinoCollection } from "@/components/casino-discovery/CasinoCollection";
 import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
+import { OfferCountrySelect } from "@/components/commercial/OfferCountrySelect";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/casino-discovery/CasinosPage.module.css";
 import { commercialUxMessages, countNoun } from "@/lib/commercial/commercial-ux-messages";
@@ -14,7 +15,7 @@ import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pa
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { editorialPresentation } from "@/lib/market/editorial-market";
+import { resolveServerOfferPresentation } from "@/lib/public-offer/offer-country.server";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryQuery, CasinoDiscoveryResult } from "@/lib/public-casino-discovery/public-casino-discovery.types";
@@ -50,8 +51,7 @@ function emptyCasinoCollection(query: CasinoDiscoveryQuery): CasinoDiscoveryResu
 }
 
 const loadCasinoCollection = cache(async (visualFixture: boolean) => {
-  const [visitorPresentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
-  const presentation = editorialPresentation(visitorPresentation);
+  const [presentation, authority] = await Promise.all([resolveServerOfferPresentation(), resolveServerJurisdiction()]);
   const query = collectionQuery();
   const result = visualFixture
     ? emptyCasinoCollection(query)
@@ -133,6 +133,7 @@ async function CasinosContent({ raw }: { raw: Record<string, string | string[] |
     </section>
     <section className={styles.directory} data-nav-theme="dark" id="casino-directory"><div className={styles.shell}>
       <div className={styles.directoryHeading} data-motion-reveal><div><p>{copy.casinosShown}</p><h2><EmphasisTail text={messages.casinos.directoryTitle} /></h2></div><span>{result.total} {countNoun(presentation.locale, result.total, copy.casinoOne, copy.casinoOther)}</span></div>
+      {!visualFixture && loaded.presentation.offerCountry ? <OfferCountrySelect elsewhereNote={copy.offerCountryElsewhere} label={copy.offerCountryLabel} selectLabel={copy.offerCountrySelect} surface="CASINOS" view={loaded.presentation.offerCountry} /> : null}
       {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{disclosure}</p></aside> : null}
       {result.items.length ? <CasinoCollection casinos={result.items} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
     </div></section>

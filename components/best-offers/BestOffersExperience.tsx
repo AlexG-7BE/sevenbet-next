@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
@@ -18,7 +18,9 @@ import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offe
 
 import styles from "./BestOffers.module.css";
 
-export function BestOffersExperience({ inventoryMode, messages, presentation, shortlist }: {
+export function BestOffersExperience({ countrySelect = null, inventoryMode, messages, presentation, shortlist }: {
+  /** The country filter, set above the category rail by the page. */
+  countrySelect?: ReactNode;
   inventoryMode: PublicOfferInventoryMode;
   messages: ProductPageMessages;
   presentation: PresentationResolution;
@@ -54,6 +56,7 @@ export function BestOffersExperience({ inventoryMode, messages, presentation, sh
         <p>{messages.bestOffers.sectionTitle}</p>
         <h2 id="best-offers-heading"><EmphasisTail text={labels[category]} /></h2>
       </header>
+      {countrySelect}
       <div aria-label={messages.bestOffers.sectionTitle} className={styles.categoryRail} role="tablist">
         {BEST_OFFER_CATEGORIES.map((key) => <button
           aria-controls="best-offer-results"

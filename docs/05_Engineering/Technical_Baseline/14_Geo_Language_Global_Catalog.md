@@ -27,6 +27,17 @@ retain separate authorities.
 country/locale values are discarded. The public selector exposes published
 languages only and posts through a signed return-path boundary.
 
+**DETECTED on 21 October 2026:** `lib/public-offer/offer-country.server.ts`
+resolves the presentation of `/casinos`, `/bonuses`, `/best-offers` and
+`/casino/<slug>` as `editorialPresentation(...)` moved to the country in the
+`b4g_offer_country` cookie, when that country is in the open offer-country list
+(`openOfferCountries` over the cached `listOfferMarkets()` projection) and
+neither the visitor's trusted country nor the default view prohibits offers.
+The cookie is written by `components/commercial/OfferCountrySelect.tsx` and is
+never passed to the jurisdiction resolver; the action resolver still grants a
+route only when the trusted country is the country asked about
+([OFFER-COUNTRY-FILTER-2026-10-21](../../07_Decisions/OFFER-COUNTRY-FILTER-2026-10-21.md)).
+
 ## Casino publication and projection
 
 **DETECTED:** the public repository selects the newest immutable published

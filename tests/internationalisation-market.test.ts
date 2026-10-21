@@ -1035,7 +1035,10 @@ test("visitors from outside our markets read the URL language's market; buttons 
   const resolver = readFileSync("lib/commercial/public-commercial-action-resolver.ts", "utf8");
   assert.match(resolver, /const authorityMatches = Boolean\(countryCode && input\.authority\?\.countryCode === countryCode\);/);
   assert.match(resolver, /if \(!countryCode \|\| !marketCode \|\| !authorityMatches\) \{/);
+  // The pages read the editorial view through the offer-country filter (OFFER-COUNTRY-FILTER-2026-10-21),
+  // which starts from this same view and moves it only to a country the visitor picked.
+  assert.match(readFileSync("lib/public-offer/offer-country.server.ts", "utf8"), /withOfferCountryChoice\(editorialPresentation\(visitorPresentation\), \{/);
   for (const page of ["app/(public)/bonuses/page.tsx", "app/(public)/best-offers/page.tsx", "app/(public)/casinos/page.tsx", "app/(public)/casino/[slug]/page.tsx"]) {
-    assert.match(readFileSync(page, "utf8"), /const presentation = editorialPresentation\(visitorPresentation\);/, page);
+    assert.match(readFileSync(page, "utf8"), /const \[presentation, authority(, editorialResult)?\] = await Promise\.all\(\[\s*resolveServerOfferPresentation\(\),/, page);
   }
 });

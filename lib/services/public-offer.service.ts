@@ -10,6 +10,7 @@ import { publicOfferRepository, type PublicOfferStore } from "@/lib/repositories
 import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { marketAccess, offerFitsMarket } from "@/lib/market-access/access";
+import { openOfferCountries } from "@/lib/public-offer/offer-country";
 import { localizePublicOffer } from "@/lib/i18n/casino-editorial-translations/localize";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import {
@@ -187,6 +188,16 @@ export class PublicOfferService {
       facets: buildOfferFacets(all),
       inventoryMode: publicOfferInventoryMode(all),
     };
+  }
+
+  /** Countries whose own offers the lists can show now; the country filter offers these. */
+  async listOfferCountries(now = new Date()) {
+    if (!this.cmsEnabled() || !this.repository.listOfferMarkets) return [];
+    try {
+      return openOfferCountries(await this.repository.listOfferMarkets(), now);
+    } catch {
+      return [];
+    }
   }
 
   async getFeaturedOffers(options: { country?: string; commercialMarketCode?: string; presentationLanguage?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {

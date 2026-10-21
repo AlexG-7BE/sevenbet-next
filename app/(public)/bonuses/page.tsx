@@ -8,6 +8,7 @@ import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceV
 import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
 import { BonusOfferDirectory } from "@/components/bonus-directory/BonusOfferDirectory";
 import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
+import { OfferCountrySelect } from "@/components/commercial/OfferCountrySelect";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "./BonusesPage.module.css";
 import { commercialUxMessages, countNoun } from "@/lib/commercial/commercial-ux-messages";
@@ -17,7 +18,7 @@ import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { editorialPresentation } from "@/lib/market/editorial-market";
+import { resolveServerOfferPresentation } from "@/lib/public-offer/offer-country.server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
@@ -35,8 +36,7 @@ type PageProps = { searchParams: Promise<PublicOfferSearchParams> };
 
 const loadBonusDirectory = cache(async () => {
   const commercialProductStatePromise = resolveServerCommercialProductState();
-  const [visitorPresentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
-  const presentation = editorialPresentation(visitorPresentation);
+  const [presentation, authority] = await Promise.all([resolveServerOfferPresentation(), resolveServerJurisdiction()]);
   const query = parsePublicOfferQuery({}, 100);
   const resultPromise = publicOfferService.searchOffers(
     { ...query, country: presentation.marketCountryCode ?? undefined },
@@ -104,12 +104,16 @@ async function BonusesContent({ raw }: { raw: Record<string, string | string[] |
   const calculatorLinkLabel = wageringCalculatorLocale(presentation.locale) === presentation.locale ? wageringCalculatorMessages(presentation.locale).breadcrumbLabel : null;
   const marketUnavailable = !visualFixture
     && (!offersPermitted || (!result.records.length && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState)));
+  const countrySelect = !visualFixture && loaded.presentation.offerCountry
+    ? <OfferCountrySelect elsewhereNote={copy.offerCountryElsewhere} label={copy.offerCountryLabel} selectLabel={copy.offerCountrySelect} surface="BONUSES" view={loaded.presentation.offerCountry} />
+    : null;
   if (marketUnavailable) return <div className={`${styles.page} ${instrumentSerif.variable}`} data-commercial-market-state="editorial-only" data-runtime-renderer="bonuses">
     <CommercialSurfaceView surface="bonuses" />
     <section className={styles.unavailable} data-nav-theme="dark"><div aria-hidden="true" className={styles.glow} /><div className={styles.unavailablePanel}>
       <small>{shell.bonuses}</small>
       <h1>{formatProductMessage(copy.bonusesMarketUnavailableTitle, { market })}</h1>
       <p>{copy.bonusesMarketUnavailableCopy}</p>
+      {countrySelect}
       <nav aria-label={shell.bonuses}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link><Link href="/bonus-guide">{messages.common.bonusGuide}</Link></nav>
     </div></section>
   </div>;
@@ -146,6 +150,7 @@ async function BonusesContent({ raw }: { raw: Record<string, string | string[] |
     <section className={styles.directorySection} data-nav-theme="dark" id="bonus-directory">
       <div className={styles.shell}>
         <header className={styles.sectionHeading} data-motion-reveal><h2><EmphasisTail text={messages.bonuses.directoryTitle} /></h2><p>{result.total} {countNoun(presentation.locale, result.total, copy.offerOne, copy.offerOther, copy.offerFew)}</p></header>
+        {countrySelect}
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure}</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></section> : <BonusOfferDirectory messages={messages} offers={result.records} presentation={presentation} />}
       </div>

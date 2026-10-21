@@ -21,6 +21,15 @@ RFC-037 and RFC-038. Their durable language/market separation, exact factual
 market grain, evidence, publication, Programme/privacy firewall and cumulative
 commercial-authority requirements remain active.
 
+**Note, 21 October 2026
+([OFFER-COUNTRY-FILTER-2026-10-21](../07_Decisions/OFFER-COUNTRY-FILTER-2026-10-21.md)):**
+the newer Founder decision adds a country filter above the Casinos, Bonuses and
+Best Offers lists. A country the visitor picks there, kept in the
+`b4g_offer_country` cookie, selects the editorial view of those lists and of
+the casino review. It is never commercial input: partner actions still require
+the trusted request country, and the public URL still expresses language only.
+"There is no public country/market control" below is superseded to that extent.
+
 [RFC-044](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md)
 extends the published-language inventory while retaining this RFC's routing
 and authority model. The single canonical registry currently publishes `en`,

@@ -18,6 +18,8 @@ import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { productHref, productLanguageAlternates, productMetadata, robotsAllowIndexing } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { editorialPresentation } from "@/lib/market/editorial-market";
+import { resolveServerOfferPresentation } from "@/lib/public-offer/offer-country.server";
+import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import { reviewIndexable, reviewLanguageAlternates } from "@/lib/seo/review-indexing";
 import { shouldStreamRouteFrame } from "@/lib/seo/route-frame";
 import { absoluteUrl } from "@/lib/site";
@@ -34,12 +36,12 @@ const loadEditorial = cache(async (slug: string) => {
   }
 });
 const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
-  const [visitorPresentation, authority, editorialResult] = await Promise.all([
-    resolveServerPresentationContext(),
+  // The country the visitor picked above an offer list carries over: the review shows that country's offer.
+  const [presentation, authority, editorialResult] = await Promise.all([
+    resolveServerOfferPresentation(),
     resolveServerJurisdiction(),
     visualFixture ? Promise.resolve(null) : loadEditorial(slug),
   ]);
-  const presentation = editorialPresentation(visitorPresentation);
   const candidate = visualFixture
     ? visualCasinoProfileFixture(slug)
     : await publicCasinoService.getCasino(
@@ -105,6 +107,8 @@ async function CasinoContent({ raw, slug, visualDataFixture }: { raw: Record<str
   const runtimeCasino = withHandoffCasinoProfileData(casino, visualDataFixture, presentation.locale, fixtureMarket);
   const editorial = withHandoffCasinoEditorialData(profileEditorialDocument(loaded.editorialResult, casino.id), visualDataFixture, presentation.locale);
   const messages = productPageMessages(presentation.locale);
+  const copy = commercialUxMessages(presentation.locale);
+  const offerCountry = visualDataFixture ? null : loaded.presentation.offerCountry;
   const profileUrl = absoluteUrl(productHref(presentation, `/casino/${runtimeCasino.slug}`));
   const casinoDirectoryUrl = absoluteUrl(productHref(presentation, "/casinos"));
   const schemas = projectCasinoProfileSchemas(casinoProfileSchemas(runtimeCasino, editorial), {
@@ -125,6 +129,7 @@ async function CasinoContent({ raw, slug, visualDataFixture }: { raw: Record<str
       messages={messages}
       // Neighbouring licensed reviews stream on their own and never delay the review (audit, 15 Oct 2026).
       neighbours={visualDataFixture || runtimeCasino.dataClassification === "DEMO_FIXTURE" ? null : <Suspense fallback={null}><LicensedNeighbours casinoSlug={runtimeCasino.slug} messages={messages} presentation={presentation} /></Suspense>}
+      noActionNote={offerCountry?.actionsElsewhere ? `${copy.offerCountryLabel}: ${offerCountry.label}. ${copy.offerCountryElsewhere}` : null}
       presentation={presentation}
     />
   </>;
