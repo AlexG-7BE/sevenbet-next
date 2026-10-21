@@ -34,7 +34,7 @@ function SectionFacts({ facts, empty }: { facts: readonly CommercialFact[]; empt
   return <dl className={styles.sectionFacts}>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
 }
 
-export function CasinoProfile({ casino, editorial, messages, presentation, availableForPresentation, neighbours = null }: {
+export function CasinoProfile({ casino, editorial, messages, presentation, availableForPresentation, neighbours = null, noActionNote = null }: {
   casino: PublicCasinoDTO;
   editorial: CasinoEditorialDocument | null;
   messages: ProductPageMessages;
@@ -42,6 +42,8 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   availableForPresentation: boolean;
   /** "Other casinos licensed in <country>", streamed by the page (components/casino-profile/LicensedNeighbours.tsx). */
   neighbours?: ReactNode;
+  /** Why there is no button when the visitor picked another country above an offer list. */
+  noActionNote?: string | null;
 }) {
   const copy = commercialUxMessages(presentation.locale);
   const inDepth = casinoInDepthReview(casino.slug, presentation.language);
@@ -153,7 +155,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             <h2><OfferHeadline text={offerHeadline} /></h2>
             {heroFacts.length ? <CommercialFacts facts={heroFacts} className={styles.heroFacts} /> : null}
             {action ? <div className={styles.heroAction}><CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_HERO", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /></div> : null}
-            <small>{action ? demo ? messages.common.marketPresentationNotice : copy.compactDisclosure : messages.common.reviewAvailableNoAction}</small>
+            <small>{action ? demo ? messages.common.marketPresentationNotice : copy.compactDisclosure : (noActionNote ?? messages.common.reviewAvailableNoAction)}</small>
           </div>
         </div>
       </section>
@@ -188,9 +190,9 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <header data-motion-reveal><p>03</p><h2 id="offer-heading">{copy.currentOffer}</h2></header>
         <div className={styles.offerPanel} data-analytics-casino-id={!demo && bonus ? casino.id : undefined} data-analytics-offer-key={!demo && bonus ? bonus.id : undefined}>
           <h3><OfferHeadline text={offerHeadline} /></h3>
-          {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{action ? copy.noCurrentOfferVisit : messages.common.reviewAvailableNoAction}</p>}
+          {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{action ? copy.noCurrentOfferVisit : (noActionNote ?? messages.common.reviewAvailableNoAction)}</p>}
           {bonus ? <p className={styles.materialWarning}>{decision.restriction}</p> : null}
-          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{messages.common.reviewAvailableNoAction}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) && action ? <GovernedCommercialAction action={{ href: action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "CASINO_OFFER_TERMS", casino: casino.slug, market: presentation.marketCountryCode }}>{copy.terms} <span aria-hidden="true">→</span></GovernedCommercialAction> : safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}{bonus?.wageringMultiplier && licensedNeighbourMarket(presentation.language) ? <Link data-wagering-calculator-link="" href={productHref(presentation, "/wagering-calculator")}>{copy.wageringCalculator} <span aria-hidden="true">→</span></Link> : null}</div>
+          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{(noActionNote ?? messages.common.reviewAvailableNoAction)}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) && action ? <GovernedCommercialAction action={{ href: action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "CASINO_OFFER_TERMS", casino: casino.slug, market: presentation.marketCountryCode }}>{copy.terms} <span aria-hidden="true">→</span></GovernedCommercialAction> : safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}{bonus?.wageringMultiplier && licensedNeighbourMarket(presentation.language) ? <Link data-wagering-calculator-link="" href={productHref(presentation, "/wagering-calculator")}>{copy.wageringCalculator} <span aria-hidden="true">→</span></Link> : null}</div>
           {sport ? <div aria-labelledby="sport-offer-heading" className={styles.sportOffer} data-casino-sport={sport.market} role="group">
             <p className={styles.sportKicker}>{sport.kicker}</p>
             <h3 id="sport-offer-heading">{sport.heading}</h3>

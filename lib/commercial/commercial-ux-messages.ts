@@ -85,6 +85,11 @@ export type CommercialUxMessages = Readonly<{
   partnerLinks: string;
   publishedOffers: string;
   filteredFor: string;
+  /** The country filter above the offer lists (OFFER-COUNTRY-FILTER-2026-10-21): "Offers for: Sweden". */
+  offerCountryLabel: string;
+  offerCountrySelect: string;
+  /** Shown when the lists show a country other than the visitor's own, where no partner button can appear. */
+  offerCountryElsewhere: string;
 }>;
 
 const en: CommercialUxMessages = {
@@ -162,6 +167,9 @@ const en: CommercialUxMessages = {
   partnerLinks: "partner links",
   publishedOffers: "published offers",
   filteredFor: "Filtered for {market}",
+  offerCountryLabel: "Offers for",
+  offerCountrySelect: "Choose a country",
+  offerCountryElsewhere: "Casino links work only from this country.",
 };
 
 const marketStateTranslations: Partial<Record<SupportedLocale, Pick<CommercialUxMessages,
@@ -323,7 +331,26 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "da-DK": { licensedNeighboursTitle: "Andre casinoer med licens i {country}", wageringCalculator: "Beregn omsætningskravet" },
     "de-DE": { licensedNeighboursTitle: "Weitere Anbieter mit Lizenz in {country}", wageringCalculator: "Umsatzbedingungen berechnen" },
   };
-  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}), ...(noOfferVisitLabels[locale] ?? {}), ...(reviewLinkLabels[locale] ?? {}) };
+  // German names operators "Anbieter" (german-terminology.ts). The sentence names no country, so no
+  // language has to inflect one: the filter above it already shows which country the list is for.
+  const offerCountryLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "offerCountryLabel" | "offerCountrySelect" | "offerCountryElsewhere">>> = {
+    "de-DE": { offerCountryLabel: "Angebote für", offerCountrySelect: "Land auswählen", offerCountryElsewhere: "Links zu den Anbietern funktionieren nur aus diesem Land." },
+    "it-IT": { offerCountryLabel: "Offerte per", offerCountrySelect: "Scegli un paese", offerCountryElsewhere: "I link ai casinò funzionano solo da questo paese." },
+    "es-ES": { offerCountryLabel: "Ofertas para", offerCountrySelect: "Elige un país", offerCountryElsewhere: "Los enlaces a los casinos solo funcionan desde este país." },
+    "es-PE": { offerCountryLabel: "Ofertas para", offerCountrySelect: "Elige un país", offerCountryElsewhere: "Los enlaces a los casinos solo funcionan desde este país." },
+    "pt-PT": { offerCountryLabel: "Ofertas para", offerCountrySelect: "Escolha um país", offerCountryElsewhere: "As ligações para os casinos só funcionam a partir deste país." },
+    "el-GR": { offerCountryLabel: "Προσφορές για", offerCountrySelect: "Επιλέξτε χώρα", offerCountryElsewhere: "Οι σύνδεσμοι προς τα καζίνο λειτουργούν μόνο από αυτή τη χώρα." },
+    "nl-NL": { offerCountryLabel: "Aanbiedingen voor", offerCountrySelect: "Kies een land", offerCountryElsewhere: "Links naar de casino's werken alleen vanuit dit land." },
+    "sv-SE": { offerCountryLabel: "Erbjudanden för", offerCountrySelect: "Välj land", offerCountryElsewhere: "Länkarna till casinona fungerar bara från det här landet." },
+    "da-DK": { offerCountryLabel: "Tilbud for", offerCountrySelect: "Vælg land", offerCountryElsewhere: "Links til kasinoerne virker kun fra dette land." },
+    "fi-FI": { offerCountryLabel: "Maan tarjoukset", offerCountrySelect: "Valitse maa", offerCountryElsewhere: "Linkit kasinoille toimivat vain tästä maasta." },
+    "nb-NO": { offerCountryLabel: "Tilbud for", offerCountrySelect: "Velg land", offerCountryElsewhere: "Lenkene til kasinoene fungerer bare fra dette landet." },
+    "fr-CA": { offerCountryLabel: "Offres pour", offerCountrySelect: "Choisissez un pays", offerCountryElsewhere: "Les liens vers les casinos ne fonctionnent qu’à partir de ce pays." },
+    "uk-UA": { offerCountryLabel: "Пропозиції для", offerCountrySelect: "Обери країну", offerCountryElsewhere: "Переходи до казино працюють лише з цієї країни." },
+    "ru-RU": { offerCountryLabel: "Предложения для", offerCountrySelect: "Выбери страну", offerCountryElsewhere: "Переходы в казино работают только из этой страны." },
+    "uz-UZ": { offerCountryLabel: "Mamlakat takliflari", offerCountrySelect: "Mamlakatni tanlang", offerCountryElsewhere: "Kazinoga oʻtish havolalari faqat shu mamlakatdan ishlaydi." },
+  };
+  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}), ...(noOfferVisitLabels[locale] ?? {}), ...(reviewLinkLabels[locale] ?? {}), ...(offerCountryLabels[locale] ?? {}) };
 }
 
 /** The singular or plural noun for a catalogue count, by the locale's own plural rules ("1 offer", "8 offers"). */

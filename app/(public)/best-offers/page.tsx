@@ -7,6 +7,7 @@ import { BestOffersExperience } from "@/components/best-offers/BestOffersExperie
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
 import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
+import { OfferCountrySelect } from "@/components/commercial/OfferCountrySelect";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/best-offers/BestOffers.module.css";
 import { publicOfferService } from "@/lib/services/public-offer.service";
@@ -18,7 +19,7 @@ import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pa
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { editorialPresentation } from "@/lib/market/editorial-market";
+import { resolveServerOfferPresentation } from "@/lib/public-offer/offer-country.server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
@@ -29,11 +30,10 @@ import { rankBestOffersForCategory } from "@/lib/public-offer/best-offer-ranking
 export const dynamic = "force-dynamic";
 const loadBestOffersPageData = cache(async () => {
   const commercialProductStatePromise = resolveServerCommercialProductState();
-  const [visitorPresentation, authority] = await Promise.all([
-    resolveServerPresentationContext(),
+  const [presentation, authority] = await Promise.all([
+    resolveServerOfferPresentation(),
     resolveServerJurisdiction(),
   ]);
-  const presentation = editorialPresentation(visitorPresentation);
   const resultPromise = publicOfferService.getBestOffersPageData(
     {
       country: presentation.marketCountryCode ?? undefined,
@@ -103,12 +103,16 @@ async function BestOffersContent({ raw }: { raw: Record<string, string | string[
   const offersPermitted = offersMayBePresented(presentation.marketCountryCode);
   const marketUnavailable = !fixtureEnabled
     && (!offersPermitted || (!result.records.length && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState)));
+  const countrySelect = !fixtureEnabled && loaded.presentation.offerCountry
+    ? <OfferCountrySelect elsewhereNote={copy.offerCountryElsewhere} label={copy.offerCountryLabel} selectLabel={copy.offerCountrySelect} surface="BEST_OFFERS" view={loaded.presentation.offerCountry} />
+    : null;
   if (marketUnavailable) return <div className={styles.page} data-commercial-market-state="editorial-only" data-runtime-renderer="best-offers">
     <CommercialSurfaceView surface="best_offers" />
     <section className={styles.statePage} data-nav-theme="dark"><div className={styles.shell}><div className={styles.statePanel} role="status">
       <p className={styles.kicker}>{shell.bestOffers}</p>
       <h1>{formatProductMessage(copy.bestOffersMarketUnavailableTitle, { market })}</h1>
       <p>{copy.bestOffersMarketUnavailableCopy}</p>
+      {countrySelect}
       <div className={styles.stateActions}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link><Link href={productHref(presentation, "/methodology")}>{messages.bestOffers.rankingLink}</Link></div>
     </div></div></section>
   </div>;
@@ -154,7 +158,7 @@ async function BestOffersContent({ raw }: { raw: Record<string, string | string[
       </div>
     </div></section>
     {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>{messages.common.demoData}.</strong> {messages.bestOffers.demoCopy}</p></div></section> : null}
-    {result.status === "available" ? <><BestOffersExperience inventoryMode={result.inventoryMode} messages={messages} presentation={presentation} shortlist={result.records} />
+    {result.status === "available" ? <><BestOffersExperience countrySelect={countrySelect} inventoryMode={result.inventoryMode} messages={messages} presentation={presentation} shortlist={result.records} />
       <section className={styles.whyPicked} data-premium-section="best-offers-method" data-nav-theme="cream"><div className={styles.shell} data-motion-reveal>
         <div><p className={styles.lightKicker}>{messages.common.methodology}</p><h2><EmphasisTail text={messages.bestOffers.methodTitle} /></h2><p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link></p></div>
         <ol>
@@ -170,7 +174,7 @@ async function BestOffersContent({ raw }: { raw: Record<string, string | string[
           <details name="best-offers-faq"><summary>{messages.bestOffers.faqWhyThreeQuestion}<span aria-hidden="true">+</span></summary><p>{messages.bestOffers.faqWhyThreeAnswer}</p></details>
         </div>
       </div></section>
-    </> : <section className={styles.statePage} data-nav-theme="dark" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{messages.common.commercialUnavailable}</p><h2>{result.status === "unavailable" ? messages.bestOffers.unavailableTitleBody : formatProductMessage(messages.bestOffers.emptyTitle, { market })}</h2><p>{result.status === "unavailable" ? messages.bestOffers.unavailableCopy : messages.bestOffers.emptyCopy}</p><div className={styles.stateActions}><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></div></section>}
+    </> : <section className={styles.statePage} data-nav-theme="dark" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{messages.common.commercialUnavailable}</p><h2>{result.status === "unavailable" ? messages.bestOffers.unavailableTitleBody : formatProductMessage(messages.bestOffers.emptyTitle, { market })}</h2><p>{result.status === "unavailable" ? messages.bestOffers.unavailableCopy : messages.bestOffers.emptyCopy}</p>{countrySelect}<div className={styles.stateActions}><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></div></section>}
   </div>;
 }
 
