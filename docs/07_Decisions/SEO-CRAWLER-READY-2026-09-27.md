@@ -15,8 +15,9 @@
 - **`/program` in languages closed to search is noindex** with hreflang limited to the open languages (`en`, `de`, `sv`, `da`), like every other page under [SEO-INDEX-DE-SV-DA-2026-09-27](SEO-INDEX-DE-SV-DA-2026-09-27.md).
 - **Learn guides declare only the language they exist in**; `de`/`sv`/`da` Learn hubs list the English guides marked as English; switching language on a guide lands on the target language's Learn hub. The retired `sports-betting-basics/sports-betting-odds-basics` guide redirects permanently to `sports-betting-basics/sportsbook-bonus-basics`.
 - **IndexNow**: the public key is served at `/219017cffaba5177842beab195a2564c.txt`; publishing a casino or a guide announces the changed URLs from Production, best effort, after the response.
+- **Yandex Webmaster** (Founder, 22 October 2026): the ownership file `/yandex_2c1ce41417df0f15.html` is served on the main host only (`COMMERCIAL`, so the help host answers 404). Google Search Console and Bing Webmaster are verified by DNS and need no file.
 
 ## Evidence
 
-- `tests/crawler-ready-metadata.test.ts` (`npm run seo-crawler:test`, part of `ci:quality`) pins `htmlLimitedBots`, robots, the structured data, review metadata, Learn hreflang and fallback, the Programme metadata, the German and Danish titles, the shared Bonuses rule, llms.txt, llms-full.txt and IndexNow.
+- `tests/crawler-ready-metadata.test.ts` (`npm run seo-crawler:test`, part of `ci:quality`) pins `htmlLimitedBots`, robots, the structured data, review metadata, Learn hreflang and fallback, the Programme metadata, the German and Danish titles, the shared Bonuses rule, llms.txt, llms-full.txt, IndexNow and the Yandex ownership file.
 - `tests/commercial-pages-streaming.test.ts` pins the browser-only frame on the home page and the commercial pages.

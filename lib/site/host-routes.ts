@@ -195,6 +195,8 @@ export const SITE_ROUTE_MANIFEST = [
   // The main host's IndexNow key file. §12 gives each host its own key, so this exact path is
   // the main site's and answers 404 on the help host; the help key file is its own path.
   { path: "/219017cffaba5177842beab195a2564c.txt", match: "EXACT", siteClass: "COMMERCIAL" },
+  // The Yandex Webmaster ownership file proves control of b4gamble.com only (22 October 2026).
+  { path: "/yandex_2c1ce41417df0f15.html", match: "EXACT", siteClass: "COMMERCIAL" },
 
   // -------------------------------------------------------------- INTERNAL
   { path: "/admin", match: "SUBTREE", siteClass: "INTERNAL" },

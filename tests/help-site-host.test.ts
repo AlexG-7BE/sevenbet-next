@@ -549,6 +549,7 @@ test("COMMERCIAL and INTERNAL routes answer 404 on the help host, under every pr
     "/llms-full.txt",
     "/opengraph-image",
     "/219017cffaba5177842beab195a2564c.txt",
+    "/yandex_2c1ce41417df0f15.html",
     "/api/public/bonuses",
     "/api/public/comparison",
     "/api/media/x",
