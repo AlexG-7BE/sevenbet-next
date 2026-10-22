@@ -38,6 +38,8 @@ import {
   learnArticleUrls,
   submitIndexNow,
 } from "../lib/seo/indexnow";
+import { YANDEX_VERIFICATION_CODE, YANDEX_VERIFICATION_PATH } from "../lib/seo/yandex-webmaster";
+import { GET as yandexVerificationGet } from "../app/yandex_2c1ce41417df0f15.html/route";
 import { buildLlmsFullTxt, buildLlmsTxt, llmsLaunchMarkets } from "../lib/seo/llms";
 import { loadLlmsFullMarket, type LlmsFullDependencies } from "../lib/seo/llms-full";
 import { bonusDirectoryIndexable } from "../lib/seo/product-indexing";
@@ -584,6 +586,13 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
   assert.notEqual(HELP_INDEXNOW_KEY, INDEXNOW_KEY);
   assert.equal(classifyRoutePath(`/${INDEXNOW_KEY}.txt`), "COMMERCIAL");
   assert.equal(classifyRoutePath(`/${HELP_INDEXNOW_KEY}.txt`), "HELP");
+
+  // The Yandex Webmaster ownership file: one route, named by the code, serving the body Yandex prints.
+  const yandexRoutes = readdirSync("app").filter((name) => /^yandex_[0-9a-f]+\.html$/.test(name));
+  assert.deepEqual(yandexRoutes, [YANDEX_VERIFICATION_PATH.slice(1)]);
+  const yandexFile = await yandexVerificationGet().text();
+  assert.match(yandexFile, new RegExp(`<body>Verification: ${YANDEX_VERIFICATION_CODE}</body>`));
+  assert.equal(classifyRoutePath(YANDEX_VERIFICATION_PATH), "COMMERCIAL");
 
   assert.equal(indexNowEnabled({ VERCEL_ENV: "production" }), true);
   assert.equal(indexNowEnabled({ VERCEL_ENV: "preview" }), false);
