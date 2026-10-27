@@ -14,7 +14,7 @@ import {
 } from "../lib/public-shell";
 import { COMMERCIAL_SECTION_ROOTS } from "../lib/commercial-section";
 import { ORGANIZATION_PROFILES } from "../lib/seo/structured-data";
-import { BRAND_SOCIAL_PROFILES } from "../lib/social/brand-profiles";
+import { BRAND_SOCIAL_PROFILES, BRAND_SOCIAL_VISIBLE } from "../lib/social/brand-profiles";
 
 test("public navigation follows the approved Figma information architecture", () => {
   assert.deepEqual(PUBLIC_NAVIGATION, [
@@ -445,22 +445,27 @@ test("the footer notice block is hidden from every visitor and kept whole (Found
   assert.ok(footer.includes("<p className={styles.footerCommission}>{footer.commissionDisclosure}</p>"));
 });
 
-test("the footer links to the brand's five social profiles and the schema names the same accounts (Founder, 11 October 2026)", () => {
+test("the footer's social row is hidden and the schema names only the accounts B4GAMBLE keeps (Founder, 11 and 27 October 2026)", () => {
   const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
   const links = readFileSync("components/public-shell/BrandSocialLinks.tsx", "utf8");
   const catalog = readFileSync("lib/i18n/public-shell-catalog.ts", "utf8");
   const styles = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
 
+  // 27 Oct 2026: the social accounts move to 7BE, so the row renders nothing before building anything.
+  assert.equal(BRAND_SOCIAL_VISIBLE, false);
+  assert.ok(links.includes("export function BrandSocialLinks({ label, opensInNewTab }: { label: string; opensInNewTab: string }) {\n  if (!BRAND_SOCIAL_VISIBLE) return null;"));
+
   assert.deepEqual(BRAND_SOCIAL_PROFILES.map((profile) => [profile.network, profile.href]), [
     ["instagram", "https://www.instagram.com/b4gamble.c0m"],
     ["youtube", "https://www.youtube.com/@b4gamble"],
-    ["x", "https://x.com/b4gamble"],
     ["facebook", "https://www.facebook.com/b4gamble"],
     ["threads", "https://www.threads.com/@b4gamble.c0m"],
   ]);
   // One list: the Organization schema opens with exactly the footer's accounts, and the retired handle is gone.
   assert.deepEqual(ORGANIZATION_PROFILES.slice(0, BRAND_SOCIAL_PROFILES.length), BRAND_SOCIAL_PROFILES.map((profile) => profile.href));
   assert.ok(!ORGANIZATION_PROFILES.some((profile) => profile.includes("b4gamble_com")));
+  // X, Medium and Product Hunt were 7BE's accounts and go back to 7BE.
+  for (const host of ["x.com", "medium.com", "producthunt.com"]) assert.ok(!ORGANIZATION_PROFILES.some((profile) => profile.includes(host)), host);
 
   // The row sits under the brand description in the one shared footer.
   assert.ok(footer.includes("<p>{footer.description}<br />{footer.operatorDisclaimer}</p>\n            <BrandSocialLinks label={footer.social} opensInNewTab={footer.opensInNewTab} />"));

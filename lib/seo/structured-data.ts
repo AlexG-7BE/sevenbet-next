@@ -38,14 +38,13 @@ export const BRAND_ALTERNATE_NAMES = ["Before Gamble", "Before You Gamble", "B4 
 /**
  * The brand's own public profiles, so search engines tie them to the site as one entity
  * (Founder, 1 Oct 2026). Only profiles B4GAMBLE controls; add one when it goes live.
- * The five the footer links to come first, from the list the footer itself renders.
+ * The footer's accounts come first, from the list the footer itself renders. X, Medium and
+ * Product Hunt left on 27 Oct 2026: they were 7BE's accounts and go back to 7BE.
  */
 export const ORGANIZATION_PROFILES = [
   ...BRAND_SOCIAL_PROFILES.map((profile) => profile.href),
   "https://www.tiktok.com/@b4gamble.com",
   "https://www.pinterest.com/b4gamble",
-  "https://medium.com/@b4gamble.com",
-  "https://www.producthunt.com/@b4gamble",
   "https://www.crunchbase.com/organization/b4gamble",
   "https://www.trustpilot.com/review/b4gamble.com",
 ] as const;
