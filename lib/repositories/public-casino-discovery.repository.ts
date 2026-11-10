@@ -12,7 +12,7 @@ const cachedPublishedAliases = publicEditorialCache(
   async (casinoIdsKey: string) => {
     const casinoIds = casinoIdsKey ? casinoIdsKey.split(",") : [];
     if (!casinoIds.length) return [];
-    return runPublicDatabaseRead(() => prisma.casinoAlias.findMany({
+    return runPublicDatabaseRead((db) => db.casinoAlias.findMany({
       where: { casinoId: { in: casinoIds }, casino: { status: EditorialStatus.PUBLISHED, archivedAt: null } },
       select: { casinoId: true, value: true },
     }));

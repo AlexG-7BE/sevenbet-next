@@ -27,14 +27,14 @@ const include = { revisions: { orderBy: { revisionNumber: "desc" } } } satisfies
 // The public review reads only the published revision; the full history (about 90 revisions,
 // ~350 kB per casino) would be loaded, cached and parsed on every page for nothing.
 const cachedPublishedEditorialReview = publicEditorialCache(
-  async (slug: string) => runPublicDatabaseRead(async () => {
-    const published = await prisma.editorialReview.findFirst({
+  async (slug: string) => runPublicDatabaseRead(async (db) => {
+    const published = await db.editorialReview.findFirst({
       where: { status: "PUBLISHED", archivedAt: null, casino: { slug } },
       include: { casino: { select: { id: true, slug: true, title: true } } },
     });
     if (!published) return null;
     const revisions = published.publishedRevisionId
-      ? await prisma.editorialReviewRevision.findMany({ where: { id: published.publishedRevisionId, reviewId: published.id } })
+      ? await db.editorialReviewRevision.findMany({ where: { id: published.publishedRevisionId, reviewId: published.id } })
       : [];
     return { ...published, revisions };
   }),

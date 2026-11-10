@@ -196,7 +196,7 @@ const joinedRuntimeRelations = Prisma.sql`
 `;
 
 async function listJoinedRuntimeRoutes(casinoIds: string[], marketKey: CanonicalCommercialMarketKey) {
-  const rows = await runPublicDatabaseRead(() => prisma.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
+  const rows = await runPublicDatabaseRead((db) => db.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
     SELECT to_jsonb(ma) AS activation, ${joinedRuntimeProjection}
     FROM "MarketActivation" ma
     ${joinedRuntimeRelations}
@@ -211,7 +211,7 @@ async function listJoinedRuntimeRoutes(casinoIds: string[], marketKey: Canonical
 }
 
 async function resolveJoinedRuntimeRoute(redirectSlug: string, marketKey: CanonicalCommercialMarketKey) {
-  const rows = await runPublicDatabaseRead(() => prisma.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
+  const rows = await runPublicDatabaseRead((db) => db.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
     SELECT to_jsonb(ma) AS activation, ${joinedRuntimeProjection}
     FROM "MarketActivation" ma
     ${joinedRuntimeRelations}
@@ -338,7 +338,7 @@ export class MarketActivationRuntime {
     const row = await runPublicDatabaseRead(() => this.database.marketActivation.findFirst({
       where: { marketCode: marketKey, product: "CASINO", status: "ACTIVE", desiredState: "ACTIVE" },
       select: { id: true },
-    }));
+    }), { clients: null });
     return Boolean(row);
   }
 

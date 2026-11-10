@@ -1,3 +1,7 @@
+import type { PrismaClient } from "@prisma/client";
+
+import { directReadPrisma } from "@/lib/db/direct-read-prisma";
+import { prisma } from "@/lib/db/prisma";
 import { usesSingleConnectionPool } from "@/lib/db/prisma-runtime-config";
 
 /**
@@ -16,6 +20,19 @@ export const PUBLIC_DATABASE_READ_BUDGET_MS = 8_000;
  */
 export const PUBLIC_DATABASE_PROJECTION_BUDGET_MS = 25_000;
 
+/**
+ * How long a public read waits on the pooled endpoint before the same read also goes to the
+ * direct host (Founder, 10 November 2026). A public read normally answers in about 100 ms; one
+ * still open at 2 s is stalled at the pooled endpoint, and a full pool gives up only at its 3 s
+ * connect bound, after the fallback has started.
+ */
+export const PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS = 2_000;
+
+/** The clients a public read runs on: the runtime client, and the direct fallback where there is one. */
+export type PublicReadClients = { primary: PrismaClient; fallback: () => PrismaClient | null };
+
+const runtimeClients: PublicReadClients = { primary: prisma, fallback: directReadPrisma };
+
 export class PublicDatabaseReadTimeoutError extends Error {
   readonly code = "PUBLIC_DATABASE_READ_TIMEOUT";
 
@@ -30,7 +47,7 @@ type ReadBudget = { expired: boolean };
 class PublicDatabaseReadCoordinator {
   private tail: Promise<void> = Promise.resolve();
 
-  run<T>(operation: () => Promise<T>, budgetMs: number): Promise<T> {
+  run<T>(operation: (db: PrismaClient) => Promise<T>, budgetMs: number, clients: PublicReadClients | null): Promise<T> {
     const budget: ReadBudget = { expired: false };
     let timer: ReturnType<typeof setTimeout> | undefined;
     const deadline = new Promise<never>((_, reject) => {
@@ -40,8 +57,43 @@ class PublicDatabaseReadCoordinator {
       }, budgetMs);
       timer.unref?.();
     });
-    const work = usesSingleConnectionPool() ? this.enqueue(operation, budget, budgetMs) : operation();
+    const primary = clients?.primary ?? prisma;
+    const work = usesSingleConnectionPool()
+      ? this.enqueue(() => operation(primary), budget, budgetMs)
+      : clients
+        ? this.withFallback(operation, clients, budget)
+        : operation(primary);
     return Promise.race([work, deadline]).finally(() => clearTimeout(timer));
+  }
+
+  /**
+   * The read on the runtime client, and, once it has been open for
+   * {@link PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS}, the same read on the direct fallback client
+   * beside it. The first answer wins; the read fails only when every copy that started has
+   * failed. A failure before the fallback starts is the read's answer, as before. Public reads
+   * only select, so running one twice changes nothing.
+   */
+  private withFallback<T>(operation: (db: PrismaClient) => Promise<T>, clients: PublicReadClients, budget: ReadBudget): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      let started = 1;
+      let failed = 0;
+      const fail = (error: unknown) => {
+        failed += 1;
+        if (failed === started) reject(error);
+      };
+      const timer = setTimeout(() => {
+        const fallback = budget.expired ? null : clients.fallback();
+        if (!fallback) return;
+        started += 1;
+        console.warn("public_db_read_fallback", { afterMs: PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS });
+        operation(fallback).then((value) => {
+          console.warn("public_db_read_fallback_answered");
+          resolve(value);
+        }, fail);
+      }, PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS);
+      timer.unref?.();
+      operation(clients.primary).then(resolve, fail).finally(() => clearTimeout(timer));
+    });
   }
 
   /**
@@ -71,10 +123,16 @@ const publicDatabaseReadCoordinator = new PublicDatabaseReadCoordinator();
  * effective `connection_limit=1` pool (disposable local/CI databases) shares one
  * process-local FIFO, instead of competing for the single slot until Prisma's
  * pool timeout.
+ *
+ * The read gets the client to query (`db`) and must use it, not the module-level `prisma`: a
+ * read still unanswered after {@link PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS} runs again on the
+ * direct host where there is one. `clients: null` runs it on the runtime client only, for a
+ * read bound to another client.
  */
 export function runPublicDatabaseRead<T>(
-  operation: () => Promise<T>,
-  options: { budgetMs?: number } = {},
+  operation: (db: PrismaClient) => Promise<T>,
+  options: { budgetMs?: number; clients?: PublicReadClients | null } = {},
 ): Promise<T> {
-  return publicDatabaseReadCoordinator.run(operation, options.budgetMs ?? PUBLIC_DATABASE_READ_BUDGET_MS);
+  const clients = options.clients === undefined ? runtimeClients : options.clients;
+  return publicDatabaseReadCoordinator.run(operation, options.budgetMs ?? PUBLIC_DATABASE_READ_BUDGET_MS, clients);
 }

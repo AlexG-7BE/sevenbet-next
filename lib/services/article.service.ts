@@ -185,7 +185,7 @@ function assertPublicationReady(article: Article) {
 
 const cachedPublishedArticles = publicEditorialCache(
   async (locale: string, category: string | null, take: number, excludeId: string | null) => (
-    await runPublicDatabaseRead(() => prisma.article.findMany({
+    await runPublicDatabaseRead((db) => db.article.findMany({
       where: {
         status: EditorialStatus.PUBLISHED,
         archivedAt: null,
@@ -207,7 +207,7 @@ const cachedPublishedArticles = publicEditorialCache(
 
 const cachedPublishedArticle = publicEditorialCache(
   async (category: string, slug: string, locale: string) => {
-    const record = await runPublicDatabaseRead(() => prisma.article.findFirst({
+    const record = await runPublicDatabaseRead((db) => db.article.findFirst({
       where: { category, slug, locale, status: EditorialStatus.PUBLISHED, archivedAt: null, publishedAt: { lte: new Date() } },
     }));
     return record ? mapPublishedArticle(record) : null;

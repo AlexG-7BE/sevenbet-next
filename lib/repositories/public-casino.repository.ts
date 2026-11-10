@@ -1,7 +1,6 @@
 import { EditorialStatus, Prisma } from "@prisma/client";
 
 import { PUBLIC_DATABASE_PROJECTION_BUDGET_MS, runPublicDatabaseRead } from "@/lib/db/public-database-read-coordinator";
-import { prisma } from "@/lib/db/prisma";
 import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 import { extractPublishedOfferCandidateRows, type PublishedOfferCandidateRow } from "@/lib/public-offer/offer-presentation";
 import type { PublishedCasinoSnapshotRecord, PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
@@ -134,7 +133,7 @@ function hydratedPublishedSnapshot(row: PublishedCasinoSnapshotRecord): Publishe
 // once per casino rather than once per published version (every publish adds one).
 async function queryPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]> {
   const snapshot = projectedPublishedSnapshot(countryCode);
-  return runPublicDatabaseRead(() => prisma.$queryRaw<PublishedSnapshotRow[]>(Prisma.sql`
+  return runPublicDatabaseRead((db) => db.$queryRaw<PublishedSnapshotRow[]>(Prisma.sql`
     SELECT
       cv."casinoId",
       cv.version,
@@ -164,7 +163,7 @@ const cachedPublished = publicEditorialCache(
 
 async function queryPublishedBySlug(slug: string, countryCode?: string | null) {
   const snapshot = projectedPublishedSnapshot(countryCode);
-  const [version] = await runPublicDatabaseRead(() => prisma.$queryRaw<PublishedSnapshotRow[]>(Prisma.sql`
+  const [version] = await runPublicDatabaseRead((db) => db.$queryRaw<PublishedSnapshotRow[]>(Prisma.sql`
     SELECT
       cv."casinoId",
       cv.version,
@@ -194,7 +193,7 @@ const cachedPublishedBySlug = publicEditorialCache(
 // only casino identities, not the whole-catalogue snapshot projection, whose per-country
 // revalidation kept timing out for crawler traffic from the United States (28 Sep 2026).
 const cachedPublishedIdentities = publicEditorialCache(
-  async () => runPublicDatabaseRead(() => prisma.casino.findMany({
+  async () => runPublicDatabaseRead((db) => db.casino.findMany({
     where: { status: EditorialStatus.PUBLISHED, archivedAt: null },
     select: { id: true, slug: true },
     orderBy: { id: "asc" },
@@ -205,7 +204,7 @@ const cachedPublishedIdentities = publicEditorialCache(
 
 export class PublicCasinoRepository implements PublicCasinoStore {
   async hasManagedSlug(slug: string) {
-    return (await runPublicDatabaseRead(() => prisma.casino.count({ where: { slug } }))) > 0;
+    return (await runPublicDatabaseRead((db) => db.casino.count({ where: { slug } }))) > 0;
   }
 
   async listPublishedIdentities() {
@@ -213,7 +212,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
   }
 
   async listManagedSlugs() {
-    return (await runPublicDatabaseRead(() => prisma.casino.findMany({ select: { slug: true } }))).map((casino) => casino.slug);
+    return (await runPublicDatabaseRead((db) => db.casino.findMany({ select: { slug: true } }))).map((casino) => casino.slug);
   }
 
   async listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]> {
@@ -228,7 +227,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
     const casinoFilter = Prisma.sql`AND published_version."casinoId" IN (${Prisma.join(
       boundedIds.map((casinoId) => Prisma.sql`${casinoId}::uuid`),
     )})`;
-    const rows = await runPublicDatabaseRead(() => prisma.$queryRaw<PublishedOfferCandidateRow[]>(Prisma.sql`
+    const rows = await runPublicDatabaseRead((db) => db.$queryRaw<PublishedOfferCandidateRow[]>(Prisma.sql`
       WITH latest_published AS (
         SELECT DISTINCT ON (published_version."casinoId")
           published_version."casinoId",

@@ -585,6 +585,17 @@ unavailable; the sitemap serves each market's last good product list
 good list of Learn guides (`lastGoodPublishedArticles`, entry `sitemap-learn-articles-v1`, 10
 minutes, no tag a publish clears, only category, slug and update date cached), so a stall right
 after a publish no longer empties the guides from the sitemap.
+## Public reads fall back to the direct database host — in review
+
+**Founder, 10 November 2026** ("Резерв через прямое", after the Vercel error check the same
+day). **PROPOSED — NOT YET LIVE** until merged and deployed. A public read still unanswered on
+the Prisma Postgres pooled endpoint after 2 s runs again on the direct host through a one-connection
+fallback client; the first answer wins and the fallback never turns an answer into an error.
+The Starter plan allows 5 workload direct connections, so only this fallback uses the direct
+host (one connection per instance, closed after 2 s idle); everything else stays pooled.
+Details, evidence and rollback: [Environment and Secrets → Runtime database pool](06_Operations/Environment-and-Secrets.md#runtime-database-pool).
+Tests: `tests/prisma-runtime-pooling.test.ts` (ci:structural).
+
 ## Commercial indexing hygiene — in review
 
 **Founder's choice in the affiliate traffic audit, 15 October 2026**

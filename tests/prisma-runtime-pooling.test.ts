@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   RUNTIME_POOL_POLICY,
   applyRuntimePoolPolicy,
+  directReadPgPool,
   runtimePgPool,
   inspectPrismaRuntimeConnection,
   runtimeConnectionLimit,
@@ -15,7 +16,9 @@ import { inspectProgrammeDatabaseReadiness } from "../lib/db/programme-database-
 import {
   PUBLIC_DATABASE_PROJECTION_BUDGET_MS,
   PUBLIC_DATABASE_READ_BUDGET_MS,
+  PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS,
   PublicDatabaseReadTimeoutError,
+  type PublicReadClients,
   runPublicDatabaseRead,
 } from "../lib/db/public-database-read-coordinator";
 
@@ -239,3 +242,92 @@ test("local and CI URLs keep their own pool size, no TLS and Prisma's 10 s wait;
   assert.equal(runtimePgPool(undefined).config.connectionString, undefined);
 });
 
+
+test("the direct read fallback pool holds one short-lived verified connection, only beside the pooled Prisma Postgres runtime", () => {
+  const settings = directReadPgPool({ DATABASE_URL: pooledUrl, DIRECT_URL: "postgresql://runtime-user:super-secret@db.prisma.io:5432/postgres" });
+  assert.ok(settings);
+  assert.equal(settings.config.max, 1, "Starter plan: 10 direct connections, 5 reserved for the platform");
+  assert.equal(settings.config.idleTimeoutMillis, 2_000);
+  assert.equal(settings.config.connectionTimeoutMillis, RUNTIME_POOL_POLICY.connect_timeout * 1000);
+  assert.equal(settings.config.query_timeout, RUNTIME_POOL_POLICY.socket_timeout * 1000);
+  assert.deepEqual(settings.config.ssl, { rejectUnauthorized: true }, "the direct host requires TLS even without sslmode in the URL");
+  assert.match(settings.config.connectionString ?? "", /^postgresql:\/\/runtime-user:super-secret@db\.prisma\.io:5432\/postgres$/);
+
+  assert.equal(directReadPgPool({ DATABASE_URL: localOneConnectionUrl, DIRECT_URL: localOneConnectionUrl }), null, "local and CI databases get no fallback");
+  assert.equal(directReadPgPool({ DATABASE_URL: pooledUrl, DIRECT_URL: pooledUrl }), null, "the fallback never goes back to the pooled endpoint");
+  assert.equal(directReadPgPool({ DATABASE_URL: directUrl, DIRECT_URL: directUrl }), null);
+  assert.equal(directReadPgPool({ DATABASE_URL: pooledUrl }), null);
+});
+
+type FakeDb = { name: string; read: () => Promise<string> };
+
+/** Clients whose reads are scripted; the coordinator only hands them to the operation. */
+function fakeClients(primary: () => Promise<string>, fallback: (() => Promise<string>) | null) {
+  const calls: string[] = [];
+  const db = (name: string, read: () => Promise<string>) => ({ name, read: () => { calls.push(name); return read(); } }) as FakeDb;
+  const clients = {
+    primary: db("pooled", primary),
+    fallback: () => (fallback ? db("direct", fallback) : null),
+  } as unknown as PublicReadClients;
+  const run = (budgetMs = 6_000) => runPublicDatabaseRead((client) => (client as unknown as FakeDb).read(), { budgetMs, clients });
+  return { calls, run };
+}
+
+const never = () => new Promise<string>(() => undefined);
+const after = (ms: number, value: string) => () => new Promise<string>((resolve) => setTimeout(() => resolve(value), ms));
+const failAfter = (ms: number, message: string) => () => new Promise<string>((_, reject) => setTimeout(() => reject(new Error(message)), ms));
+
+test("a public read stalled on the pooled endpoint runs again on the direct host and the first answer wins", async () => {
+  assert.equal(PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS, 2_000);
+  await withDatabaseUrl(pooledUrl, async () => {
+    const quick = fakeClients(after(5, "pooled answer"), after(5, "direct answer"));
+    assert.equal(await quick.run(), "pooled answer");
+    assert.deepEqual(quick.calls, ["pooled"], "a read that answers in time never opens a direct connection");
+
+    const stalled = fakeClients(never, after(5, "direct answer"));
+    const started = Date.now();
+    assert.equal(await stalled.run(), "direct answer");
+    assert.ok(Date.now() - started >= PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS);
+    assert.deepEqual(stalled.calls, ["pooled", "direct"]);
+  });
+});
+
+test("the fallback never turns an answer into a failure", async () => {
+  await withDatabaseUrl(pooledUrl, async () => {
+    const early = fakeClients(failAfter(5, "pooled failed"), after(5, "direct answer"));
+    await assert.rejects(early.run(), /pooled failed/, "a failure before the fallback starts is the answer, as before");
+    assert.deepEqual(early.calls, ["pooled"]);
+
+    const directFails = fakeClients(after(2_300, "pooled answer"), failAfter(5, "too many connections"));
+    assert.equal(await directFails.run(), "pooled answer", "a direct failure waits for the pooled read");
+
+    const bothFail = fakeClients(failAfter(2_200, "pooled failed"), failAfter(300, "direct failed"));
+    await assert.rejects(bothFail.run(), /pooled failed|direct failed/);
+
+    const noDirect = fakeClients(after(2_100, "pooled answer"), null);
+    assert.equal(await noDirect.run(), "pooled answer");
+    assert.deepEqual(noDirect.calls, ["pooled"]);
+
+    const expired = fakeClients(never, after(5, "direct answer"));
+    await assert.rejects(expired.run(1_000), PublicDatabaseReadTimeoutError, "the budget still ends the read");
+    await new Promise((resolve) => setTimeout(resolve, PUBLIC_DATABASE_READ_FALLBACK_AFTER_MS));
+    assert.deepEqual(expired.calls, ["pooled"], "no fallback starts after the budget ran out");
+  });
+});
+
+test("public reads query the client they are given, so the fallback reaches every one of them", () => {
+  for (const file of [
+    "lib/services/article.service.ts",
+    "lib/repositories/public-casino.repository.ts",
+    "lib/repositories/public-casino-discovery.repository.ts",
+    "lib/repositories/editorial-review.repository.ts",
+    "lib/market-activation/runtime.ts",
+  ]) {
+    const source = readFileSync(file, "utf8");
+    assert.doesNotMatch(source, /runPublicDatabaseRead\(\(\) => prisma\./, file);
+    assert.doesNotMatch(source, /runPublicDatabaseRead\(async \(\) => \{\s*const \w+ = await prisma\./, file);
+  }
+  const client = readFileSync("lib/db/direct-read-prisma.ts", "utf8");
+  assert.match(client, /directReadPgPool\(\)/);
+  assert.match(client, /new ReconnectingPool\(settings\.config\)/);
+});
