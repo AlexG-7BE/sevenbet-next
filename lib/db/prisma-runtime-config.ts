@@ -219,6 +219,38 @@ export function runtimePgPool(value: string | undefined): { config: RuntimePgPoo
   };
 }
 
+/**
+ * The one direct connection per instance a public read may fall back to (Founder, 10 November
+ * 2026: "Резерв через прямое"). The pooled endpoint still stalls reads past their budget, about
+ * 150–250 a day on Production since 3 October 2026, while the direct host answers in the same
+ * seconds (15 October 2026). The database is on the Prisma Postgres Starter plan: 10 direct
+ * connections, 5 of them reserved for the platform, so the whole runtime cannot move to the
+ * direct host. This pool therefore holds at most one connection, closes it after 2 s idle and is
+ * used only by a read the pooled endpoint has left unanswered (`runPublicDatabaseRead`).
+ *
+ * Null unless the runtime is the pooled endpoint and `DIRECT_URL` the direct host of Prisma
+ * Postgres (Production and Preview); local and CI databases get no fallback. TLS is always on:
+ * the direct host requires it.
+ */
+export function directReadPgPool(
+  environment: Record<string, string | undefined> = process.env,
+): { config: RuntimePgPoolConfig; schema: string | undefined } | null {
+  if (parseUrl(environment.DATABASE_URL)?.hostname !== POOLED_HOST) return null;
+  if (parseUrl(environment.DIRECT_URL)?.hostname !== DIRECT_HOST) return null;
+  const { config, schema } = runtimePgPool(environment.DIRECT_URL);
+  return {
+    config: {
+      ...config,
+      max: 1,
+      connectionTimeoutMillis: RUNTIME_POOL_POLICY.connect_timeout * 1000,
+      idleTimeoutMillis: 2_000,
+      query_timeout: RUNTIME_POOL_POLICY.socket_timeout * 1000,
+      ssl: { rejectUnauthorized: true },
+    },
+    schema,
+  };
+}
+
 export function warnForUnsafePrismaRuntimeConnection(
   environment: { DATABASE_URL?: string; NODE_ENV?: string } = process.env,
   warn: (message: string) => void = console.warn,
